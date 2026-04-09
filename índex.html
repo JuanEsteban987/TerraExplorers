@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>P2P Battle Arena</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e1e2e 0%, #2d2d44 100%);
+            color: white;
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        #gameContainer {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        canvas {
+            border: 3px solid #4a4a6a;
+            border-radius: 8px;
+            box-shadow: 0 0 30px rgba(0,0,0,0.5);
+            background: linear-gradient(to bottom, #87CEEB 0%, #E0F6FF 50%, #90EE90 50%, #228B22 100%);
+        }
+
+        #ui {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            text-align: center;
+            z-index: 10;
+        }
+
+        #connectionPanel {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(30, 30, 46, 0.95);
+            padding: 30px;
+            border-radius: 15px;
+            border: 2px solid #4a4a6a;
+            max-width: 500px;
+            width: 90%;
+            z-index: 20;
+        }
+
+        h1 {
+            color: #FFD700;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            margin: 5px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        button:disabled {
+            background: #555;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        textarea {
+            width: 100%;
+            height: 100px;
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #4a4a6a;
+            background: #2d2d44;
+            color: white;
+            font-family: monospace;
+            resize: none;
+        }
+
+        .hidden { display: none !important; }
+
+        #hud {
+            position: absolute;
+            top: 20px;
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            padding: 0 50px;
+            pointer-events: none;
+        }
+
+        .playerHud {
+            background: rgba(0,0,0,0.6);
+            padding: 15px 25px;
+            border-radius: 10px;
+            border: 2px solid;
+        }
+
+        .healthBar {
+            width: 200px;
+            height: 20px;
+            background: #333;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-top: 10px;
+            border: 2px solid #555;
+        }
+
+        .healthFill {
+            height: 100%;
+            transition: width 0.3s;
+            border-radius: 8px;
+        }
+
+        .p1 { border-color: #ff4444; }
+        .p1 .healthFill { background: linear-gradient(90deg, #ff4444, #ff6666); }
+        
+        .p2 { border-color: #4444ff; }
+        .p2 .healthFill { background: linear-gradient(90deg, #4444ff, #6666ff); }
+
+        #controls {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.7);
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 14px;
+            text-align: center;
+        }
+
+        .key {
+            display: inline-block;
+            background: #444;
+            padding: 3px 8px;
+            border-radius: 4px;
+            margin: 0 2px;
+            border: 1px solid #666;
+        }
+
+        #status {
+            color: #FFD700;
+            margin-top: 10px;
+            font-weight: bold;
+        }
+
+        .hit-effect {
+            animation: shake 0.3s;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <canvas id="gameCanvas" width="1000" height="600"></canvas>
+        
+        <div id="hud" class="hidden">
+            <div class="playerHud p1">
+                <div>Jugador 1 (Tú)</div>
+                <div class="healthBar">
+                    <div class="healthFill" id="health1" style="width: 100%"></div>
+                </div>
+            </div>
+            <div class="playerHud p2">
+                <div>Jugador 2 (Rival)</div>
+                <div class="healthBar">
+                    <div class="healthFill" id="health2" style="width: 100%"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="connectionPanel">
+            <h1>⚔️ P2P Battle Arena</h1>
+            <div id="step1">
+                <p>Conéctate directamente con otro jugador vía WebRTC (P2P)</p>
+                <button onclick="createRoom()">Crear Sala</button>
+                <button onclick="showJoin()">Unirse a Sala</button>
+            </div>
+            
+            <div id="step2" class="hidden">
+                <p id="step2Text">Copia este código y envíaselo a tu amigo:</p>
+                <textarea id="sdpOffer" readonly></textarea>
+                <button onclick="copySDP()">Copiar</button>
+                <button onclick="reset()">Volver</button>
+            </div>
+
+            <div id="step3" class="hidden">
+                <p>Pega el código de tu amigo:</p>
+                <textarea id="sdpAnswer" placeholder="Pega aquí el código..."></textarea>
+                <button onclick="acceptAnswer()">Conectar</button>
+                <button onclick="reset()">Volver</button>
+            </div>
+
+            <div id="step4" class="hidden">
+                <p>Esperando confirmación...</p>
+                <textarea id="sdpFinal" readonly></textarea>
+                <button onclick="copyFinal()">Copiar Respuesta</button>
+            </div>
+
+            <div id="status"></div>
+        </div>
+
+        <div id="controls" class="hidden">
+            <span class="key">A</span><span class="key">D</span> Moverse | 
+            <span class="key">W</span> Saltar | 
+            <span class="key">ESPACIO</span> Atacar
+        </div>
+    </div>
+
+    <script>
+        // Configuración del juego
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const GRAVITY = 0.6;
+        const JUMP_FORCE = -12;
+        const SPEED = 5;
+        const ATTACK_COOLDOWN = 30;
+        const ATTACK_RANGE = 60;
+        const DAMAGE = 10;
+
+        // Variables globales
+        let peerConnection = null;
+        let dataChannel = null;
+        let isHost = false;
+        let gameLoop = null;
+        let player = null;
+        let opponent = null;
+        let keys = {};
+        let sprites = {};
+
+        // Generar sprites PNG proceduralmente
+        function generateSprites() {
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = 64;
+            tempCanvas.height = 64;
+            const tCtx = tempCanvas.getContext('2d');
+
+            // Sprite Jugador 1 (Rojo/Guerrero)
+            tCtx.fillStyle = '#ff4444';
+            tCtx.fillRect(16, 8, 32, 24); // Cabeza
+            tCtx.fillStyle = '#cc0000';
+            tCtx.fillRect(12, 32, 40, 28); // Cuerpo
+            tCtx.fillStyle = '#ffaaaa';
+            tCtx.fillRect(20, 12, 8, 8); // Ojo
+            tCtx.fillRect(36, 12, 8, 8); // Ojo
+            tCtx.fillStyle = '#8B4513';
+            tCtx.fillRect(8, 32, 8, 24); // Brazo izq
+            tCtx.fillRect(48, 32, 8, 24); // Brazo der
+            tCtx.fillStyle = '#4444ff';
+            tCtx.fillRect(16, 60, 12, 4); // Pierna izq
+            tCtx.fillRect(36, 60, 12, 4); // Pierna der
+            sprites.player1 = new Image();
+            sprites.player1.src = tempCanvas.toDataURL('image/png');
+
+            // Sprite Jugador 2 (Azul/Ninja)
+            tCtx.clearRect(0, 0, 64, 64);
+            tCtx.fillStyle = '#4444ff';
+            tCtx.fillRect(16, 8, 32, 24);
+            tCtx.fillStyle = '#0000cc';
+            tCtx.fillRect(12, 32, 40, 28);
+            tCtx.fillStyle = '#aaaaff';
+            tCtx.fillRect(20, 12, 8, 8);
+            tCtx.fillRect(36, 12, 8, 8);
+            tCtx.fillStyle = '#2F4F4F';
+            tCtx.fillRect(8, 32, 8, 24);
+            tCtx.fillRect(48, 32, 8, 24);
+            tCtx.fillStyle = '#ff4444';
+            tCtx.fillRect(16, 60, 12, 4);
+            tCtx.fillRect(36, 60, 12, 4);
+            sprites.player2 = new Image();
+            sprites.player2.src = tempCanvas.toDataURL('image/png');
+
+            // Sprite efecto de ataque
+            tCtx.clearRect(0, 0, 64, 64);
+            tCtx.strokeStyle = '#FFD700';
+            tCtx.lineWidth = 3;
+            tCtx.beginPath();
+            tCtx.arc(32, 32, 20, 0, Math.PI * 1.5);
+            tCtx.stroke();
+            tCtx.fillStyle = '#FFFF00';
+            tCtx.fillRect(28, 28, 8, 8);
+            sprites.attack = new Image();
+            sprites.attack.src = tempCanvas.toDataURL('image/png');
+        }
+
+        class Player {
+            constructor(x, y, isLocal, sprite) {
+                this.x = x;
+                this.y = y;
+                this.width = 40;
+                this.height = 60;
+                this.vx = 0;
+                this.vy = 0;
+                this.isLocal = isLocal;
+                this.sprite = sprite;
+                this.facing = 1; // 1 derecha, -1 izquierda
+                this.health = 100;
+                this.attacking = false;
+                this.attackTimer = 0;
+                this.hit = false;
+                this.hitTimer = 0;
+                this.onGround = false;
+                this.animFrame = 0;
+            }
+
+            update() {
+                if (this.isLocal) {
+                    // Controles locales
+                    this.vx = 0;
+                    if (keys['a'] || keys['A']) {
+                        this.vx = -SPEED;
+                        this.facing = -1;
+                    }
+                    if (keys['d'] || keys['D']) {
+                        this.vx = SPEED;
+                        this.facing = 1;
+                    }
+                    if ((keys['w'] || keys['W']) && this.onGround) {
+                        this.vy = JUMP_FORCE;
+                        this.onGround = false;
+                    }
+                    if (keys[' '] && this.attackTimer === 0) {
+                        this.attack();
+                    }
+                }
+
+                // Física
+                this.vy += GRAVITY;
+                this.x += this.vx;
+                this.y += this.vy;
+
+                // Límites del mundo
+                if (this.x < 0) this.x = 0;
+                if (this.x > canvas.width - this.width) this.x = canvas.width - this.width;
+                
+                // Plataformas
+                const platforms = [
+                    {y: 400, x1: 200, x2: 800},
+                    {y: 300, x1: 100, x2: 400},
+                    {y: 300, x1: 600, x2: 900}
+                ];
+
+                this.onGround = false;
+                
+                // Suelo
+                if (this.y + this.height > canvas.height - 50) {
+                    this.y = canvas.height - 50 - this.height;
+                    this.vy = 0;
+                    this.onGround = true;
+                }
+
+                // Plataformas
+                platforms.forEach(plat => {
+                    if (this.x + this.width > plat.x1 && this.x < plat.x2 &&
+                        this.y + this.height > plat.y && this.y + this.height < plat.y + 20 &&
+                        this.vy >= 0) {
+                        this.y = plat.y - this.height;
+                        this.vy = 0;
+                        this.onGround = true;
+                    }
+                });
+
+                // Cooldown ataque
+                if (this.attackTimer > 0) {
+                    this.attackTimer--;
+                    if (this.attackTimer === 0) this.attacking = false;
+                }
+
+                // Efecto hit
+                if (this.hitTimer > 0) this.hitTimer--;
+
+                // Animación
+                if (Math.abs(this.vx) > 0) this.animFrame += 0.2;
+            }
+
+            attack() {
+                this.attacking = true;
+                this.attackTimer = ATTACK_COOLDOWN;
+                
+                // Verificar colisión con oponente
+                if (opponent) {
+                    const dx = opponent.x - this.x;
+                    const dy = opponent.y - this.y;
+                    const dist = Math.sqrt(dx*dx + dy*dy);
+                    
+                    if (dist < ATTACK_RANGE && Math.sign(dx) === this.facing) {
+                        opponent.takeDamage(DAMAGE);
+                        sendData({type: 'hit', damage: DAMAGE});
+                    }
+                }
+            }
+
+            takeDamage(dmg) {
+                this.health = Math.max(0, this.health - dmg);
+                this.hit = true;
+                this.hitTimer = 10;
+                this.vx = -this.facing * 5;
+                this.vy = -5;
+                
+                // Actualizar HUD
+                if (this.isLocal) {
+                    document.getElementById('health1').style.width = this.health + '%';
+                } else {
+                    document.getElementById('health2').style.width = this.health + '%';
+                }
+
+                if (this.health <= 0) {
+                    setTimeout(() => resetGame(), 1000);
+                }
+            }
+
+            draw() {
+                ctx.save();
+                
+                // Efecto de daño
+                if (this.hitTimer > 0) {
+                    ctx.globalAlpha = 0.5 + Math.random() * 0.5;
+                }
+
+                // Flip según dirección
+                ctx.translate(this.x + this.width/2, this.y + this.height/2);
+                ctx.scale(this.facing, 1);
+                
+                // Animación de caminar
+                const bob = Math.sin(this.animFrame) * 3;
+                
+                // Dibujar sprite
+                ctx.drawImage(
+                    this.sprite, 
+                    -this.width/2, 
+                    -this.height/2 + bob, 
+                    this.width, 
+                    this.height
+                );
+
+                // Indicador de ataque
+                if (this.attacking) {
+                    ctx.drawImage(
+                        sprites.attack,
+                        20 * this.facing,
+                        -10 + bob,
+                        30,
+                        30
+                    );
+                }
+
+                // Nombre
+                ctx.scale(this.facing, 1); // Resetear scale para texto
+                ctx.fillStyle = 'white';
+                ctx.font = 'bold 14px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText(this.isLocal ? 'Tú' : 'Rival', 0, -40);
+
+                ctx.restore();
+            }
+
+            getState() {
+                return {
+                    x: this.x,
+                    y: this.y,
+                    vx: this.vx,
+                    vy: this.vy,
+                    facing: this.facing,
+                    health: this.health,
+                    attacking: this.attacking,
+                    hit: this.hitTimer > 0
+                };
+            }
+
+            setState(state) {
+                this.x = state.x;
+                this.y = state.y;
+                this.vx = state.vx;
+                this.vy = state.vy;
+                this.facing = state.facing;
+                this.health = state.health;
+                this.attacking = state.attacking;
+                if (state.hit) this.hitTimer = 10;
+                
+                document.getElementById('health2').style.width = this.health + '%';
+            }
+        }
+
+        // WebRTC P2P
+        async function createRoom() {
+            isHost = true;
+            document.getElementById('step1').classList.add('hidden');
+            document.getElementById('step2').classList.remove('hidden');
+            document.getElementById('step2Text').textContent = 'Copia este código y envíaselo a tu amigo (Host):';
+
+            const config = {
+                iceServers: [
+                    { urls: 'stun:stun.l.google.com:19302' },
+                    { urls: 'stun:stun1.l.google.com:19302' }
+                ]
+            };
+
+            peerConnection = new RTCPeerConnection(config);
+            
+            dataChannel = peerConnection.createDataChannel('game', {
+                ordered: true
+            });
+
+            setupDataChannel();
+
+            peerConnection.onicecandidate = (e) => {
+                if (e.candidate === null) {
+                    const sdp = btoa(JSON.stringify(peerConnection.localDescription));
+                    document.getElementById('sdpOffer').value = sdp;
+                }
+            };
+
+            const offer = await peerConnection.createOffer();
+            await peerConnection.setLocalDescription(offer);
+        }
+
+        function showJoin() {
+            document.getElementById('step1').classList.add('hidden');
+            document.getElementById('step3').classList.remove('hidden');
+        }
+
+        async function acceptAnswer() {
+            const sdpText = document.getElementById('sdpAnswer').value.trim();
+            if (!sdpText) return;
+
+            try {
+                if (isHost) {
+                    // Host recibe respuesta
+                    const answer = JSON.parse(atob(sdpText));
+                    await peerConnection.setRemoteDescription(answer);
+                    document.getElementById('step2').classList.add('hidden');
+                    startGame();
+                } else {
+                    // Guest creene conexión
+                    await initGuest(sdpText);
+                }
+            } catch (e) {
+                alert('Código inválido: ' + e.message);
+            }
+        }
+
+        async function initGuest(offerText) {
+            const config = {
+                iceServers: [
+                    { urls: 'stun:stun.l.google.com:19302' },
+                    { urls: 'stun:stun1.l.google.com:19302' }
+                ]
+            };
+
+            peerConnection = new RTCPeerConnection(config);
+            
+            peerConnection.ondatachannel = (e) => {
+                dataChannel = e.channel;
+                setupDataChannel();
+            };
+
+            peerConnection.onicecandidate = (e) => {
+                if (e.candidate === null) {
+                    const sdp = btoa(JSON.stringify(peerConnection.localDescription));
+                    document.getElementById('sdpAnswer').value = sdp;
+                    document.getElementById('step3').classList.add('hidden');
+                    document.getElementById('step4').classList.remove('hidden');
+                }
+            };
+
+            const offer = JSON.parse(atob(offerText));
+            await peerConnection.setRemoteDescription(offer);
+            
+            const answer = await peerConnection.createAnswer();
+            await peerConnection.setLocalDescription(answer);
+            
+            document.getElementById('status').textContent = 'Copia el código de respuesta y envíalo al host';
+        }
+
+        function setupDataChannel() {
+            dataChannel.onopen = () => {
+                console.log('Conexión P2P establecida');
+                if (isHost) startGame();
+            };
+
+            dataChannel.onmessage = (e) => {
+                const data = JSON.parse(e.data);
+                handlePeerData(data);
+            };
+        }
+
+        function handlePeerData(data) {
+            if (data.type === 'state' && opponent) {
+                opponent.setState(data);
+            } else if (data.type === 'hit') {
+                player.takeDamage(data.damage);
+            }
+        }
+
+        function sendData(data) {
+            if (dataChannel && dataChannel.readyState === 'open') {
+                dataChannel.send(JSON.stringify(data));
+            }
+        }
+
+        // Juego
+        function startGame() {
+            document.getElementById('connectionPanel').classList.add('hidden');
+            document.getElementById('hud').classList.remove('hidden');
+            document.getElementById('controls').classList.remove('hidden');
+            
+            generateSprites();
+            
+            // Crear jugadores
+            player = new Player(200, 300, true, isHost ? sprites.player1 : sprites.player2);
+            opponent = new Player(700, 300, false, isHost ? sprites.player2 : sprites.player1);
+            
+            // Loop principal
+            function loop() {
+                update();
+                draw();
+                gameLoop = requestAnimationFrame(loop);
+            }
+            loop();
+
+            // Enviar estado 30 veces por segundo
+            setInterval(() => {
+                if (player) {
+                    sendData({type: 'state', ...player.getState()});
+                }
+            }, 33);
+        }
+
+        function update() {
+            if (player) player.update();
+            if (opponent) opponent.update();
+        }
+
+        function draw() {
+            // Limpiar canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Dibujar plataformas
+            ctx.fillStyle = '#8B4513';
+            ctx.fillRect(200, 400, 600, 20);
+            ctx.fillRect(100, 300, 300, 20);
+            ctx.fillRect(600, 300, 300, 20);
+            
+            // Suelo decorativo
+            ctx.fillStyle = '#228B22';
+            ctx.fillRect(0, canvas.height - 50, canvas.width, 50);
+            ctx.fillStyle = '#32CD32';
+            ctx.fillRect(0, canvas.height - 50, canvas.width, 10);
+
+            // Jugadores
+            if (player) player.draw();
+            if (opponent) opponent.draw();
+
+            // Efectos
+            if (player && player.hitTimer > 0) {
+                document.getElementById('gameCanvas').classList.add('hit-effect');
+            } else {
+                document.getElementById('gameCanvas').classList.remove('hit-effect');
+            }
+        }
+
+        function resetGame() {
+            if (player) {
+                player.x = 200;
+                player.y = 300;
+                player.health = 100;
+                document.getElementById('health1').style.width = '100%';
+            }
+            if (opponent) {
+                opponent.x = 700;
+                opponent.y = 300;
+                opponent.health = 100;
+                document.getElementById('health2').style.width = '100%';
+            }
+        }
+
+        // Utilidades UI
+        function copySDP() {
+            document.getElementById('sdpOffer').select();
+            document.execCommand('copy');
+            document.getElementById('status').textContent = '¡Código copiado! Esperando al oponente...';
+        }
+
+        function copyFinal() {
+            document.getElementById('sdpFinal').select();
+            document.execCommand('copy');
+            startGame();
+        }
+
+        function reset() {
+            location.reload();
+        }
+
+        // Input handling
+        window.addEventListener('keydown', (e) => {
+            keys[e.key] = true;
+        });
+
+        window.addEventListener('keyup', (e) => {
+            keys[e.key] = false;
+        });
+
+        // Prevenir scroll con espacio
+        window.addEventListener('keydown', (e) => {
+            if(e.code === 'Space' && e.target === document.body) {
+                e.preventDefault();
+            }
+        });
+    </script>
+</body>
+</html>
