@@ -3,584 +3,963 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LEGACY BUILDER v1.0 [1986]</title>
+    <title>PC Builder Simulator 3D</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { overflow: hidden; font-family: 'Courier New', monospace; }
         
-        * {
-            image-rendering: pixelated;
-            image-rendering: crisp-edges;
-        }
+        #gameCanvas { display: block; }
         
-        body {
-            margin: 0;
-            padding: 20px;
-            background-color: #2b2b2b;
-            background-image: 
-                repeating-linear-gradient(0deg, transparent, transparent 2px, #222 2px, #222 4px),
-                repeating-linear-gradient(90deg, transparent, transparent 2px, #1a1a1a 2px, #1a1a1a 4px);
-            font-family: 'Courier New', Courier, monospace;
-            color: #00ff00;
-            overflow-x: hidden;
-        }
-
-        .crt-overlay {
+        #ui {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: linear-gradient(
-                rgba(18, 16, 16, 0) 50%, 
-                rgba(0, 0, 0, 0.25) 50%
-            );
-            background-size: 100% 4px;
             pointer-events: none;
-            z-index: 1000;
-            animation: flicker 0.15s infinite;
+            z-index: 100;
         }
-
-        @keyframes flicker {
-            0% { opacity: 0.97; }
-            50% { opacity: 1; }
-            100% { opacity: 0.98; }
-        }
-
-        .container {
-            max-width: 1000px;
-            margin: 0 auto;
-            background-color: #c0c0c0;
-            border: 3px solid #000;
-            box-shadow: 
-                inset -3px -3px 0 #808080,
-                inset 3px 3px 0 #fff,
-                10px 10px 0 rgba(0,0,0,0.5);
-            padding: 8px;
-            position: relative;
-        }
-
-        .title-bar {
-            background: linear-gradient(90deg, #000080, #1084d0);
-            color: white;
-            padding: 4px 8px;
-            margin: -8px -8px 8px -8px;
-            font-weight: bold;
-            font-size: 14px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 2px solid #000;
-        }
-
-        .title-bar button {
-            background: #c0c0c0;
-            border: 2px outset #fff;
-            width: 20px;
-            height: 18px;
-            font-size: 12px;
-            line-height: 1;
-            cursor: pointer;
-            color: black;
-        }
-
-        .title-bar button:active {
-            border-style: inset;
-        }
-
-        h1 {
-            font-family: 'VT323', monospace;
-            font-size: 32px;
-            text-align: center;
-            color: #000;
-            text-shadow: 2px 2px 0 #808080;
-            margin: 10px 0;
-            letter-spacing: 4px;
-            text-transform: uppercase;
-        }
-
-        .main-layout {
-            display: flex;
-            gap: 8px;
-        }
-
-        .sidebar {
-            width: 180px;
-            background: #c0c0c0;
-            border: 2px outset #fff;
-            padding: 8px;
-        }
-
-        .panel-header {
-            background: #808080;
-            color: white;
-            padding: 2px 4px;
-            margin: -8px -8px 8px -8px;
-            font-size: 12px;
-            font-weight: bold;
-            border-bottom: 1px solid #000;
-        }
-
-        .tool-btn {
-            display: block;
-            width: 100%;
-            margin: 4px 0;
-            padding: 8px;
-            background: #c0c0c0;
-            border: 2px outset #fff;
-            font-family: 'Courier New', monospace;
-            font-size: 12px;
-            cursor: pointer;
-            text-align: left;
-            color: #000;
-        }
-
-        .tool-btn:hover {
-            background: #d4d0c8;
-        }
-
-        .tool-btn:active {
-            border-style: inset;
-            background: #808080;
-        }
-
-        .tool-btn.active {
-            border-style: inset;
-            background: #000080;
-            color: white;
-        }
-
-        .color-palette {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 4px;
-            margin-top: 8px;
-        }
-
-        .color-btn {
-            width: 32px;
-            height: 32px;
-            border: 2px outset #fff;
-            cursor: pointer;
-            position: relative;
-        }
-
-        .color-btn:hover {
-            transform: scale(1.1);
-        }
-
-        .color-btn.active::after {
-            content: '✓';
+        
+        #crosshair {
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            color: white;
-            font-weight: bold;
-            text-shadow: 1px 1px 0 #000;
-            font-size: 18px;
-        }
-
-        .workspace {
-            flex: 1;
-            background: #808080;
-            border: 2px inset #808080;
-            position: relative;
-            min-height: 500px;
-            overflow: auto;
-        }
-
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(20, 32px);
-            grid-template-rows: repeat(15, 32px);
-            gap: 0;
-            background-image: 
-                linear-gradient(45deg, #909090 25%, transparent 25%), 
-                linear-gradient(-45deg, #909090 25%, transparent 25%), 
-                linear-gradient(45deg, transparent 75%, #909090 75%), 
-                linear-gradient(-45deg, transparent 75%, #909090 75%);
-            background-size: 32px 32px;
-            background-position: 0 0, 0 16px, 16px -16px, -16px 0px;
-            background-color: #707070;
-        }
-
-        .lego-piece {
-            position: absolute;
-            cursor: move;
-            box-shadow: 
-                inset -2px -2px 0 rgba(0,0,0,0.5),
-                inset 2px 2px 0 rgba(255,255,255,0.5),
-                4px 4px 0 rgba(0,0,0,0.3);
-            border: 2px solid rgba(0,0,0,0.3);
-            display: flex;
-            flex-wrap: wrap;
-            padding: 2px;
-            transition: transform 0.1s;
-        }
-
-        .lego-piece:hover {
-            filter: brightness(1.1);
-            z-index: 100;
-        }
-
-        .stud {
-            width: 8px;
-            height: 8px;
-            background: rgba(255,255,255,0.3);
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(0, 255, 0, 0.8);
             border-radius: 50%;
-            margin: 2px;
-            box-shadow: inset 1px 1px 0 rgba(0,0,0,0.3);
+            background: rgba(0, 255, 0, 0.1);
         }
-
-        .stats {
-            margin-top: 8px;
-            padding: 8px;
-            background: #000;
-            color: #0f0;
-            font-family: 'VT323', monospace;
-            font-size: 16px;
-            border: 2px inset #808080;
+        
+        #controls {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            color: white;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 15px;
+            border-radius: 5px;
+            font-size: 14px;
+            line-height: 1.5;
         }
-
-        .size-selector {
-            margin: 8px 0;
-            font-size: 12px;
-            color: #000;
+        
+        #phone {
+            position: absolute;
+            bottom: -400px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 300px;
+            height: 500px;
+            background: #1a1a1a;
+            border-radius: 30px;
+            border: 8px solid #333;
+            pointer-events: auto;
+            transition: bottom 0.3s;
+            overflow: hidden;
         }
-
-        select {
-            font-family: 'Courier New', monospace;
-            background: #fff;
-            border: 2px inset #808080;
-            padding: 2px;
+        
+        #phone.open { bottom: 20px; }
+        
+        #phoneScreen {
             width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            color: white;
         }
-
-        .help-text {
-            font-size: 11px;
-            color: #000;
-            margin-top: 8px;
-            border-top: 1px solid #808080;
-            padding-top: 8px;
+        
+        .phone-header {
+            text-align: center;
+            font-size: 18px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid rgba(255,255,255,0.3);
+            padding-bottom: 10px;
         }
-
-        .mode-indicator {
+        
+        .app-icon {
+            width: 60px;
+            height: 60px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 15px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin: 10px;
+            cursor: pointer;
+            transition: transform 0.2s;
+            font-size: 24px;
+        }
+        
+        .app-icon:hover { transform: scale(1.1); background: rgba(255,255,255,0.3); }
+        
+        #shopScreen { display: none; height: 100%; overflow-y: auto; }
+        .shop-item {
+            background: rgba(255,255,255,0.1);
+            margin: 10px 0;
+            padding: 15px;
+            border-radius: 10px;
+            cursor: pointer;
+            border: 2px solid transparent;
+        }
+        .shop-item:hover { border-color: #fff; }
+        .shop-item.selected { border-color: #00ff00; background: rgba(0,255,0,0.2); }
+        
+        #notification {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.9);
+            color: #0f0;
+            padding: 15px;
+            border-radius: 5px;
+            border-left: 4px solid #0f0;
+            display: none;
+            max-width: 300px;
+        }
+        
+        #computerScreen {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 800px;
+            height: 600px;
+            background: #000;
+            border: 20px solid #333;
+            border-radius: 10px;
+            display: none;
+            pointer-events: auto;
+        }
+        
+        #bios {
+            width: 100%;
+            height: 100%;
+            background: #000080;
+            color: #fff;
+            padding: 20px;
+            font-family: 'Courier New', monospace;
+            font-size: 16px;
+            overflow-y: auto;
+        }
+        
+        #windows1 {
+            width: 100%;
+            height: 100%;
+            background: #c0c0c0;
+            display: none;
+            position: relative;
+        }
+        
+        .win1-header {
+            background: linear-gradient(90deg, #000080, #1084d0);
+            color: white;
+            padding: 5px;
+            font-weight: bold;
+        }
+        
+        .win1-content {
+            padding: 20px;
+        }
+        
+        .win1-icon {
+            width: 80px;
+            text-align: center;
+            margin: 10px;
+            cursor: pointer;
             display: inline-block;
-            width: 12px;
-            height: 12px;
-            background: #f00;
-            border: 1px solid #000;
-            margin-right: 4px;
-            animation: blink 1s infinite;
         }
-
-        @keyframes blink {
-            0%, 50% { opacity: 1; }
-            51%, 100% { opacity: 0; }
+        .win1-icon:hover { background: #000080; color: white; }
+        
+        #doorbell {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #ff6600;
+            color: white;
+            padding: 20px 40px;
+            border-radius: 10px;
+            font-size: 24px;
+            display: none;
+            animation: pulse 1s infinite;
         }
-
-        .hidden { display: none; }
+        
+        @keyframes pulse {
+            0%, 100% { transform: translateX(-50%) scale(1); }
+            50% { transform: translateX(-50%) scale(1.1); }
+        }
+        
+        .inventory {
+            position: absolute;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
+            background: rgba(0,0,0,0.8);
+            padding: 10px;
+            border-radius: 10px;
+        }
+        
+        .inv-item {
+            width: 50px;
+            height: 50px;
+            background: rgba(255,255,255,0.2);
+            border: 2px solid #666;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 24px;
+        }
+        
+        .inv-item.active { border-color: #0f0; background: rgba(0,255,0,0.3); }
+        .inv-item.has-item { border-color: #fff; }
+        
+        #assemblyUI {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.95);
+            padding: 30px;
+            border-radius: 10px;
+            color: white;
+            display: none;
+            text-align: center;
+            max-width: 400px;
+        }
+        
+        .component-slot {
+            border: 2px dashed #666;
+            padding: 15px;
+            margin: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .component-slot:hover { border-color: #0f0; }
+        .component-slot.installed { border-color: #0f0; background: rgba(0,255,0,0.1); }
+        
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+        }
+        
+        button:hover { background: #45a049; }
+        button:disabled { background: #666; cursor: not-allowed; }
     </style>
 </head>
 <body>
-    <div class="crt-overlay"></div>
+    <canvas id="gameCanvas"></canvas>
     
-    <div class="container">
-        <div class="title-bar">
-            <span>LEGACY_BUILDER.EXE - [RUNNING]</span>
-            <button onclick="alert('System Error: Cannot close legacy systems')" title="Close">×</button>
+    <div id="ui">
+        <div id="crosshair"></div>
+        <div id="controls">
+            <strong>🎮 CONTROLES:</strong><br>
+            WASD - Moverse<br>
+            MOUSE - Mirar<br>
+            E - Interactuar<br>
+            P - Abrir Celular<br>
+            ESC - Cerrar/Cancelar<br>
+            <br>
+            <span id="objective">Objetivo: Arma tu PC</span>
         </div>
         
-        <h1>▓▓▓ LEGO CONSTRUCTOR v1.0 ▓▓▓</h1>
+        <div class="inventory" id="inventory">
+            <div class="inv-item" id="slot0"></div>
+            <div class="inv-item" id="slot1"></div>
+            <div class="inv-item" id="slot2"></div>
+            <div class="inv-item" id="slot3"></div>
+        </div>
         
-        <div class="main-layout">
-            <div class="sidebar">
-                <div style="border: 2px outset #fff; margin-bottom: 8px;">
-                    <div class="panel-header">CONTROL PANEL</div>
-                    
-                    <div style="padding: 8px;">
-                        <button class="tool-btn active" onclick="setTool('build')">
-                            <span class="mode-indicator"></span>BUILD MODE
-                        </button>
-                        <button class="tool-btn" onclick="setTool('delete')">
-                            DELETE MODE
-                        </button>
-                        <button class="tool-btn" onclick="clearAll()">
-                            CLEAR ALL
-                        </button>
-                        
-                        <div class="size-selector">
-                            <label>BRICK SIZE:</label>
-                            <select id="brickSize" onchange="updateSize()">
-                                <option value="1x1">1 × 1</option>
-                                <option value="2x1">2 × 1</option>
-                                <option value="2x2" selected>2 × 2</option>
-                                <option value="4x2">4 × 2</option>
-                                <option value="4x1">4 × 1</option>
-                            </select>
-                        </div>
-                        
-                        <div style="margin-top: 12px; border: 2px inset #808080; padding: 8px; background: #000;">
-                            <div style="color: #0f0; font-family: 'VT323', monospace; font-size: 14px;">
-                                > STATUS: READY<br>
-                                > BLOCKS: <span id="blockCount">0</span><br>
-                                > MEM: 640K OK
-                            </div>
-                        </div>
+        <div id="phone">
+            <div id="phoneScreen">
+                <div class="phone-header">📱 Mi Celular</div>
+                <div id="homeScreen">
+                    <div class="app-icon" onclick="openShop()">🛒</div>
+                    <div class="app-icon" onclick="alert('Batería: 87%')">🔋</div>
+                    <div class="app-icon" onclick="alert('Sin señal')">📡</div>
+                    <div class="app-icon" onclick="alert('No hay fotos')">📷</div>
+                    <div style="margin-top: 20px; font-size: 12px; opacity: 0.7;">
+                        Banco: $<span id="money">500</span>
                     </div>
                 </div>
-                
-                <div style="border: 2px outset #fff;">
-                    <div class="panel-header">COLOR PALETTE</div>
-                    <div style="padding: 8px;">
-                        <div class="color-palette">
-                            <div class="color-btn active" style="background: #ff0000" onclick="setColor('#ff0000', this)" title="Classic Red"></div>
-                            <div class="color-btn" style="background: #0000ff" onclick="setColor('#0000ff', this)" title="Classic Blue"></div>
-                            <div class="color-btn" style="background: #ffff00" onclick="setColor('#ffff00', this)" title="Classic Yellow"></div>
-                            <div class="color-btn" style="background: #00aa00" onclick="setColor('#00aa00', this)" title="Classic Green"></div>
-                            <div class="color-btn" style="background: #ffffff" onclick="setColor('#ffffff', this)" title="Classic White"></div>
-                            <div class="color-btn" style="background: #000000" onclick="setColor('#000000', this)" title="Classic Black"></div>
-                            <div class="color-btn" style="background: #ff6600" onclick="setColor('#ff6600', this)" title="Classic Orange"></div>
-                            <div class="color-btn" style="background: #8b4513" onclick="setColor('#8b4513', this)" title="Classic Brown"></div>
-                        </div>
+                <div id="shopScreen">
+                    <button onclick="closeShop()" style="margin-bottom: 10px;">← Volver</button>
+                    <h3>🛒 Tienda Online</h3>
+                    <div class="shop-item" onclick="selectItem('usb')">
+                        💾 USB Windows 1.0 - $50<br>
+                        <small>Sistema operativo retro</small>
                     </div>
-                </div>
-                
-                <div class="help-text">
-                    <strong>INSTRUCTIONS:</strong><br>
-                    • Click grid to place<br>
-                    • Right-click to delete<br>
-                    • Select color first<br>
-                    • Build your legacy<br>
-                    <br>
-                    <em>© 1986 LEGACY SYS</em>
-                </div>
-            </div>
-            
-            <div class="workspace" id="workspace">
-                <div class="grid" id="grid" onclick="handleGridClick(event)">
+                    <div class="shop-item" onclick="selectItem('mouse')">
+                        🖱️ Mouse USB - $25<br>
+                        <small>Para controlar la PC</small>
+                    </div>
+                    <div class="shop-item" onclick="selectItem('keyboard')">
+                        ⌨️ Teclado USB - $40<br>
+                        <small>Para escribir</small>
+                    </div>
+                    <div class="shop-item" onclick="selectItem('ram')">
+                        🧠 RAM DDR4 8GB - $80<br>
+                        <small>Memoria para la PC</small>
+                    </div>
+                    <button id="buyBtn" onclick="buyItem()" disabled>Comprar</button>
                 </div>
             </div>
         </div>
         
-        <div class="stats">
-            > SYSTEM READY_ | COORDINATES: <span id="coords">0,0</span> | LAST_ACTION: <span id="lastAction">NONE</span>
+        <div id="notification"></div>
+        <div id="doorbell">🔔 ¡Toc toc! ¡Entrega!</div>
+        
+        <div id="assemblyUI">
+            <h2>🔧 Modo Ensamblaje</h2>
+            <div id="assemblySlots"></div>
+            <button onclick="closeAssembly()">Cerrar</button>
+            <button onclick="finishAssembly()" id="finishBtn" style="display:none;">Encender PC</button>
+        </div>
+        
+        <div id="computerScreen">
+            <div id="bios">
+                <div id="bootText"></div>
+            </div>
+            <div id="windows1">
+                <div class="win1-header">MS-DOS Executive</div>
+                <div class="win1-content">
+                    <div class="win1-icon" onclick="alert('MS-DOS Prompt abierto')">🖥️<br>Command</div>
+                    <div class="win1-icon" onclick="alert('Escribiendo...')">📝<br>Write</div>
+                    <div class="win1-icon" onclick="alert('Calculando... 2+2=4')">🧮<br>Calc</div>
+                    <div class="win1-icon" onclick="alert('Reversi iniciado')">⚫<br>Reversi</div>
+                    <div class="win1-icon" onclick="alert('Reloj: 12:00 PM')">🕐<br>Clock</div>
+                    <div class="win1-icon" onclick="alert('Paint abierto (simulado)')">🎨<br>Paint</div>
+                </div>
+            </div>
         </div>
     </div>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script>
-        let currentTool = 'build';
-        let currentColor = '#ff0000';
-        let currentSize = '2x2';
-        let blockCount = 0;
-        let occupied = new Set();
-        
-        function setTool(tool) {
-            currentTool = tool;
-            document.querySelectorAll('.tool-btn').forEach(btn => {
-                btn.classList.remove('active');
-                if(btn.textContent.toLowerCase().includes(tool)) {
-                    btn.classList.add('active');
-                }
-            });
-            logAction(`TOOL_CHANGED_${tool.toUpperCase()}`);
-        }
-        
-        function setColor(color, element) {
-            currentColor = color;
-            document.querySelectorAll('.color-btn').forEach(btn => {
-                btn.classList.remove('active');
-            });
-            element.classList.add('active');
-            logAction(`COLOR_SELECT_${color}`);
-        }
-        
-        function updateSize() {
-            currentSize = document.getElementById('brickSize').value;
-            logAction(`SIZE_SELECT_${currentSize}`);
-        }
-        
-        function handleGridClick(event) {
-            if(event.button !== 0) return; // Only left click
-            
-            const grid = document.getElementById('grid');
-            const rect = grid.getBoundingClientRect();
-            const x = Math.floor((event.clientX - rect.left) / 32) * 32;
-            const y = Math.floor((event.clientY - rect.top) / 32) * 32;
-            
-            if(currentTool === 'build') {
-                placeBlock(x, y);
+        // Game State
+        const state = {
+            money: 500,
+            inventory: [],
+            pcBuilt: false,
+            pcOn: false,
+            hasUSB: false,
+            hasMouse: false,
+            hasKeyboard: false,
+            doorHasPackage: false,
+            selectedItem: null,
+            assemblyMode: false,
+            components: {
+                motherboard: false,
+                cpu: false,
+                ram: false,
+                gpu: false,
+                psu: false,
+                storage: false
             }
-            
-            updateCoords(x, y);
-        }
-        
-        function placeBlock(x, y) {
-            const [w, h] = currentSize.split('x').map(n => parseInt(n) * 32);
-            
-            // Check bounds
-            if(x + w > 640 || y + h > 480) {
-                alert('ERROR: Out of bounds!');
-                return;
-            }
-            
-            // Check collision
-            for(let i = x; i < x + w; i += 32) {
-                for(let j = y; j < y + h; j += 32) {
-                    if(occupied.has(`${i},${j}`)) {
-                        logAction('COLLISION_DETECTED');
-                        return;
-                    }
-                }
-            }
-            
-            // Create block
-            const block = document.createElement('div');
-            block.className = 'lego-piece';
-            block.style.left = x + 'px';
-            block.style.top = y + 'px';
-            block.style.width = (w - 4) + 'px';
-            block.style.height = (h - 4) + 'px';
-            block.style.backgroundColor = currentColor;
-            
-            // Add studs
-            const studsX = parseInt(currentSize.split('x')[0]);
-            const studsY = parseInt(currentSize.split('x')[1]);
-            for(let i = 0; i < studsX * studsY; i++) {
-                const stud = document.createElement('div');
-                stud.className = 'stud';
-                block.appendChild(stud);
-            }
-            
-            // Make draggable
-            let isDragging = false;
-            let startX, startY, initialLeft, initialTop;
-            
-            block.addEventListener('mousedown', (e) => {
-                if(e.button === 2) { // Right click to delete
-                    e.preventDefault();
-                    removeBlock(block, x, y, w, h);
-                    return;
-                }
-                isDragging = true;
-                startX = e.clientX;
-                startY = e.clientY;
-                initialLeft = parseInt(block.style.left);
-                initialTop = parseInt(block.style.top);
-                block.style.zIndex = 1000;
-            });
-            
-            document.addEventListener('mousemove', (e) => {
-                if(!isDragging) return;
-                const dx = Math.round((e.clientX - startX) / 32) * 32;
-                const dy = Math.round((e.clientY - startY) / 32) * 32;
-                
-                // Boundary check
-                let newX = initialLeft + dx;
-                let newY = initialTop + dy;
-                
-                if(newX >= 0 && newX + w <= 640 && newY >= 0 && newY + h <= 480) {
-                    block.style.left = newX + 'px';
-                    block.style.top = newY + 'px';
-                }
-            });
-            
-            document.addEventListener('mouseup', () => {
-                if(isDragging) {
-                    isDragging = false;
-                    block.style.zIndex = '';
-                    // Update occupied
-                    updateOccupied(block, w, h);
-                }
-            });
-            
-            // Right click delete
-            block.addEventListener('contextmenu', (e) => {
-                e.preventDefault();
-                removeBlock(block, x, y, w, h);
-            });
-            
-            document.getElementById('grid').appendChild(block);
-            
-            // Mark occupied
-            for(let i = x; i < x + w; i += 32) {
-                for(let j = y; j < y + h; j += 32) {
-                    occupied.add(`${i},${j}`);
-                }
-            }
-            
-            blockCount++;
-            document.getElementById('blockCount').textContent = blockCount;
-            logAction(`BLOCK_PLACED_${currentSize}`);
-        }
-        
-        function removeBlock(block, x, y, w, h) {
-            const left = parseInt(block.style.left);
-            const top = parseInt(block.style.top);
-            
-            for(let i = left; i < left + w; i += 32) {
-                for(let j = top; j < top + h; j += 32) {
-                    occupied.delete(`${i},${j}`);
-                }
-            }
-            
-            block.remove();
-            blockCount--;
-            document.getElementById('blockCount').textContent = blockCount;
-            logAction('BLOCK_DELETED');
-        }
-        
-        function updateOccupied(block, w, h) {
-            const x = parseInt(block.style.left);
-            const y = parseInt(block.style.top);
-            
-            // Clear old positions would require tracking, simplified here
-            occupied.clear();
-            document.querySelectorAll('.lego-piece').forEach(b => {
-                const bx = parseInt(b.style.left);
-                const by = parseInt(b.style.top);
-                const bw = parseInt(b.style.width) + 4;
-                const bh = parseInt(b.style.height) + 4;
-                
-                for(let i = bx; i < bx + bw; i += 32) {
-                    for(let j = by; j < by + bh; j += 32) {
-                        occupied.add(`${i},${j}`);
-                    }
-                }
-            });
-        }
-        
-        function clearAll() {
-            if(confirm('WARNING: Delete all blocks? (Y/N)')) {
-                document.getElementById('grid').innerHTML = '';
-                occupied.clear();
-                blockCount = 0;
-                document.getElementById('blockCount').textContent = 0;
-                logAction('MEMORY_CLEARED');
-            }
-        }
-        
-        function updateCoords(x, y) {
-            document.getElementById('coords').textContent = `${x},${y}`;
-        }
-        
-        function logAction(action) {
-            document.getElementById('lastAction').textContent = action;
-        }
-        
-        // Prevent context menu on grid
-        document.getElementById('grid').addEventListener('contextmenu', e => e.preventDefault());
-        
-        // Mouse tracking
-        document.getElementById('grid').addEventListener('mousemove', (e) => {
-            const rect = e.target.getBoundingClientRect();
-            const x = Math.floor((e.clientX - rect.left) / 32) * 32;
-            const y = Math.floor((e.clientY - rect.top) / 32) * 32;
-            updateCoords(x, y);
+        };
+
+        // Three.js Setup
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x202020);
+        scene.fog = new THREE.Fog(0x202020, 1, 50);
+
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('gameCanvas') });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.shadowMap.enabled = true;
+
+        // Lighting
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+        scene.add(ambientLight);
+
+        const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        dirLight.position.set(10, 20, 10);
+        dirLight.castShadow = true;
+        scene.add(dirLight);
+
+        // Room
+        const roomGeometry = new THREE.BoxGeometry(20, 10, 20);
+        const roomMaterial = new THREE.MeshStandardMaterial({ 
+            color: 0x808080, 
+            side: THREE.BackSide 
         });
+        const room = new THREE.Mesh(roomGeometry, roomMaterial);
+        room.receiveShadow = true;
+        scene.add(room);
+
+        // Floor
+        const floorGeometry = new THREE.PlaneGeometry(20, 20);
+        const floorMaterial = new THREE.MeshStandardMaterial({ color: 0x654321 });
+        const floor = new THREE.Mesh(floorGeometry, floorMaterial);
+        floor.rotation.x = -Math.PI / 2;
+        floor.position.y = -5;
+        floor.receiveShadow = true;
+        scene.add(floor);
+
+        // Desk
+        const deskGeometry = new THREE.BoxGeometry(6, 0.2, 3);
+        const deskMaterial = new THREE.MeshStandardMaterial({ color: 0x8B4513 });
+        const desk = new THREE.Mesh(deskGeometry, deskMaterial);
+        desk.position.set(0, -1, -3);
+        desk.castShadow = true;
+        desk.receiveShadow = true;
+        scene.add(desk);
+
+        // Desk legs
+        const legGeometry = new THREE.BoxGeometry(0.2, 2, 0.2);
+        const legMaterial = new THREE.MeshStandardMaterial({ color: 0x333333 });
+        [-2.8, 2.8].forEach(x => {
+            [-1.3, 1.3].forEach(z => {
+                const leg = new THREE.Mesh(legGeometry, legMaterial);
+                leg.position.set(x, -2, -3 + z);
+                leg.castShadow = true;
+                scene.add(leg);
+            });
+        });
+
+        // PC Case (unassembled)
+        const caseGeometry = new THREE.BoxGeometry(1.5, 3, 3.5);
+        const caseMaterial = new THREE.MeshStandardMaterial({ color: 0x222222 });
+        const pcCase = new THREE.Mesh(caseGeometry, caseMaterial);
+        pcCase.position.set(-2, -0.4, -3);
+        pcCase.castShadow = true;
+        pcCase.userData = { type: 'pcCase', name: 'PC Case (Vacía)' };
+        scene.add(pcCase);
+
+        // Monitor
+        const monitorGeometry = new THREE.BoxGeometry(3, 2, 0.2);
+        const monitorMaterial = new THREE.MeshStandardMaterial({ color: 0x111111 });
+        const monitor = new THREE.Mesh(monitorGeometry, monitorMaterial);
+        monitor.position.set(1.5, 0.5, -3);
+        monitor.castShadow = true;
+        monitor.userData = { type: 'monitor', name: 'Monitor' };
+        scene.add(monitor);
+
+        // Monitor stand
+        const standGeometry = new THREE.BoxGeometry(0.5, 1, 0.5);
+        const stand = new THREE.Mesh(standGeometry, legMaterial);
+        stand.position.set(1.5, -0.5, -3);
+        stand.castShadow = true;
+        scene.add(stand);
+
+        // Screen glow (off initially)
+        const screenGeometry = new THREE.PlaneGeometry(2.8, 1.8);
+        const screenMaterial = new THREE.MeshBasicMaterial({ color: 0x000000 });
+        const screen = new THREE.Mesh(screenGeometry, screenMaterial);
+        screen.position.set(0, 0, 0.11);
+        monitor.add(screen);
+
+        // Door
+        const doorGeometry = new THREE.BoxGeometry(3, 6, 0.3);
+        const doorMaterial = new THREE.MeshStandardMaterial({ color: 0x4a3000 });
+        const door = new THREE.Mesh(doorGeometry, doorMaterial);
+        door.position.set(0, -2, -9.8);
+        door.userData = { type: 'door', name: 'Puerta' };
+        scene.add(door);
+
+        // Doorknob
+        const knobGeometry = new THREE.SphereGeometry(0.1);
+        const knobMaterial = new THREE.MeshStandardMaterial({ color: 0xffd700 });
+        const knob = new THREE.Mesh(knobGeometry, knobMaterial);
+        knob.position.set(1, 0, 0.2);
+        door.add(knob);
+
+        // Package (hidden initially)
+        const packageGeometry = new THREE.BoxGeometry(1, 0.8, 1);
+        const packageMaterial = new THREE.MeshStandardMaterial({ color: 0x8B4513 });
+        const package = new THREE.Mesh(packageGeometry, packageMaterial);
+        package.position.set(0, -4.5, -8);
+        package.visible = false;
+        package.userData = { type: 'package', name: 'Paquete' };
+        scene.add(package);
+
+        // Package tape
+        const tapeGeometry = new THREE.BoxGeometry(1.02, 0.1, 1.02);
+        const tapeMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+        const tape = new THREE.Mesh(tapeGeometry, tapeMaterial);
+        package.add(tape);
+
+        // Component meshes (for assembly)
+        const components = {
+            motherboard: createComponent(0x228b22, 'Placa Madre', 'motherboard'),
+            cpu: createComponent(0xff0000, 'CPU', 'cpu'),
+            ram: createComponent(0x0000ff, 'RAM', 'ram'),
+            gpu: createComponent(0x800080, 'GPU', 'gpu'),
+            psu: createComponent(0x808080, 'Fuente', 'psu'),
+            storage: createComponent(0xffa500, 'Disco', 'storage')
+        };
+
+        function createComponent(color, name, type) {
+            const geo = new THREE.BoxGeometry(0.3, 0.3, 0.3);
+            const mat = new THREE.MeshStandardMaterial({ color: color });
+            const mesh = new THREE.Mesh(geo, mat);
+            mesh.visible = false;
+            mesh.userData = { type: type, name: name, isComponent: true };
+            scene.add(mesh);
+            return mesh;
+        }
+
+        // Position components around the case when in assembly mode
+        const componentPositions = [
+            { x: -3.5, y: 0.5, z: -2 },
+            { x: -3.5, y: 0, z: -2 },
+            { x: -3.5, y: -0.5, z: -2 },
+            { x: -0.5, y: 0.5, z: -2 },
+            { x: -0.5, y: 0, z: -2 },
+            { x: -0.5, y: -0.5, z: -2 }
+        ];
+
+        let componentIndex = 0;
+        Object.values(components).forEach(comp => {
+            comp.position.copy(pcCase.position).add({
+                x: componentPositions[componentIndex].x - pcCase.position.x,
+                y: componentPositions[componentIndex].y,
+                z: componentPositions[componentIndex].z - pcCase.position.z
+            });
+            componentIndex++;
+        });
+
+        // USB Drive (when bought)
+        const usbGeometry = new THREE.BoxGeometry(0.1, 0.3, 0.1);
+        const usbMaterial = new THREE.MeshStandardMaterial({ color: 0x00ff00 });
+        const usbDrive = new THREE.Mesh(usbGeometry, usbMaterial);
+        usbDrive.visible = false;
+        usbDrive.userData = { type: 'usb', name: 'USB Windows 1.0' };
+        scene.add(usbDrive);
+
+        // Mouse and Keyboard
+        const mouseGeometry = new THREE.BoxGeometry(0.4, 0.15, 0.6);
+        const mouseMaterial = new THREE.MeshStandardMaterial({ color: 0xffffff });
+        const mouse = new THREE.Mesh(mouseGeometry, mouseMaterial);
+        mouse.position.set(2.5, -0.8, -2);
+        mouse.visible = false;
+        mouse.userData = { type: 'mouse', name: 'Mouse USB' };
+        scene.add(mouse);
+
+        const kbGeometry = new THREE.BoxGeometry(2.5, 0.1, 0.8);
+        const kbMaterial = new THREE.MeshStandardMaterial({ color: 0xdddddd });
+        const keyboard = new THREE.Mesh(kbGeometry, kbMaterial);
+        keyboard.position.set(1.5, -0.85, -1.5);
+        keyboard.visible = false;
+        keyboard.userData = { type: 'keyboard', name: 'Teclado USB' };
+        scene.add(keyboard);
+
+        // Player controls
+        camera.position.set(0, 0, 5);
         
-        // Initialize
-        logAction('SYSTEM_INIT_OK');
+        const velocity = new THREE.Vector3();
+        const direction = new THREE.Vector3();
+        let moveForward = false;
+        let moveBackward = false;
+        let moveLeft = false;
+        let moveRight = false;
+        
+        let prevTime = performance.now();
+        let isPointerLocked = false;
+
+        document.addEventListener('keydown', (event) => {
+            switch(event.code) {
+                case 'KeyW': moveForward = true; break;
+                case 'KeyA': moveLeft = true; break;
+                case 'KeyS': moveBackward = true; break;
+                case 'KeyD': moveRight = true; break;
+                case 'KeyP': togglePhone(); break;
+                case 'KeyE': interact(); break;
+                case 'Escape': closeAll(); break;
+            }
+        });
+
+        document.addEventListener('keyup', (event) => {
+            switch(event.code) {
+                case 'KeyW': moveForward = false; break;
+                case 'KeyA': moveLeft = false; break;
+                case 'KeyS': moveBackward = false; break;
+                case 'KeyD': moveRight = false; break;
+            }
+        });
+
+        document.addEventListener('mousemove', (event) => {
+            if (!isPointerLocked) return;
+            const movementX = event.movementX || event.mozMovementX || event.webkitMovementX || 0;
+            const movementY = event.movementY || event.mozMovementY || event.webkitMovementY || 0;
+            
+            camera.rotation.y -= movementX * 0.002;
+            camera.rotation.x -= movementY * 0.002;
+            camera.rotation.x = Math.max(-Math.PI/2, Math.min(Math.PI/2, camera.rotation.x));
+        });
+
+        document.addEventListener('click', () => {
+            if (!isPointerLocked && !isPhoneOpen() && !isAssemblyOpen() && !state.pcOn) {
+                document.body.requestPointerLock();
+            }
+        });
+
+        document.addEventListener('pointerlockchange', () => {
+            isPointerLocked = document.pointerLockElement === document.body;
+        });
+
+        // Raycaster for interaction
+        const raycaster = new THREE.Raycaster();
+        const center = new THREE.Vector2(0, 0);
+
+        function interact() {
+            raycaster.setFromCamera(center, camera);
+            const intersects = raycaster.intersectObjects(scene.children, true);
+            
+            if (intersects.length > 0) {
+                const obj = intersects[0].object;
+                const type = obj.userData.type || obj.parent?.userData?.type;
+                
+                switch(type) {
+                    case 'pcCase':
+                        if (!state.pcBuilt) openAssembly();
+                        else if (state.hasUSB && !state.pcOn) insertUSB();
+                        break;
+                    case 'monitor':
+                        if (state.pcOn) toggleComputer();
+                        break;
+                    case 'door':
+                        checkDoor();
+                        break;
+                    case 'package':
+                        collectPackage();
+                        break;
+                    case 'motherboard':
+                    case 'cpu':
+                    case 'ram':
+                    case 'gpu':
+                    case 'psu':
+                    case 'storage':
+                        if (state.assemblyMode) installComponent(type);
+                        break;
+                    case 'usb':
+                        if (!state.hasUSB) pickupUSB();
+                        break;
+                }
+            }
+        }
+
+        function openAssembly() {
+            state.assemblyMode = true;
+            document.getElementById('assemblyUI').style.display = 'block';
+            document.exitPointerLock();
+            updateAssemblyUI();
+        }
+
+        function closeAssembly() {
+            state.assemblyMode = false;
+            document.getElementById('assemblyUI').style.display = 'none';
+            Object.values(components).forEach(c => c.visible = false);
+        }
+
+        function isAssemblyOpen() {
+            return document.getElementById('assemblyUI').style.display === 'block';
+        }
+
+        function updateAssemblyUI() {
+            const slots = document.getElementById('assemblySlots');
+            slots.innerHTML = '';
+            
+            const comps = [
+                { key: 'motherboard', name: 'Placa Madre' },
+                { key: 'cpu', name: 'Procesador' },
+                { key: 'ram', name: 'Memoria RAM' },
+                { key: 'gpu', name: 'Tarjeta Gráfica' },
+                { key: 'psu', name: 'Fuente de Poder' },
+                { key: 'storage', name: 'Disco Duro' }
+            ];
+            
+            let allInstalled = true;
+            
+            comps.forEach(comp => {
+                const div = document.createElement('div');
+                div.className = `component-slot ${state.components[comp.key] ? 'installed' : ''}`;
+                div.textContent = state.components[comp.key] ? `✅ ${comp.name}` : `⬜ ${comp.name}`;
+                div.onclick = () => selectComponent(comp.key);
+                slots.appendChild(div);
+                
+                if (!state.components[comp.key]) allInstalled = false;
+            });
+            
+            if (allInstalled) {
+                document.getElementById('finishBtn').style.display = 'inline-block';
+            }
+        }
+
+        function selectComponent(key) {
+            if (!state.components[key]) {
+                Object.values(components).forEach(c => c.visible = (c.userData.type === key));
+                showNotification(`Haz clic en el componente ${key} para instalarlo`);
+            }
+        }
+
+        function installComponent(type) {
+            state.components[type] = true;
+            components[type].visible = false;
+            showNotification(`✅ ${components[type].userData.name} instalado`);
+            updateAssemblyUI();
+        }
+
+        function finishAssembly() {
+            state.pcBuilt = true;
+            closeAssembly();
+            pcCase.material.color.setHex(0x444444);
+            showNotification('🎉 PC ensamblada correctamente');
+            document.getElementById('objective').textContent = 'Objetivo: Compra una USB con Windows 1.0';
+        }
+
+        function togglePhone() {
+            const phone = document.getElementById('phone');
+            phone.classList.toggle('open');
+            if (phone.classList.contains('open')) {
+                document.exitPointerLock();
+            } else {
+                document.body.requestPointerLock();
+            }
+        }
+
+        function isPhoneOpen() {
+            return document.getElementById('phone').classList.contains('open');
+        }
+
+        function openShop() {
+            document.getElementById('homeScreen').style.display = 'none';
+            document.getElementById('shopScreen').style.display = 'block';
+        }
+
+        function closeShop() {
+            document.getElementById('shopScreen').style.display = 'none';
+            document.getElementById('homeScreen').style.display = 'block';
+            document.querySelectorAll('.shop-item').forEach(i => i.classList.remove('selected'));
+            state.selectedItem = null;
+            document.getElementById('buyBtn').disabled = true;
+        }
+
+        function selectItem(item) {
+            state.selectedItem = item;
+            document.querySelectorAll('.shop-item').forEach(i => i.classList.remove('selected'));
+            event.currentTarget.classList.add('selected');
+            document.getElementById('buyBtn').disabled = false;
+        }
+
+        function buyItem() {
+            const prices = { usb: 50, mouse: 25, keyboard: 40, ram: 80 };
+            if (state.money >= prices[state.selectedItem]) {
+                state.money -= prices[state.selectedItem];
+                document.getElementById('money').textContent = state.money;
+                
+                // Simulate delivery
+                showNotification('📦 Pedido realizado. Llegará en 10 segundos...');
+                setTimeout(() => {
+                    state.doorHasPackage = true;
+                    package.visible = true;
+                    document.getElementById('doorbell').style.display = 'block';
+                    showNotification('🔔 ¡Toc toc! Tu pedido ha llegado');
+                }, 10000);
+                
+                closeShop();
+                togglePhone();
+            }
+        }
+
+        function checkDoor() {
+            if (state.doorHasPackage) {
+                showNotification('Hay un paquete en la puerta');
+            }
+        }
+
+        function collectPackage() {
+            if (!state.doorHasPackage) return;
+            
+            package.visible = false;
+            state.doorHasPackage = false;
+            document.getElementById('doorbell').style.display = 'none';
+            
+            // Determine what was bought
+            if (state.money <= 450 && !state.hasUSB) {
+                state.hasUSB = true;
+                usbDrive.visible = true;
+                usbDrive.position.set(0, -4, -8);
+                showNotification('💾 USB con Windows 1.0 obtenida');
+                document.getElementById('objective').textContent = 'Objetivo: Inserta la USB en la PC';
+            } else if (state.money <= 475 && !state.hasMouse) {
+                state.hasMouse = true;
+                mouse.visible = true;
+                showNotification('🖱️ Mouse obtenido');
+            } else if (state.money <= 460 && !state.hasKeyboard) {
+                state.hasKeyboard = true;
+                keyboard.visible = true;
+                showNotification('⌨️ Teclado obtenido');
+            }
+            
+            updateInventory();
+        }
+
+        function pickupUSB() {
+            // Add to inventory
+            if (state.inventory.length < 4) {
+                state.inventory.push('usb');
+                usbDrive.visible = false;
+                updateInventory();
+                showNotification('USB guardada en inventario. Acércate a la PC para usarla.');
+            }
+        }
+
+        function updateInventory() {
+            state.inventory.forEach((item, i) => {
+                const slot = document.getElementById(`slot${i}`);
+                slot.classList.add('has-item');
+                if (item === 'usb') slot.textContent = '💾';
+            });
+        }
+
+        function insertUSB() {
+            showNotification('💾 Insertando USB e instalando Windows 1.0...');
+            setTimeout(() => {
+                state.pcOn = true;
+                screen.material.color.setHex(0x000080);
+                screenMaterial.emissive = new THREE.Color(0x000080);
+                screenMaterial.emissiveIntensity = 0.5;
+                showNotification('✅ Windows 1.0 instalado. La PC está lista');
+                document.getElementById('objective').textContent = 'Objetivo: Enciende el monitor para usar la PC';
+            }, 3000);
+        }
+
+        function toggleComputer() {
+            const compScreen = document.getElementById('computerScreen');
+            const bios = document.getElementById('bios');
+            const win1 = document.getElementById('windows1');
+            
+            if (compScreen.style.display === 'block') {
+                compScreen.style.display = 'none';
+                document.body.requestPointerLock();
+            } else {
+                compScreen.style.display = 'block';
+                document.exitPointerLock();
+                bootSequence();
+            }
+        }
+
+        function bootSequence() {
+            const bootText = document.getElementById('bootText');
+            const lines = [
+                'AWARD MODULAR BIOS v4.51PG',
+                'Copyright (C) 1984-95 Award Software Inc.',
+                '',
+                'CPU: Intel 486DX2-66',
+                'Memory Test: 640K OK',
+                '',
+                'Detecting USB devices...',
+                'USB Device Found: Windows 1.0 Installation Media',
+                '',
+                'Booting from USB...',
+                'Loading MS-DOS...',
+                'Starting Windows 1.01...'
+            ];
+            
+            let i = 0;
+            bootText.innerHTML = '';
+            
+            function addLine() {
+                if (i < lines.length) {
+                    bootText.innerHTML += lines[i] + '<br>';
+                    i++;
+                    setTimeout(addLine, 500);
+                } else {
+                    setTimeout(() => {
+                        document.getElementById('bios').style.display = 'none';
+                        document.getElementById('windows1').style.display = 'block';
+                    }, 1000);
+                }
+            }
+            
+            addLine();
+        }
+
+        function showNotification(text) {
+            const notif = document.getElementById('notification');
+            notif.textContent = text;
+            notif.style.display = 'block';
+            setTimeout(() => {
+                notif.style.display = 'none';
+            }, 4000);
+        }
+
+        function closeAll() {
+            document.getElementById('phone').classList.remove('open');
+            document.getElementById('assemblyUI').style.display = 'none';
+            document.getElementById('computerScreen').style.display = 'none';
+            closeAssembly();
+            document.body.requestPointerLock();
+        }
+
+        // Animation loop
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            const time = performance.now();
+            const delta = (time - prevTime) / 1000;
+            
+            if (isPointerLocked) {
+                velocity.x -= velocity.x * 10.0 * delta;
+                velocity.z -= velocity.z * 10.0 * delta;
+                
+                direction.z = Number(moveForward) - Number(moveBackward);
+                direction.x = Number(moveRight) - Number(moveLeft);
+                direction.normalize();
+                
+                if (moveForward || moveBackward) velocity.z -= direction.z * 100.0 * delta;
+                if (moveLeft || moveRight) velocity.x -= direction.x * 100.0 * delta;
+                
+                camera.translateX(-velocity.x * delta);
+                camera.translateZ(-velocity.z * delta);
+                
+                // Keep player in room bounds
+                camera.position.x = Math.max(-9, Math.min(9, camera.position.x));
+                camera.position.z = Math.max(-9, Math.min(9, camera.position.z));
+                camera.position.y = Math.max(-2, Math.min(4, camera.position.y));
+            }
+            
+            prevTime = time;
+            
+            // Animate package if present
+            if (package.visible) {
+                package.rotation.y += 0.01;
+                package.position.y = -4.5 + Math.sin(time * 0.003) * 0.1;
+            }
+            
+            // Animate USB
+            if (usbDrive.visible) {
+                usbDrive.rotation.y += 0.02;
+            }
+            
+            renderer.render(scene, camera);
+        }
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        animate();
+        
+        // Initial notification
+        setTimeout(() => {
+            showNotification('¡Bienvenido! Arma tu PC. Acércate al case y presiona E');
+        }, 1000);
     </script>
 </body>
 </html>
