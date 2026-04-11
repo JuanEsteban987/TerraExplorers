@@ -3,1526 +3,893 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Empire: Age of Civilization - Sprite Edition</title>
+    <title>RPG 2D Procedural con Inventario</title>
     <style>
-        * {
+        body {
             margin: 0;
             padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-            color: #fff;
+            background: #0d1117;
+            display: flex;
+            justify-content: center;
+            align-items: center;
             min-height: 100vh;
-            overflow-x: hidden;
-        }
-
-        .game-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 20px;
-            max-width: 1400px;
-            margin: 0 auto;
-        }
-
-        h1 {
-            text-align: center;
-            margin-bottom: 20px;
-            color: #ffd700;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
-            font-size: 2.5em;
-        }
-
-        /* CONFIGURACIÓN DE SPRITES */
-        .sprite {
-            image-rendering: pixelated;
-            image-rendering: -moz-crisp-edges;
-            image-rendering: crisp-edges;
-        }
-
-        .terrain-bg {
-            width: 100%;
-            height: 100%;
-            position: absolute;
-            top: 0;
-            left: 0;
-            z-index: 1;
-            object-fit: cover;
-        }
-
-        .building-sprite {
-            width: 85%;
-            height: 85%;
-            object-fit: contain;
-            z-index: 5;
-            position: relative;
-            filter: drop-shadow(2px 2px 2px rgba(0,0,0,0.5));
-        }
-
-        .unit-sprite {
-            width: 75%;
-            height: 75%;
-            object-fit: contain;
-            z-index: 10;
-            position: relative;
-            filter: drop-shadow(2px 2px 3px rgba(0,0,0,0.6));
-        }
-
-        .resource-icon {
-            width: 24px;
-            height: 24px;
-            object-fit: contain;
-            vertical-align: middle;
-            margin-right: 5px;
-        }
-
-        .action-icon {
-            width: 20px;
-            height: 20px;
-            object-fit: contain;
-            margin-right: 8px;
-        }
-
-        /* Panel de Recursos */
-        .resource-panel {
-            display: flex;
-            gap: 30px;
-            background: linear-gradient(145deg, #2d3748, #1a202c);
-            padding: 15px 30px;
-            border-radius: 15px;
-            margin-bottom: 20px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
-            border: 2px solid #4a5568;
-            flex-wrap: wrap;
-            justify-content: center;
-        }
-
-        .resource {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-weight: bold;
-            font-size: 1.1em;
-        }
-
-        /* Contenedor Principal */
-        .main-content {
-            display: flex;
-            gap: 20px;
-            flex-wrap: wrap;
-            justify-content: center;
-            width: 100%;
-        }
-
-        /* Panel Lateral */
-        .side-panel {
-            background: linear-gradient(145deg, #2d3748, #1a202c);
-            border-radius: 15px;
-            padding: 20px;
-            width: 280px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
-            border: 2px solid #4a5568;
-        }
-
-        .panel-section {
-            margin-bottom: 20px;
-            padding-bottom: 15px;
-            border-bottom: 1px solid #4a5568;
-        }
-
-        .panel-section:last-child {
-            border-bottom: none;
-        }
-
-        .panel-title {
-            color: #ffd700;
-            margin-bottom: 10px;
-            font-size: 1.2em;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .panel-title-icon {
-            width: 24px;
-            height: 24px;
-        }
-
-        /* Botones */
-        .btn {
-            background: linear-gradient(145deg, #3b82f6, #2563eb);
+            font-family: 'Courier New', monospace;
             color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 0.9em;
-            font-weight: bold;
-            transition: all 0.3s ease;
-            margin: 5px;
-            width: 100%;
-            text-transform: uppercase;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-        }
-
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
-        }
-
-        .btn-danger {
-            background: linear-gradient(145deg, #ef4444, #dc2626);
-        }
-
-        .btn-success {
-            background: linear-gradient(145deg, #22c55e, #16a34a);
-        }
-
-        .btn-warning {
-            background: linear-gradient(145deg, #f59e0b, #d97706);
-        }
-
-        /* Grid del Mapa */
-        .map-container {
-            background: #1a202c;
-            padding: 20px;
-            border-radius: 15px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
-            border: 2px solid #4a5568;
-            overflow: auto;
-            max-width: 100%;
-        }
-
-        .game-grid {
-            display: grid;
-            gap: 1px;
-            background: #2d3748;
-            padding: 5px;
-            border-radius: 8px;
-        }
-
-        .tile {
-            width: 48px;
-            height: 48px;
-            border: 1px solid rgba(255,255,255,0.1);
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.2s ease;
-            position: relative;
-            user-select: none;
             overflow: hidden;
         }
-
-        /* Fallback colors por si no hay imagen */
-        .tile.grass { background: linear-gradient(145deg, #22c55e, #16a34a); }
-        .tile.forest { background: linear-gradient(145deg, #15803d, #166534); }
-        .tile.mountain { background: linear-gradient(145deg, #6b7280, #4b5563); }
-        .tile.water { background: linear-gradient(145deg, #3b82f6, #2563eb); cursor: default; }
-        .tile.desert { background: linear-gradient(145deg, #fcd34d, #f59e0b); }
-        .tile.hills { background: linear-gradient(145deg, #a16207, #854d0e); }
-
-        .tile:hover {
-            transform: scale(1.1);
-            z-index: 20;
-            box-shadow: 0 0 15px rgba(255,215,0,0.6);
+        
+        #gameContainer {
+            position: relative;
+            box-shadow: 0 0 30px rgba(0, 255, 136, 0.3);
         }
-
-        .tile.selected {
-            border: 3px solid #ffd700;
-            box-shadow: 0 0 20px rgba(255,215,0,0.8);
-            z-index: 15;
+        
+        canvas {
+            image-rendering: pixelated;
+            cursor: crosshair;
         }
-
-        .tile.movable {
-            animation: pulse 1.5s infinite;
-            border: 2px solid #3b82f6;
+        
+        #ui {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            font-size: 14px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.9);
+            pointer-events: none;
+            background: rgba(0,0,0,0.6);
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #333;
         }
-
-        .tile.enemy {
-            border: 2px solid #ef4444;
-            animation: enemyPulse 1.5s infinite;
+        
+        #inventoryUI {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(20, 20, 30, 0.95);
+            border: 2px solid #666;
+            border-radius: 10px;
+            padding: 20px;
+            display: none;
+            grid-template-columns: repeat(5, 60px);
+            grid-gap: 10px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.8);
         }
-
-        .tile.fog {
-            filter: brightness(0.3);
-            cursor: default;
-        }
-
-        /* Animaciones */
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.7; }
-        }
-
-        @keyframes enemyPulse {
-            0%, 100% { border-color: #ef4444; }
-            50% { border-color: #f87171; }
-        }
-
-        @keyframes spawn {
-            0% { transform: scale(0); opacity: 0; }
-            100% { transform: scale(1); opacity: 1; }
-        }
-
-        .spawn-animation {
-            animation: spawn 0.5s ease-out;
-        }
-
-        /* Panel de Acciones */
-        .action-btn {
+        
+        .inv-slot {
+            width: 60px;
+            height: 60px;
+            background: rgba(50, 50, 60, 0.8);
+            border: 2px solid #444;
+            border-radius: 5px;
             display: flex;
             align-items: center;
-            gap: 10px;
-            padding: 10px;
-            margin: 5px 0;
-            background: rgba(255,255,255,0.1);
-            border-radius: 8px;
+            justify-content: center;
             cursor: pointer;
+            font-size: 24px;
+            position: relative;
             transition: all 0.2s;
-            border: 1px solid transparent;
         }
-
-        .action-btn:hover {
-            background: rgba(255,255,255,0.2);
-            border-color: #3b82f6;
+        
+        .inv-slot:hover {
+            border-color: #0f0;
+            background: rgba(70, 70, 80, 0.9);
         }
-
-        .action-btn.disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            filter: grayscale(100%);
+        
+        .inv-slot.selected {
+            border-color: #gold;
+            background: rgba(100, 100, 50, 0.8);
+            box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
         }
-
-        /* Barra de vida */
-        .health-bar {
+        
+        .item-count {
             position: absolute;
             bottom: 2px;
-            left: 2px;
-            right: 2px;
-            height: 5px;
-            background: rgba(239, 68, 68, 0.9);
-            border-radius: 3px;
-            overflow: hidden;
-            z-index: 20;
-            border: 1px solid rgba(0,0,0,0.5);
+            right: 5px;
+            font-size: 12px;
+            color: #fff;
+            font-weight: bold;
         }
-
-        .health-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #22c55e, #4ade80);
-            transition: width 0.3s ease;
-        }
-
-        /* Indicador de equipo */
-        .team-indicator {
+        
+        #controls {
             position: absolute;
-            top: 2px;
-            right: 2px;
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            z-index: 20;
-            border: 1px solid rgba(0,0,0,0.5);
+            bottom: 10px;
+            left: 10px;
+            font-size: 12px;
+            color: #aaa;
+            background: rgba(0,0,0,0.7);
+            padding: 10px;
+            border-radius: 5px;
         }
-
-        .team-player { background: #3b82f6; }
-        .team-enemy { background: #ef4444; }
-
-        /* Tooltip */
-        .tooltip {
+        
+        #tooltip {
             position: absolute;
-            background: rgba(0,0,0,0.95);
-            color: white;
-            padding: 12px;
-            border-radius: 8px;
-            font-size: 0.9em;
+            background: rgba(0,0,0,0.9);
+            border: 1px solid #666;
+            padding: 8px;
+            border-radius: 4px;
             pointer-events: none;
+            display: none;
             z-index: 1000;
-            max-width: 280px;
-            border: 1px solid #4a5568;
-            display: none;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+            font-size: 12px;
+            max-width: 200px;
         }
-
-        .tooltip img {
-            width: 32px;
-            height: 32px;
-            margin-right: 8px;
-            vertical-align: middle;
-        }
-
-        /* Modal */
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.85);
-            z-index: 2000;
-            justify-content: center;
-            align-items: center;
-            backdrop-filter: blur(5px);
-        }
-
-        .modal-content {
-            background: linear-gradient(145deg, #2d3748, #1a202c);
-            padding: 30px;
-            border-radius: 15px;
-            max-width: 600px;
-            width: 90%;
-            border: 2px solid #4a5568;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
-            max-height: 80vh;
-            overflow-y: auto;
-        }
-
-        .modal-title {
-            color: #ffd700;
-            margin-bottom: 20px;
-            font-size: 1.5em;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .tech-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 15px;
-            margin-top: 15px;
-        }
-
-        .tech-item {
-            background: rgba(255,255,255,0.05);
-            padding: 15px;
-            border-radius: 10px;
-            cursor: pointer;
-            transition: all 0.2s;
-            border: 2px solid transparent;
-        }
-
-        .tech-item:hover:not(.researched) {
-            border-color: #3b82f6;
-            background: rgba(59, 130, 246, 0.15);
-            transform: translateY(-2px);
-        }
-
-        .tech-item.researched {
-            background: rgba(34, 197, 94, 0.15);
-            border-color: #22c55e;
-            opacity: 0.7;
-            cursor: default;
-        }
-
-        .tech-icon {
-            width: 40px;
-            height: 40px;
-            margin-bottom: 8px;
-        }
-
-        /* Notificaciones */
-        .notification {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: linear-gradient(145deg, #22c55e, #16a34a);
-            color: white;
-            padding: 15px 25px;
-            border-radius: 10px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-            animation: slideIn 0.3s ease-out;
-            z-index: 3000;
-            max-width: 300px;
-            border: 1px solid rgba(255,255,255,0.2);
-        }
-
-        @keyframes slideIn {
-            from { transform: translateX(400px); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
-        }
-
-        /* Responsive */
-        @media (max-width: 1024px) {
-            .tile {
-                width: 36px;
-                height: 36px;
-            }
-            .side-panel {
-                width: 100%;
-                order: 2;
-            }
-            .map-container {
-                order: 1;
-            }
-        }
-
-        /* Preview de sprite en panel */
-        .sprite-preview {
-            width: 64px;
-            height: 64px;
-            background: rgba(0,0,0,0.3);
-            border-radius: 8px;
-            margin: 10px auto;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border: 1px solid #4a5568;
-        }
-
-        .sprite-preview img {
-            max-width: 90%;
-            max-height: 90%;
-            object-fit: contain;
-        }
+        
+        .rarity-common { color: #fff; }
+        .rarity-rare { color: #4488ff; }
+        .rarity-epic { color: #a855f7; }
+        .rarity-legendary { color: #fbbf24; }
     </style>
 </head>
 <body>
-    <div class="game-container">
-        <h1>🏛️ Empire: Age of Civilization</h1>
+    <div id="gameContainer">
+        <canvas id="gameCanvas" width="900" height="700"></canvas>
         
-        <!-- Panel de Recursos -->
-        <div class="resource-panel">
-            <div class="resource">
-                <img src="sprites/resources/resource_food.png" class="resource-icon" alt="Comida" onerror="this.style.display='none'">
-                <span>Comida: <span id="food">200</span></span>
-            </div>
-            <div class="resource">
-                <img src="sprites/resources/resource_wood.png" class="resource-icon" alt="Madera" onerror="this.style.display='none'">
-                <span>Madera: <span id="wood">150</span></span>
-            </div>
-            <div class="resource">
-                <img src="sprites/resources/resource_gold.png" class="resource-icon" alt="Oro" onerror="this.style.display='none'">
-                <span>Oro: <span id="gold">100</span></span>
-            </div>
-            <div class="resource">
-                <img src="sprites/resources/resource_stone.png" class="resource-icon" alt="Piedra" onerror="this.style.display='none'">
-                <span>Piedra: <span id="stone">50</span></span>
-            </div>
-            <div class="resource">
-                <img src="sprites/resources/resource_population.png" class="resource-icon" alt="Población" onerror="this.style.display='none'">
-                <span>Población: <span id="pop">1</span>/<span id="pop-max">5</span></span>
-            </div>
-            <div class="resource">
-                <img src="sprites/ui/icon_turn.png" class="resource-icon" alt="Turno" onerror="this.style.display='none'">
-                <span>Turno: <span id="turn">1</span></span>
-            </div>
+        <div id="ui">
+            <div>❤️ Vida: <span id="health">100</span>/<span id="maxHealth">100</span></div>
+            <div>⚔️ Nivel: <span id="level">1</span> | 🎯 Exp: <span id="exp">0</span></div>
+            <div>📍 Pos: <span id="pos">0,0</span></div>
+            <div>🗡️ Arma: <span id="currentWeapon">Espada</span></div>
+            <div style="margin-top:10px; color:#0f0">Presiona 'I' para inventario</div>
         </div>
-
-        <div class="main-content">
-            <!-- Panel Lateral -->
-            <div class="side-panel">
-                <div class="panel-section">
-                    <h3 class="panel-title">
-                        <img src="sprites/ui/icon_info.png" class="panel-title-icon" onerror="this.style.display='none'">
-                        Información
-                    </h3>
-                    <div id="selection-info">
-                        <div style="text-align: center; color: #9ca3af; font-style: italic; padding: 20px;">
-                            <img src="sprites/ui/icon_select.png" style="width: 48px; opacity: 0.5; margin-bottom: 10px;" onerror="this.style.display='none'">
-                            <p>Selecciona una unidad o edificio</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="panel-section">
-                    <h3 class="panel-title">
-                        <img src="sprites/ui/icon_actions.png" class="panel-title-icon" onerror="this.style.display='none'">
-                        Acciones
-                    </h3>
-                    <div id="action-buttons">
-                        <p style="color: #9ca3af; font-style: italic;">Selecciona algo primero</p>
-                    </div>
-                </div>
-
-                <div class="panel-section">
-                    <h3 class="panel-title">
-                        <img src="sprites/ui/icon_tech.png" class="panel-title-icon" onerror="this.style.display='none'">
-                        Tecnologías
-                    </h3>
-                    <button class="btn btn-warning" onclick="game.openTechTree()">
-                        <img src="sprites/ui/icon_research.png" style="width: 20px;" onerror="this.style.display='none'">
-                        Árbol de Tecnologías
-                    </button>
-                </div>
-
-                <div class="panel-section">
-                    <h3 class="panel-title">
-                        <img src="sprites/ui/icon_settings.png" class="panel-title-icon" onerror="this.style.display='none'">
-                        Controles
-                    </h3>
-                    <button class="btn btn-success" onclick="game.endTurn()">
-                        <img src="sprites/ui/icon_next_turn.png" style="width: 20px;" onerror="this.style.display='none'">
-                        Terminar Turno
-                    </button>
-                    <button class="btn" onclick="game.saveGame()">
-                        <img src="sprites/ui/icon_save.png" style="width: 20px;" onerror="this.style.display='none'">
-                        Guardar
-                    </button>
-                    <button class="btn" onclick="game.loadGame()">
-                        <img src="sprites/ui/icon_load.png" style="width: 20px;" onerror="this.style.display='none'">
-                        Cargar
-                    </button>
-                </div>
-            </div>
-
-            <!-- Contenedor del Mapa -->
-            <div class="map-container">
-                <div id="game-grid" class="game-grid"></div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Tooltip -->
-    <div id="tooltip" class="tooltip"></div>
-
-    <!-- Modal de Tecnologías -->
-    <div id="tech-modal" class="modal">
-        <div class="modal-content">
-            <h2 class="modal-title">
-                <img src="sprites/ui/icon_tech_big.png" style="width: 32px;" onerror="this.style.display='none'">
-                Árbol de Tecnologías
-            </h2>
-            <div id="tech-tree" class="tech-grid"></div>
-            <button class="btn btn-danger" onclick="game.closeTechTree()" style="margin-top: 20px;">
-                Cerrar
-            </button>
+        
+        <div id="inventoryUI"></div>
+        
+        <div id="tooltip"></div>
+        
+        <div id="controls">
+            WASD/Flechas: Mover | Espacio: Atacar | I: Inventario<br>
+            Click: Usar item | 1-5: Hotbar rápida | E: Recoger
         </div>
     </div>
 
     <script>
-        // CONFIGURACIÓN DE RUTAS DE SPRITES
-        const SPRITES = {
-            // Unidades del jugador
-            units: {
-                villager: 'sprites/units/unit_villager.png',
-                warrior: 'sprites/units/unit_warrior.png',
-                archer: 'sprites/units/unit_archer.png',
-                cavalry: 'sprites/units/unit_cavalry.png'
-            },
-            // Unidades enemigas (pueden ser las mismas con tinte rojo o diferentes)
-            enemy_units: {
-                warrior: 'sprites/units/enemy_warrior.png',
-                archer: 'sprites/units/enemy_archer.png',
-                cavalry: 'sprites/units/enemy_cavalry.png'
-            },
-            // Edificios
-            buildings: {
-                city: 'sprites/buildings/building_city.png',
-                barracks: 'sprites/buildings/building_barracks.png',
-                stable: 'sprites/buildings/building_stable.png',
-                farm: 'sprites/buildings/building_farm.png',
-                lumbercamp: 'sprites/buildings/building_lumbercamp.png',
-                mine: 'sprites/buildings/building_mine.png',
-                house: 'sprites/buildings/building_house.png'
-            },
-            // Terrenos (fondos de casilla)
-            terrain: {
-                grass: 'sprites/terrain/terrain_grass.png',
-                forest: 'sprites/terrain/terrain_forest.png',
-                mountain: 'sprites/terrain/terrain_mountain.png',
-                water: 'sprites/terrain/terrain_water.png',
-                desert: 'sprites/terrain/terrain_desert.png',
-                hills: 'sprites/terrain/terrain_hills.png'
-            },
-            // Iconos de tecnología
-            techs: {
-                agriculture: 'sprites/techs/tech_agriculture.png',
-                bronze_working: 'sprites/techs/tech_bronze.png',
-                horseback_riding: 'sprites/techs/tech_horse.png',
-                archery: 'sprites/techs/tech_archery.png',
-                masonry: 'sprites/techs/tech_masonry.png',
-                currency: 'sprites/techs/tech_currency.png'
-            },
-            // Efectos
-            effects: {
-                move: 'sprites/effects/effect_move.png',
-                attack: 'sprites/effects/effect_attack.png',
-                select: 'sprites/effects/effect_select.png'
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const invUI = document.getElementById('inventoryUI');
+        const tooltip = document.getElementById('tooltip');
+        
+        // Configuración
+        const TILE_SIZE = 32;
+        const WORLD_SIZE = 100; // Tamaño del mundo en tiles (100x100)
+        const VIEW_DIST = 15; // Distancia de visión
+        
+        // Generador de ruido simple (Perlin-like)
+        class SimpleNoise {
+            constructor(seed = Math.random()) {
+                this.seed = seed;
+                this.perm = new Array(512);
+                for(let i=0; i<256; i++) this.perm[i] = i;
+                for(let i=255; i>0; i--) {
+                    const j = Math.floor((seed * (i+1)) % 256);
+                    [this.perm[i], this.perm[j]] = [this.perm[j], this.perm[i]];
+                }
+                for(let i=0; i<256; i++) this.perm[i+256] = this.perm[i];
             }
-        };
-
-        // Configuración del Juego
-        const CONFIG = {
-            gridWidth: 16,
-            gridHeight: 12,
-            tileSize: 48,
-            terrainTypes: {
-                grass: { name: 'grass', moveCost: 1, defense: 0, resources: {} },
-                forest: { name: 'forest', moveCost: 2, defense: 1, resources: { wood: 10 } },
-                mountain: { name: 'mountain', moveCost: 3, defense: 2, resources: { stone: 5 } },
-                water: { name: 'water', moveCost: 99, defense: 0, resources: {} },
-                desert: { name: 'desert', moveCost: 1, defense: -1, resources: {} },
-                hills: { name: 'hills', moveCost: 2, defense: 1, resources: {} }
+            
+            noise2D(x, y) {
+                const X = Math.floor(x) & 255;
+                const Y = Math.floor(y) & 255;
+                const fx = x - Math.floor(x);
+                const fy = y - Math.floor(y);
+                
+                const u = fx * fx * (3 - 2 * fx);
+                const v = fy * fy * (3 - 2 * fy);
+                
+                const A = this.perm[X] + Y;
+                const B = this.perm[X+1] + Y;
+                
+                // Simplificación para 2D
+                return (this.perm[A] % 256 / 255) * (1-u) * (1-v) + 
+                       (this.perm[B] % 256 / 255) * u * (1-v) +
+                       (this.perm[A+1] % 256 / 255) * (1-u) * v +
+                       (this.perm[B+1] % 256 / 255) * u * v;
             }
+        }
+        
+        const noise = new SimpleNoise();
+        
+        // Tipos de terreno
+        const TERRAIN = {
+            WATER: { id: 0, color: '#1e3a8a', solid: true, name: 'Agua' },
+            SAND: { id: 1, color: '#fde047', solid: false, name: 'Arena' },
+            GRASS: { id: 2, color: '#16a34a', solid: false, name: 'Pasto' },
+            FOREST: { id: 3, color: '#14532d', solid: false, name: 'Bosque' },
+            MOUNTAIN: { id: 4, color: '#57534e', solid: true, name: 'Montaña' },
+            SNOW: { id: 5, color: '#f3f4f6', solid: false, name: 'Nieve' }
         };
-
-        // Definición de Unidades
-        const UNITS = {
-            villager: {
-                name: 'Aldeano',
-                cost: { food: 50 },
-                health: 20,
-                attack: 2,
-                defense: 0,
-                movement: 2,
-                description: 'Construye edificios y recolecta recursos'
-            },
-            warrior: {
-                name: 'Guerrero',
-                cost: { food: 60, gold: 20 },
-                health: 40,
-                attack: 8,
-                defense: 2,
-                movement: 3,
-                description: 'Infantería básica de combate cuerpo a cuerpo'
-            },
-            archer: {
-                name: 'Arquero',
-                cost: { food: 40, wood: 30, gold: 20 },
-                health: 25,
-                attack: 6,
-                defense: 0,
-                movement: 3,
-                range: 2,
-                description: 'Unidad a distancia con alcance de 2 casillas'
-            },
-            cavalry: {
-                name: 'Caballería',
-                cost: { food: 80, gold: 60 },
-                health: 60,
-                attack: 12,
-                defense: 3,
-                movement: 5,
-                description: 'Unidad rápida y poderosa'
-            }
+        
+        // Items
+        const ITEMS = {
+            sword: { name: 'Espada de Hierro', icon: '🗡️', type: 'weapon', damage: 15, rarity: 'common' },
+            bow: { name: 'Arco', icon: '🏹', type: 'weapon', damage: 12, range: true, rarity: 'common' },
+            potion: { name: 'Poción de Vida', icon: '🧪', type: 'consumable', heal: 40, rarity: 'common' },
+            armor: { name: 'Armadura', icon: '🛡️', type: 'armor', defense: 5, rarity: 'rare' },
+            chest: { name: 'Cofre', icon: '📦', type: 'container', rarity: 'epic' },
+            gold: { name: 'Oro', icon: '🪙', type: 'currency', rarity: 'common' },
+            gem: { name: 'Gema', icon: '💎', type: 'currency', rarity: 'rare' },
+            axe: { name: 'Hacha', icon: '🪓', type: 'weapon', damage: 20, rarity: 'rare' }
         };
-
-        // Definición de Edificios
-        const BUILDINGS = {
-            city: {
-                name: 'Centro Urbano',
-                cost: { wood: 200, stone: 100, gold: 100 },
-                health: 200,
-                provides: { pop: 5, gold: 5 },
-                canTrain: ['villager']
-            },
-            barracks: {
-                name: 'Cuartel',
-                cost: { wood: 100, stone: 50 },
-                health: 100,
-                canTrain: ['warrior', 'archer']
-            },
-            stable: {
-                name: 'Establos',
-                cost: { wood: 150, stone: 80 },
-                health: 100,
-                canTrain: ['cavalry']
-            },
-            farm: {
-                name: 'Granja',
-                cost: { wood: 60 },
-                health: 50,
-                provides: { food: 10 }
-            },
-            lumbercamp: {
-                name: 'Campamento Maderero',
-                cost: { wood: 40 },
-                health: 50,
-                provides: { wood: 10 }
-            },
-            mine: {
-                name: 'Mina',
-                cost: { wood: 80 },
-                health: 60,
-                provides: { stone: 5, gold: 3 }
-            },
-            house: {
-                name: 'Casa',
-                cost: { wood: 30 },
-                health: 40,
-                provides: { pop: 2 }
-            }
-        };
-
-        // Tecnologías
-        const TECHNOLOGIES = {
-            agriculture: {
-                name: 'Agricultura',
-                cost: { food: 100 },
-                effect: 'Granjas producen +5 comida',
-                icon: 'tech_agriculture'
-            },
-            bronze_working: {
-                name: 'Trabajo del Bronce',
-                cost: { stone: 100, gold: 50 },
-                effect: 'Unidades +2 ataque',
-                icon: 'tech_bronze'
-            },
-            horseback_riding: {
-                name: 'Equitación',
-                cost: { food: 150, gold: 100 },
-                effect: 'Desbloquea Caballería',
-                icon: 'tech_horse'
-            },
-            archery: {
-                name: 'Arquería',
-                cost: { wood: 100, food: 50 },
-                effect: 'Desbloquea Arqueros',
-                icon: 'tech_archery'
-            },
-            masonry: {
-                name: 'Albañilería',
-                cost: { stone: 150 },
-                effect: 'Edificios +50% salud',
-                icon: 'tech_masonry'
-            },
-            currency: {
-                name: 'Moneda',
-                cost: { gold: 200 },
-                effect: 'Oro +50% por turno',
-                icon: 'tech_currency'
-            }
-        };
-
-        // Clase Principal
-        class StrategyGame {
+        
+        // Generación del mundo
+        class World {
             constructor() {
-                this.grid = [];
-                this.units = [];
-                this.buildings = [];
-                this.resources = { food: 200, wood: 150, gold: 100, stone: 50 };
-                this.population = { current: 0, max: 5 };
-                this.turn = 1;
-                this.selectedTile = null;
-                this.selectedUnit = null;
-                this.techs = JSON.parse(JSON.stringify(TECHNOLOGIES));
-                this.movementMode = false;
-                this.attackMode = false;
-                
-                this.init();
+                this.tiles = new Map();
+                this.items = [];
+                this.generate();
             }
-
-            init() {
-                this.generateMap();
-                this.spawnInitialUnits();
-                this.renderGrid();
-                this.updateUI();
+            
+            getTile(x, y) {
+                const key = `${Math.floor(x)},${Math.floor(y)}`;
+                if (!this.tiles.has(key)) {
+                    this.generateTile(x, y);
+                }
+                return this.tiles.get(key);
             }
-
-            generateMap() {
-                for (let y = 0; y < CONFIG.gridHeight; y++) {
-                    const row = [];
-                    for (let x = 0; x < CONFIG.gridWidth; x++) {
-                        const rand = Math.random();
-                        let terrain = 'grass';
-                        
-                        if (rand < 0.15) terrain = 'forest';
-                        else if (rand < 0.25) terrain = 'hills';
-                        else if (rand < 0.30) terrain = 'mountain';
-                        else if (rand < 0.35) terrain = 'desert';
-                        else if (rand < 0.40 && (x < 3 || x > CONFIG.gridWidth - 4 || y < 3 || y > CONFIG.gridHeight - 4)) 
-                            terrain = 'water';
-                        
-                        // Centro siempre tierra firme
-                        if (x >= 6 && x <= 9 && y >= 4 && y <= 7) {
-                            terrain = 'grass';
-                        }
-                        
-                        row.push({
-                            x, y,
-                            terrain: terrain,
-                            revealed: true,
-                            unit: null,
-                            building: null,
-                            resourceAmount: terrain === 'forest' ? 100 : 
-                                          terrain === 'mountain' ? 50 : 0
-                        });
-                    }
-                    this.grid.push(row);
-                }
-            }
-
-            spawnInitialUnits() {
-                const centerX = Math.floor(CONFIG.gridWidth / 2);
-                const centerY = Math.floor(CONFIG.gridHeight / 2);
+            
+            generateTile(x, y) {
+                // Múltiples octavas de ruido para terreno más natural
+                let val = 0;
+                let amp = 1;
+                let freq = 0.03;
                 
-                this.buildBuilding(centerX, centerY, 'city', true);
-                this.spawnUnit(centerX - 1, centerY, 'villager', true);
-                this.spawnUnit(centerX + 1, centerY, 'villager', true);
-            }
-
-            spawnUnit(x, y, type, playerOwned = true) {
-                const unit = {
-                    id: Date.now() + Math.random(),
-                    type: type,
-                    x: x,
-                    y: y,
-                    health: UNITS[type].health,
-                    maxHealth: UNITS[type].health,
-                    playerOwned: playerOwned,
-                    moved: false,
-                    attacked: false
-                };
-                
-                this.units.push(unit);
-                this.grid[y][x].unit = unit;
-                
-                if (playerOwned) {
-                    this.population.current++;
-                }
-            }
-
-            buildBuilding(x, y, type, playerOwned = true) {
-                const building = {
-                    id: Date.now() + Math.random(),
-                    type: type,
-                    x: x,
-                    y: y,
-                    health: BUILDINGS[type].health,
-                    maxHealth: BUILDINGS[type].health,
-                    playerOwned: playerOwned
-                };
-                
-                this.buildings.push(building);
-                this.grid[y][x].building = building;
-                
-                if (BUILDINGS[type].provides && BUILDINGS[type].provides.pop) {
-                    this.population.max += BUILDINGS[type].provides.pop;
-                }
-            }
-
-            renderGrid() {
-                const gridEl = document.getElementById('game-grid');
-                gridEl.style.gridTemplateColumns = `repeat(${CONFIG.gridWidth}, ${CONFIG.tileSize}px)`;
-                gridEl.innerHTML = '';
-                
-                for (let y = 0; y < CONFIG.gridHeight; y++) {
-                    for (let x = 0; x < CONFIG.gridWidth; x++) {
-                        const tile = this.grid[y][x];
-                        const tileEl = document.createElement('div');
-                        tileEl.className = `tile ${tile.terrain}`;
-                        tileEl.dataset.x = x;
-                        tileEl.dataset.y = y;
-                        
-                        // Imagen de fondo del terreno
-                        const terrainImg = document.createElement('img');
-                        terrainImg.src = SPRITES.terrain[tile.terrain];
-                        terrainImg.className = 'terrain-bg sprite';
-                        terrainImg.alt = tile.terrain;
-                        terrainImg.onerror = () => terrainImg.style.display = 'none';
-                        tileEl.appendChild(terrainImg);
-                        
-                        // Edificio
-                        if (tile.building) {
-                            const b = BUILDINGS[tile.building.type];
-                            const buildingImg = document.createElement('img');
-                            buildingImg.src = SPRITES.buildings[tile.building.type];
-                            buildingImg.className = 'building-sprite sprite spawn-animation';
-                            buildingImg.alt = b.name;
-                            buildingImg.onerror = () => {
-                                buildingImg.style.display = 'none';
-                                // Fallback: mostrar primera letra
-                                tileEl.innerHTML += `<span style="font-size: 20px; z-index: 5;">${b.name[0]}</span>`;
-                            };
-                            tileEl.appendChild(buildingImg);
-                            
-                            // Indicador de equipo
-                            const teamIndicator = document.createElement('div');
-                            teamIndicator.className = `team-indicator ${tile.building.playerOwned ? 'team-player' : 'team-enemy'}`;
-                            tileEl.appendChild(teamIndicator);
-                        }
-                        
-                        // Unidad
-                        if (tile.unit) {
-                            const u = UNITS[tile.unit.type];
-                            const unitImg = document.createElement('img');
-                            // Usar sprite enemigo o jugador
-                            if (tile.unit.playerOwned) {
-                                unitImg.src = SPRITES.units[tile.unit.type];
-                            } else {
-                                unitImg.src = SPRITES.enemy_units[tile.unit.type] || SPRITES.units[tile.unit.type];
-                            }
-                            unitImg.className = 'unit-sprite sprite spawn-animation';
-                            unitImg.alt = u.name;
-                            unitImg.style.filter = tile.unit.playerOwned ? '' : 'hue-rotate(300deg) brightness(0.8)';
-                            unitImg.onerror = () => {
-                                unitImg.style.display = 'none';
-                                tileEl.innerHTML += `<span style="font-size: 16px; z-index: 10;">${u.name[0]}</span>`;
-                            };
-                            tileEl.appendChild(unitImg);
-                            
-                            // Barra de vida
-                            const healthBar = document.createElement('div');
-                            healthBar.className = 'health-bar';
-                            const healthFill = document.createElement('div');
-                            healthFill.className = 'health-fill';
-                            healthFill.style.width = `${(tile.unit.health / tile.unit.maxHealth) * 100}%`;
-                            healthBar.appendChild(healthFill);
-                            tileEl.appendChild(healthBar);
-                            
-                            // Indicador de equipo para unidad
-                            const teamIndicator = document.createElement('div');
-                            teamIndicator.className = `team-indicator ${tile.unit.playerOwned ? 'team-player' : 'team-enemy'}`;
-                            tileEl.appendChild(teamIndicator);
-                        }
-                        
-                        // Eventos
-                        tileEl.addEventListener('click', () => this.handleTileClick(x, y));
-                        tileEl.addEventListener('mouseenter', (e) => this.showTooltip(e, x, y));
-                        tileEl.addEventListener('mouseleave', () => this.hideTooltip());
-                        
-                        // Estados visuales
-                        if (this.selectedTile && this.selectedTile.x === x && this.selectedTile.y === y) {
-                            tileEl.classList.add('selected');
-                        }
-                        
-                        if (this.movementMode && this.selectedUnit) {
-                            const dist = Math.abs(x - this.selectedUnit.x) + Math.abs(y - this.selectedUnit.y);
-                            const unitType = UNITS[this.selectedUnit.type];
-                            if (dist <= unitType.movement && !tile.unit && tile.terrain !== 'water') {
-                                tileEl.classList.add('movable');
-                            }
-                        }
-                        
-                        gridEl.appendChild(tileEl);
-                    }
-                }
-            }
-
-            handleTileClick(x, y) {
-                const tile = this.grid[y][x];
-                
-                if (this.movementMode && this.selectedUnit) {
-                    const dist = Math.abs(x - this.selectedUnit.x) + Math.abs(y - this.selectedUnit.y);
-                    const unitType = UNITS[this.selectedUnit.type];
-                    
-                    if (dist <= unitType.movement && !tile.unit && tile.terrain !== 'water') {
-                        this.moveUnit(this.selectedUnit, x, y);
-                        this.movementMode = false;
-                        this.renderGrid();
-                        this.updateSelectionInfo();
-                        return;
-                    }
+                for(let i=0; i<3; i++) {
+                    val += noise.noise2D(x * freq, y * freq) * amp;
+                    amp *= 0.5;
+                    freq *= 2;
                 }
                 
-                this.selectedTile = { x, y };
+                // Normalizar a 0-1
+                val = (val + 1) / 2;
                 
-                if (tile.unit && tile.unit.playerOwned) {
-                    this.selectedUnit = tile.unit;
-                    this.movementMode = false;
-                } else {
-                    this.selectedUnit = null;
-                }
+                let type;
+                if (val < 0.25) type = TERRAIN.WATER;
+                else if (val < 0.3) type = TERRAIN.SAND;
+                else if (val < 0.6) type = TERRAIN.GRASS;
+                else if (val < 0.75) type = TERRAIN.FOREST;
+                else if (val < 0.9) type = TERRAIN.MOUNTAIN;
+                else type = TERRAIN.SNOW;
                 
-                this.renderGrid();
-                this.updateSelectionInfo();
-            }
-
-            moveUnit(unit, newX, newY) {
-                this.grid[unit.y][unit.x].unit = null;
-                unit.x = newX;
-                unit.y = newY;
-                unit.moved = true;
-                this.grid[newY][newX].unit = unit;
+                this.tiles.set(`${x},${y}`, { type, x, y });
                 
-                this.showNotification(`${UNITS[unit.type].name} se movió`);
-            }
-
-            updateSelectionInfo() {
-                const infoEl = document.getElementById('selection-info');
-                const actionsEl = document.getElementById('action-buttons');
-                
-                if (!this.selectedTile) {
-                    infoEl.innerHTML = `
-                        <div style="text-align: center; color: #9ca3af; font-style: italic; padding: 20px;">
-                            <img src="sprites/ui/icon_select.png" style="width: 48px; opacity: 0.5; margin-bottom: 10px;" onerror="this.style.display='none'">
-                            <p>Selecciona una unidad o edificio</p>
-                        </div>`;
-                    actionsEl.innerHTML = '<p style="color: #9ca3af; font-style: italic;">Selecciona algo primero</p>';
-                    return;
-                }
-                
-                const tile = this.grid[this.selectedTile.y][this.selectedTile.x];
-                let html = '';
-                let actionsHtml = '';
-                
-                // Preview de sprite si hay unidad o edificio
-                let previewSrc = null;
-                if (tile.unit) {
-                    previewSrc = tile.unit.playerOwned ? SPRITES.units[tile.unit.type] : (SPRITES.enemy_units[tile.unit.type] || SPRITES.units[tile.unit.type]);
-                } else if (tile.building) {
-                    previewSrc = SPRITES.buildings[tile.building.type];
-                }
-                
-                if (previewSrc) {
-                    html += `<div class="sprite-preview">
-                        <img src="${previewSrc}" onerror="this.src='sprites/ui/icon_unknown.png'" style="${tile.unit && !tile.unit.playerOwned ? 'filter: hue-rotate(300deg);' : ''}">
-                    </div>`;
-                }
-                
-                // Información del terreno
-                const terrain = CONFIG.terrainTypes[tile.terrain];
-                html += `<p><strong>${this.capitalize(tile.terrain)}</strong></p>`;
-                html += `<p style="font-size: 0.9em; color: #cbd5e1;">Mov: ${terrain.moveCost} | Def: ${terrain.defense}</p>`;
-                
-                if (tile.unit) {
-                    const u = UNITS[tile.unit.type];
-                    const owner = tile.unit.playerOwned ? 'Tuyo' : 'Enemigo';
-                    html += `<hr style="margin: 10px 0; border-color: #4a5568;">`;
-                    html += `<p><strong>${u.name}</strong> <span style="color: ${tile.unit.playerOwned ? '#3b82f6' : '#ef4444'}">(${owner})</span></p>`;
-                    html += `<p>❤️ ${tile.unit.health}/${tile.unit.maxHealth} | ⚔️ ${u.attack} | 🛡️ ${u.defense}</p>`;
-                    html += `<p style="font-size: 0.85em; color: #94a3b8; margin-top: 5px;">${u.description}</p>`;
-                    
-                    if (tile.unit.playerOwned && !tile.unit.moved) {
-                        actionsHtml += `<div class="action-btn" onclick="game.toggleMoveMode()">
-                            <img src="sprites/ui/icon_move.png" class="action-icon" onerror="this.style.display='none'">
-                            <span>Mover Unidad</span>
-                        </div>`;
-                    }
-                }
-                
-                if (tile.building) {
-                    const b = BUILDINGS[tile.building.type];
-                    html += `<hr style="margin: 10px 0; border-color: #4a5568;">`;
-                    html += `<p><strong>${b.name}</strong></p>`;
-                    html += `<p>❤️ ${tile.building.health}/${tile.building.maxHealth}</p>`;
-                    
-                    if (b.provides) {
-                        html += `<p style="font-size: 0.9em; margin-top: 5px;">`;
-                        if (b.provides.food) html += `<img src="sprites/resources/resource_food.png" style="width: 16px; vertical-align: middle;"> +${b.provides.food} `;
-                        if (b.provides.wood) html += `<img src="sprites/resources/resource_wood.png" style="width: 16px; vertical-align: middle;"> +${b.provides.wood} `;
-                        if (b.provides.gold) html += `<img src="sprites/resources/resource_gold.png" style="width: 16px; vertical-align: middle;"> +${b.provides.gold} `;
-                        if (b.provides.pop) html += `<img src="sprites/resources/resource_population.png" style="width: 16px; vertical-align: middle;"> +${b.provides.pop} `;
-                        html += `</p>`;
-                    }
-                    
-                    if (tile.building.playerOwned && b.canTrain) {
-                        actionsHtml += `<div style="margin-top: 15px; padding-top: 10px; border-top: 1px solid #4a5568;">
-                            <h4 style="color: #ffd700; margin-bottom: 10px; font-size: 0.9em;">ENTRENAR:</h4>`;
-                        b.canTrain.forEach(unitType => {
-                            const u = UNITS[unitType];
-                            const canAfford = this.canAfford(u.cost);
-                            const disabled = !canAfford || this.population.current >= this.population.max;
-                            actionsHtml += `<div class="action-btn ${disabled ? 'disabled' : ''}" 
-                                onclick="${disabled ? '' : `game.trainUnit('${unitType}')`}">
-                                <img src="sprites/units/unit_${unitType}.png" class="action-icon" onerror="this.style.display='none'">
-                                <div style="flex: 1;">
-                                    <div style="font-weight: bold;">${u.name}</div>
-                                    <div style="font-size: 0.75em; color: #94a3b8;">
-                                        ${Object.entries(u.cost).map(([k,v]) => `${v} ${k}`).join(' ')}
-                                    </div>
-                                </div>
-                            </div>`;
-                        });
-                        actionsHtml += `</div>`;
-                    }
-                }
-                
-                if (tile.unit && tile.unit.type === 'villager' && tile.unit.playerOwned && !tile.unit.moved) {
-                    actionsHtml += `<div style="margin-top: 15px; padding-top: 10px; border-top: 1px solid #4a5568;">
-                        <h4 style="color: #ffd700; margin-bottom: 10px; font-size: 0.9em;">CONSTRUIR:</h4>`;
-                    Object.entries(BUILDINGS).forEach(([key, building]) => {
-                        if (key === 'city') return;
-                        const canAfford = this.canAfford(building.cost);
-                        const disabled = !canAfford;
-                        actionsHtml += `<div class="action-btn ${disabled ? 'disabled' : ''}" 
-                            onclick="${disabled ? '' : `game.build('${key}')`}">
-                            <img src="sprites/buildings/building_${key}.png" class="action-icon" onerror="this.style.display='none'">
-                            <div style="flex: 1;">
-                                <div style="font-weight: bold;">${building.name}</div>
-                                <div style="font-size: 0.75em; color: #94a3b8;">
-                                    ${Object.entries(building.cost).map(([k,v]) => `${v}${k[0]}`).join(' ')}
-                                </div>
-                            </div>
-                        </div>`;
+                // Spawn items aleatorios
+                if (Math.random() < 0.02 && type.solid === false) {
+                    const itemKeys = Object.keys(ITEMS);
+                    const randomItem = itemKeys[Math.floor(Math.random() * itemKeys.length)];
+                    this.items.push({
+                        x: x * TILE_SIZE + TILE_SIZE/2,
+                        y: y * TILE_SIZE + TILE_SIZE/2,
+                        type: randomItem,
+                        id: Math.random()
                     });
-                    actionsHtml += `</div>`;
                 }
-                
-                infoEl.innerHTML = html;
-                actionsEl.innerHTML = actionsHtml || '<p style="color: #9ca3af; font-style: italic;">No hay acciones disponibles</p>';
             }
-
-            toggleMoveMode() {
-                this.movementMode = !this.movementMode;
-                this.renderGrid();
-            }
-
-            trainUnit(unitType) {
-                const tile = this.grid[this.selectedTile.y][this.selectedTile.x];
-                const building = tile.building;
-                
-                if (!building || !building.playerOwned) return;
-                
-                const adjacent = this.getAdjacentTiles(this.selectedTile.x, this.selectedTile.y);
-                const emptyTile = adjacent.find(t => !t.unit && t.terrain !== 'water');
-                
-                if (!emptyTile) {
-                    this.showNotification('No hay espacio para entrenar unidad', 'error');
-                    return;
-                }
-                
-                const u = UNITS[unitType];
-                if (!this.spendResources(u.cost)) return;
-                
-                this.spawnUnit(emptyTile.x, emptyTile.y, unitType, true);
-                this.showNotification(`${u.name} entrenado`);
-                this.updateUI();
-            }
-
-            build(buildingType) {
-                const tile = this.grid[this.selectedTile.y][this.selectedTile.x];
-                if (tile.building || tile.unit) return;
-                
-                const b = BUILDINGS[buildingType];
-                if (!this.spendResources(b.cost)) return;
-                
-                this.buildBuilding(this.selectedTile.x, this.selectedTile.y, buildingType, true);
-                this.showNotification(`${b.name} construido`);
-                this.updateUI();
-                this.renderGrid();
-            }
-
-            getAdjacentTiles(x, y) {
-                const adjacent = [];
-                const dirs = [[0,1], [0,-1], [1,0], [-1,0]];
-                for (const [dx, dy] of dirs) {
-                    const nx = x + dx, ny = y + dy;
-                    if (nx >= 0 && nx < CONFIG.gridWidth && ny >= 0 && ny < CONFIG.gridHeight) {
-                        adjacent.push(this.grid[ny][nx]);
+            
+            generate() {
+                // Generar área inicial
+                for(let x=-20; x<20; x++) {
+                    for(let y=-20; y<20; y++) {
+                        this.generateTile(x, y);
                     }
                 }
-                return adjacent;
             }
-
-            canAfford(cost) {
-                return Object.entries(cost).every(([resource, amount]) => 
-                    this.resources[resource] >= amount
-                );
-            }
-
-            spendResources(cost) {
-                if (!this.canAfford(cost)) return false;
+            
+            draw(camera) {
+                const startX = Math.floor(camera.x / TILE_SIZE) - 1;
+                const startY = Math.floor(camera.y / TILE_SIZE) - 1;
+                const endX = startX + Math.ceil(canvas.width / TILE_SIZE) + 2;
+                const endY = startY + Math.ceil(canvas.height / TILE_SIZE) + 2;
                 
-                Object.entries(cost).forEach(([resource, amount]) => {
-                    this.resources[resource] -= amount;
-                });
-                
-                this.updateUI();
-                return true;
-            }
-
-            endTurn() {
-                this.units.forEach(u => {
-                    if (u.playerOwned) {
-                        u.moved = false;
-                        u.attacked = false;
-                    }
-                });
-                
-                this.buildings.forEach(b => {
-                    if (b.playerOwned && BUILDINGS[b.type].provides) {
-                        const provides = BUILDINGS[b.type].provides;
-                        Object.entries(provides).forEach(([resource, amount]) => {
-                            if (this.resources[resource] !== undefined) {
-                                let bonus = amount;
-                                if (resource === 'food' && this.techs.agriculture.researched) bonus += 5;
-                                if (resource === 'gold' && this.techs.currency.researched) bonus = Math.floor(bonus * 1.5);
-                                this.resources[resource] += bonus;
-                            }
-                        });
-                    }
-                });
-                
-                this.units.forEach(u => {
-                    const tile = this.grid[u.y][u.x];
-                    if (tile.building && tile.building.type === 'city') {
-                        u.health = Math.min(u.health + 10, u.maxHealth);
-                    }
-                });
-                
-                this.enemyAI();
-                
-                this.turn++;
-                this.selectedTile = null;
-                this.selectedUnit = null;
-                this.movementMode = false;
-                
-                this.showNotification(`Turno ${this.turn} iniciado`);
-                this.renderGrid();
-                this.updateUI();
-            }
-
-            enemyAI() {
-                const enemyUnits = this.units.filter(u => !u.playerOwned);
-                enemyUnits.forEach(unit => {
-                    if (Math.random() < 0.6) {
-                        const moves = [[0,1], [0,-1], [1,0], [-1,0]];
-                        const move = moves[Math.floor(Math.random() * moves.length)];
-                        const newX = unit.x + move[0];
-                        const newY = unit.y + move[1];
+                for(let x=startX; x<=endX; x++) {
+                    for(let y=startY; y<=endY; y++) {
+                        const tile = this.getTile(x, y);
+                        const screenX = x * TILE_SIZE - camera.x;
+                        const screenY = y * TILE_SIZE - camera.y;
                         
-                        if (newX >= 0 && newX < CONFIG.gridWidth && 
-                            newY >= 0 && newY < CONFIG.gridHeight &&
-                            !this.grid[newY][newX].unit &&
-                            this.grid[newY][newX].terrain !== 'water') {
-                            this.moveUnit(unit, newX, newY);
+                        // Dibujar tile
+                        ctx.fillStyle = tile.type.color;
+                        ctx.fillRect(screenX, screenY, TILE_SIZE, TILE_SIZE);
+                        
+                        // Detalle textura
+                        ctx.fillStyle = 'rgba(0,0,0,0.1)';
+                        if ((x+y)%2 === 0) {
+                            ctx.fillRect(screenX, screenY, TILE_SIZE, 2);
+                            ctx.fillRect(screenX, screenY+TILE_SIZE-2, TILE_SIZE, 2);
                         }
+                    }
+                }
+                
+                // Dibujar items en el suelo
+                this.items.forEach((item, idx) => {
+                    const screenX = item.x - camera.x;
+                    const screenY = item.y - camera.y;
+                    
+                    if (screenX > -50 && screenX < canvas.width + 50 && 
+                        screenY > -50 && screenY < canvas.height + 50) {
+                        
+                        // Animación flotante
+                        const bounce = Math.sin(Date.now() / 200) * 3;
+                        
+                        ctx.fillStyle = 'rgba(0,0,0,0.3)';
+                        ctx.beginPath();
+                        ctx.ellipse(screenX, screenY + 10, 10, 5, 0, 0, Math.PI*2);
+                        ctx.fill();
+                        
+                        ctx.font = '24px Arial';
+                        ctx.textAlign = 'center';
+                        ctx.fillText(ITEMS[item.type].icon, screenX, screenY + bounce);
+                        
+                        // Indicador de rareza
+                        const rarity = ITEMS[item.type].rarity;
+                        const colors = { common: '#fff', rare: '#4488ff', epic: '#a855f7', legendary: '#fbbf24' };
+                        ctx.fillStyle = colors[rarity] || '#fff';
+                        ctx.beginPath();
+                        ctx.arc(screenX + 10, screenY - 8, 3, 0, Math.PI*2);
+                        ctx.fill();
                     }
                 });
+            }
+            
+            isSolid(x, y) {
+                const tile = this.getTile(Math.floor(x/TILE_SIZE), Math.floor(y/TILE_SIZE));
+                return tile.type.solid;
+            }
+        }
+        
+        // Inventario
+        class Inventory {
+            constructor(size = 25) {
+                this.size = size;
+                this.items = new Array(size).fill(null);
+                this.open = false;
+                this.selectedSlot = 0;
+                this.hotbar = 5;
                 
-                if (this.turn % 4 === 0 && Math.random() < 0.4) {
-                    const edges = [];
-                    for (let x = 0; x < CONFIG.gridWidth; x++) {
-                        for (let y of [0, CONFIG.gridHeight-1]) {
-                            if (!this.grid[y][x].unit && this.grid[y][x].terrain !== 'water') 
-                                edges.push({x, y});
-                        }
+                // Items iniciales
+                this.addItem('sword');
+                this.addItem('potion', 3);
+            }
+            
+            addItem(type, quantity = 1) {
+                const item = ITEMS[type];
+                
+                // Apilar items consumables y currency
+                if (item.type === 'consumable' || item.type === 'currency') {
+                    const existing = this.items.find(i => i && i.type === type);
+                    if (existing) {
+                        existing.quantity += quantity;
+                        return true;
                     }
-                    for (let y = 1; y < CONFIG.gridHeight-1; y++) {
-                        for (let x of [0, CONFIG.gridWidth-1]) {
-                            if (!this.grid[y][x].unit && this.grid[y][x].terrain !== 'water') 
-                                edges.push({x, y});
-                        }
-                    }
-                    
-                    if (edges.length > 0) {
-                        const pos = edges[Math.floor(Math.random() * edges.length)];
-                        const types = ['warrior', 'archer'];
-                        const type = types[Math.floor(Math.random() * types.length)];
-                        this.spawnUnit(pos.x, pos.y, type, false);
+                }
+                
+                // Buscar slot vacío
+                const emptySlot = this.items.findIndex(i => i === null);
+                if (emptySlot !== -1) {
+                    this.items[emptySlot] = { type, quantity, ...item };
+                    return true;
+                }
+                return false;
+            }
+            
+            removeItem(index) {
+                if (this.items[index]) {
+                    this.items[index].quantity--;
+                    if (this.items[index].quantity <= 0) {
+                        this.items[index] = null;
                     }
                 }
             }
-
-            openTechTree() {
-                const modal = document.getElementById('tech-modal');
-                const tree = document.getElementById('tech-tree');
-                tree.innerHTML = '';
+            
+            useItem(index) {
+                const item = this.items[index];
+                if (!item) return;
                 
-                Object.entries(this.techs).forEach(([key, tech]) => {
-                    const div = document.createElement('div');
-                    div.className = `tech-item ${tech.researched ? 'researched' : ''}`;
+                if (item.type === 'consumable') {
+                    if (item.heal) {
+                        player.heal(item.heal);
+                        this.removeItem(index);
+                    }
+                } else if (item.type === 'weapon') {
+                    player.equipWeapon(item);
+                } else if (item.type === 'armor') {
+                    player.defense += item.defense;
+                    this.removeItem(index);
+                }
+            }
+            
+            toggle() {
+                this.open = !this.open;
+                invUI.style.display = this.open ? 'grid' : 'none';
+                this.render();
+            }
+            
+            render() {
+                invUI.innerHTML = '';
+                
+                this.items.forEach((item, idx) => {
+                    const slot = document.createElement('div');
+                    slot.className = 'inv-slot';
+                    if (idx === this.selectedSlot) slot.classList.add('selected');
                     
-                    const techIcon = SPRITES.techs[key] || 'sprites/ui/icon_tech.png';
-                    
-                    div.innerHTML = `
-                        <img src="${techIcon}" class="tech-icon" onerror="this.style.display='none'">
-                        <h4 style="color: ${tech.researched ? '#22c55e' : '#ffd700'}; margin-bottom: 5px;">${tech.name}</h4>
-                        <p style="font-size: 0.85em; color: #cbd5e1; margin-bottom: 8px;">${tech.effect}</p>
-                        <div style="font-size: 0.8em; color: #fbbf24;">
-                            ${Object.entries(tech.cost).map(([k,v]) => `<img src="sprites/resources/resource_${k}.png" style="width: 14px; vertical-align: middle;"> ${v}`).join(' ')}
-                        </div>
-                    `;
-                    
-                    if (!tech.researched) {
-                        div.onclick = () => this.researchTech(key);
+                    if (item) {
+                        slot.innerHTML = `
+                            ${item.icon}
+                            ${item.quantity > 1 ? `<span class="item-count">${item.quantity}</span>` : ''}
+                        `;
+                        
+                        const rarity = item.rarity || 'common';
+                        slot.classList.add(`rarity-${rarity}`);
+                        
+                        slot.onmouseenter = (e) => this.showTooltip(e, item);
+                        slot.onmouseleave = () => this.hideTooltip();
                     }
                     
-                    tree.appendChild(div);
+                    slot.onclick = () => {
+                        this.selectedSlot = idx;
+                        this.useItem(idx);
+                        this.render();
+                    };
+                    
+                    invUI.appendChild(slot);
                 });
-                
-                modal.style.display = 'flex';
             }
-
-            closeTechTree() {
-                document.getElementById('tech-modal').style.display = 'none';
-            }
-
-            researchTech(techKey) {
-                const tech = this.techs[techKey];
-                if (tech.researched) return;
-                
-                if (!this.spendResources(tech.cost)) {
-                    this.showNotification('Recursos insuficientes', 'error');
-                    return;
-                }
-                
-                tech.researched = true;
-                this.showNotification(`¡${tech.name} investigado!`);
-                this.openTechTree();
-            }
-
-            showTooltip(e, x, y) {
-                const tile = this.grid[y][x];
-                const tooltip = document.getElementById('tooltip');
-                
-                let content = '';
-                
-                if (tile.unit) {
-                    const u = UNITS[tile.unit.type];
-                    const sprite = tile.unit.playerOwned ? SPRITES.units[tile.unit.type] : (SPRITES.enemy_units[tile.unit.type] || SPRITES.units[tile.unit.type]);
-                    content += `<img src="${sprite}" style="filter: ${tile.unit.playerOwned ? '' : 'hue-rotate(300deg)'}">`;
-                    content += `<strong style="font-size: 1.1em;">${u.name}</strong><br>`;
-                    content += `<span style="color: ${tile.unit.playerOwned ? '#60a5fa' : '#f87171'}">${tile.unit.playerOwned ? 'Tu Unidad' : 'Enemigo'}</span><br>`;
-                    content += `Vida: ${tile.unit.health}/${tile.unit.maxHealth} | Atq: ${u.attack} | Def: ${u.defense}<br>`;
-                    content += `<span style="color: #94a3b8; font-size: 0.9em;">${u.description}</span>`;
-                } else if (tile.building) {
-                    const b = BUILDINGS[tile.building.type];
-                    content += `<img src="${SPRITES.buildings[tile.building.type]}">`;
-                    content += `<strong>${b.name}</strong><br>`;
-                    content += `Salud: ${tile.building.health}/${tile.building.maxHealth}`;
-                } else {
-                    const t = CONFIG.terrainTypes[tile.terrain];
-                    content += `<strong>${this.capitalize(tile.terrain)}</strong><br>`;
-                    content += `Costo movimiento: ${t.moveCost}<br>`;
-                    content += `Bonus defensa: ${t.defense > 0 ? '+' : ''}${t.defense}`;
-                    if (t.resources && Object.keys(t.resources).length > 0) {
-                        content += `<br><span style="color: #fbbf24;">Recursos disponibles</span>`;
-                    }
-                }
-                
-                tooltip.innerHTML = content;
+            
+            showTooltip(e, item) {
                 tooltip.style.display = 'block';
-                tooltip.style.left = Math.min(e.pageX + 15, window.innerWidth - 300) + 'px';
-                tooltip.style.top = Math.min(e.pageY + 15, window.innerHeight - 200) + 'px';
+                tooltip.style.left = e.pageX + 10 + 'px';
+                tooltip.style.top = e.pageY + 10 + 'px';
+                
+                const rarityColors = { common: 'white', rare: '#4488ff', epic: '#a855f7', legendary: '#fbbf24' };
+                
+                tooltip.innerHTML = `
+                    <div style="color: ${rarityColors[item.rarity]}; font-weight: bold; margin-bottom: 4px;">
+                        ${item.name}
+                    </div>
+                    <div style="color: #aaa;">Tipo: ${item.type}</div>
+                    ${item.damage ? `<div style="color: #ff6666;">Daño: ${item.damage}</div>` : ''}
+                    ${item.defense ? `<div style="color: #6666ff;">Defensa: ${item.defense}</div>` : ''}
+                    ${item.heal ? `<div style="color: #66ff66;">Cura: ${item.heal} HP</div>` : ''}
+                `;
             }
-
+            
             hideTooltip() {
-                document.getElementById('tooltip').style.display = 'none';
+                tooltip.style.display = 'none';
             }
-
-            showNotification(message, type = 'success') {
-                const notif = document.createElement('div');
-                notif.className = 'notification';
-                if (type === 'error') {
-                    notif.style.background = 'linear-gradient(145deg, #ef4444, #dc2626)';
-                }
-                notif.textContent = message;
-                document.body.appendChild(notif);
+        }
+        
+        // Entidades
+        class Player {
+            constructor() {
+                this.x = 0;
+                this.y = 0;
+                this.size = 16;
+                this.speed = 3;
+                this.health = 100;
+                this.maxHealth = 100;
+                this.level = 1;
+                this.exp = 0;
+                this.defense = 0;
+                this.weapon = ITEMS.sword;
+                this.direction = { x: 1, y: 0 };
+                this.attackCooldown = 0;
+                this.invulnerable = 0;
+            }
+            
+            update() {
+                let dx = 0;
+                let dy = 0;
                 
-                setTimeout(() => {
-                    notif.style.opacity = '0';
-                    notif.style.transform = 'translateX(400px)';
-                    setTimeout(() => notif.remove(), 300);
-                }, 3000);
-            }
-
-            capitalize(str) {
-                return str.charAt(0).toUpperCase() + str.slice(1);
-            }
-
-            updateUI() {
-                document.getElementById('food').textContent = this.resources.food;
-                document.getElementById('wood').textContent = this.resources.wood;
-                document.getElementById('gold').textContent = this.resources.gold;
-                document.getElementById('stone').textContent = this.resources.stone;
-                document.getElementById('pop').textContent = this.population.current;
-                document.getElementById('pop-max').textContent = this.population.max;
-                document.getElementById('turn').textContent = this.turn;
-            }
-
-            saveGame() {
-                const saveData = {
-                    resources: this.resources,
-                    population: this.population,
-                    turn: this.turn,
-                    units: this.units,
-                    buildings: this.buildings,
-                    grid: this.grid.map(row => row.map(tile => ({
-                        terrain: tile.terrain,
-                        building: tile.building ? { type: tile.building.type, health: tile.building.health, playerOwned: tile.building.playerOwned } : null,
-                        unit: tile.unit ? { type: tile.unit.type, health: tile.unit.health, playerOwned: tile.unit.playerOwned } : null
-                    }))),
-                    techs: this.techs
-                };
-                localStorage.setItem('empireSave', JSON.stringify(saveData));
-                this.showNotification('Juego guardado');
-            }
-
-            loadGame() {
-                const saveData = localStorage.getItem('empireSave');
-                if (!saveData) {
-                    this.showNotification('No hay partida guardada', 'error');
-                    return;
+                if (game.keys['w'] || game.keys['ArrowUp']) dy = -1;
+                if (game.keys['s'] || game.keys['ArrowDown']) dy = 1;
+                if (game.keys['a'] || game.keys['ArrowLeft']) dx = -1;
+                if (game.keys['d'] || game.keys['ArrowRight']) dx = 1;
+                
+                if (dx !== 0 && dy !== 0) {
+                    dx *= 0.707;
+                    dy *= 0.707;
                 }
                 
-                const data = JSON.parse(saveData);
-                this.resources = data.resources;
-                this.population = data.population;
-                this.turn = data.turn;
-                this.techs = data.techs;
+                // Movimiento con colisión
+                const newX = this.x + dx * this.speed;
+                const newY = this.y + dy * this.speed;
                 
-                this.grid = [];
-                for (let y = 0; y < CONFIG.gridHeight; y++) {
-                    const row = [];
-                    for (let x = 0; x < CONFIG.gridWidth; x++) {
-                        const savedTile = data.grid[y][x];
-                        row.push({
-                            x, y,
-                            terrain: savedTile.terrain,
-                            revealed: true,
-                            unit: null,
-                            building: savedTile.building,
-                            resourceAmount: savedTile.terrain === 'forest' ? 100 : 
-                                          savedTile.terrain === 'mountain' ? 50 : 0
-                        });
-                    }
-                    this.grid.push(row);
+                if (!world.isSolid(newX, this.y)) this.x = newX;
+                if (!world.isSolid(this.x, newY)) this.y = newY;
+                
+                if (dx !== 0 || dy !== 0) {
+                    this.direction = { x: dx || this.direction.x, y: dy || this.direction.y };
                 }
                 
-                this.units = [];
-                this.population.current = 0;
-                data.units.forEach(u => {
-                    if (u.playerOwned) this.population.current++;
-                    const unit = { ...u, maxHealth: UNITS[u.type].health, moved: false, attacked: false };
-                    this.units.push(unit);
-                    if (u.x >= 0 && u.x < CONFIG.gridWidth && u.y >= 0 && u.y < CONFIG.gridHeight) {
-                        this.grid[u.y][u.x].unit = unit;
-                    }
-                });
+                // Recoger items cercanos
+                if (game.keys['e']) {
+                    this.pickupItems();
+                }
                 
-                this.buildings = [];
-                this.population.max = 5;
-                data.buildings.forEach(b => {
-                    const building = { ...b, maxHealth: BUILDINGS[b.type].health };
-                    this.buildings.push(building);
-                    if (b.x >= 0 && b.x < CONFIG.gridWidth && b.y >= 0 && b.y < CONFIG.gridHeight) {
-                        this.grid[b.y][b.x].building = building;
-                        if (BUILDINGS[b.type].provides && BUILDINGS[b.type].provides.pop) {
-                            this.population.max += BUILDINGS[b.type].provides.pop;
+                // Ataque
+                if (this.attackCooldown > 0) this.attackCooldown--;
+                if (game.keys[' '] && this.attackCooldown <= 0) {
+                    this.attack();
+                    this.attackCooldown = 20;
+                }
+                
+                if (this.invulnerable > 0) this.invulnerable--;
+            }
+            
+            pickupItems() {
+                world.items = world.items.filter(item => {
+                    const dist = Math.hypot(item.x - this.x, item.y - this.y);
+                    if (dist < 40) {
+                        if (inventory.addItem(item.type)) {
+                            game.particles.push(new Particle(item.x, item.y, '#gold', 10));
+                            return false;
                         }
                     }
+                    return true;
+                });
+            }
+            
+            attack() {
+                // Lógica de ataque similar a antes
+                if (this.weapon.range) {
+                    // Proyectil
+                    game.projectiles.push(new Projectile(
+                        this.x, this.y, 
+                        this.direction.x, this.direction.y,
+                        this.weapon.damage
+                    ));
+                } else {
+                    // Melé
+                    const hitX = this.x + this.direction.x * 30;
+                    const hitY = this.y + this.direction.y * 30;
+                    
+                    game.enemies.forEach(enemy => {
+                        if (Math.hypot(enemy.x - hitX, enemy.y - hitY) < 40) {
+                            enemy.takeDamage(this.weapon.damage);
+                        }
+                    });
+                }
+            }
+            
+            equipWeapon(item) {
+                this.weapon = item;
+                document.getElementById('currentWeapon').textContent = item.name;
+            }
+            
+            heal(amount) {
+                this.health = Math.min(this.maxHealth, this.health + amount);
+            }
+            
+            takeDamage(amount) {
+                if (this.invulnerable > 0) return;
+                const actualDamage = Math.max(1, amount - this.defense);
+                this.health -= actualDamage;
+                this.invulnerable = 30;
+                
+                if (this.health <= 0) {
+                    this.respawn();
+                }
+            }
+            
+            respawn() {
+                this.x = 0;
+                this.y = 0;
+                this.health = this.maxHealth;
+                game.enemies = [];
+            }
+            
+            draw(camera) {
+                const screenX = this.x - camera.x;
+                const screenY = this.y - camera.y;
+                
+                // Sombra
+                ctx.fillStyle = 'rgba(0,0,0,0.3)';
+                ctx.beginPath();
+                ctx.ellipse(screenX, screenY + 12, 12, 6, 0, 0, Math.PI*2);
+                ctx.fill();
+                
+                // Cuerpo
+                ctx.fillStyle = this.invulnerable > 0 && Math.floor(Date.now()/100)%2 === 0 ? 
+                    'rgba(78, 204, 163, 0.5)' : '#4ecca3';
+                ctx.fillRect(screenX - 10, screenY - 15, 20, 30);
+                
+                // Cabeza
+                ctx.fillStyle = '#f4d03f';
+                ctx.fillRect(screenX - 8, screenY - 22, 16, 14);
+                
+                // Arma
+                ctx.fillStyle = '#silver';
+                ctx.fillRect(screenX + this.direction.x * 15 - 2, screenY + this.direction.y * 15, 4, 4);
+            }
+        }
+        
+        // Enemigo
+        class Enemy {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.size = 16;
+                this.speed = 1.5 + Math.random();
+                this.health = 40;
+                this.maxHealth = 40;
+            }
+            
+            update() {
+                const dx = game.player.x - this.x;
+                const dy = game.player.y - this.y;
+                const dist = Math.hypot(dx, dy);
+                
+                if (dist < 300 && dist > 20) {
+                    const moveX = (dx/dist) * this.speed;
+                    const moveY = (dy/dist) * this.speed;
+                    
+                    if (!world.isSolid(this.x + moveX, this.y)) this.x += moveX;
+                    if (!world.isSolid(this.x, this.y + moveY)) this.y += moveY;
+                }
+                
+                if (dist < 25) {
+                    game.player.takeDamage(10);
+                }
+            }
+            
+            takeDamage(dmg) {
+                this.health -= dmg;
+                game.particles.push(new Particle(this.x, this.y, '#ff0000', 8));
+                
+                if (this.health <= 0) {
+                    game.player.exp += 25;
+                    const idx = game.enemies.indexOf(this);
+                    if (idx > -1) game.enemies.splice(idx, 1);
+                }
+            }
+            
+            draw(camera) {
+                const screenX = this.x - camera.x;
+                const screenY = this.y - camera.y;
+                
+                ctx.fillStyle = '#e63946';
+                ctx.fillRect(screenX - 12, screenY - 12, 24, 24);
+                
+                // Ojos
+                ctx.fillStyle = '#000';
+                ctx.fillRect(screenX - 6, screenY - 6, 4, 4);
+                ctx.fillRect(screenX + 2, screenY - 6, 4, 4);
+                
+                // Barra vida
+                if (this.health < this.maxHealth) {
+                    ctx.fillStyle = 'red';
+                    ctx.fillRect(screenX - 12, screenY - 18, 24, 4);
+                    ctx.fillStyle = '#0f0';
+                    ctx.fillRect(screenX - 12, screenY - 18, 24 * (this.health/this.maxHealth), 4);
+                }
+            }
+        }
+        
+        // Proyectil
+        class Projectile {
+            constructor(x, y, dx, dy, damage) {
+                this.x = x;
+                this.y = y;
+                this.dx = dx;
+                this.dy = dy;
+                this.damage = damage;
+                this.life = 60;
+            }
+            
+            update() {
+                this.x += this.dx * 8;
+                this.y += this.dy * 8;
+                this.life--;
+                
+                // Colisión con enemigos
+                game.enemies.forEach(enemy => {
+                    if (Math.hypot(enemy.x - this.x, enemy.y - this.y) < 20) {
+                        enemy.takeDamage(this.damage);
+                        this.life = 0;
+                    }
                 });
                 
-                this.renderGrid();
-                this.updateUI();
-                this.showNotification('Partida cargada');
+                // Colisión con terreno sólido
+                if (world.isSolid(this.x, this.y)) this.life = 0;
+            }
+            
+            draw(camera) {
+                ctx.fillStyle = '#0f0';
+                ctx.beginPath();
+                ctx.arc(this.x - camera.x, this.y - camera.y, 4, 0, Math.PI*2);
+                ctx.fill();
             }
         }
-
-        const game = new StrategyGame();
-
-        window.onclick = function(event) {
-            const modal = document.getElementById('tech-modal');
-            if (event.target === modal) {
-                game.closeTechTree();
+        
+        // Partícula
+        class Particle {
+            constructor(x, y, color, count = 1) {
+                this.particles = [];
+                for(let i=0; i<count; i++) {
+                    this.particles.push({
+                        x: x, y: y,
+                        vx: (Math.random()-0.5)*4,
+                        vy: (Math.random()-0.5)*4,
+                        life: 30,
+                        color: color
+                    });
+                }
             }
+            
+            update() {
+                this.particles.forEach(p => {
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    p.life--;
+                });
+                this.particles = this.particles.filter(p => p.life > 0);
+            }
+            
+            draw(camera) {
+                this.particles.forEach(p => {
+                    ctx.globalAlpha = p.life/30;
+                    ctx.fillStyle = p.color;
+                    ctx.fillRect(p.x - camera.x, p.y - camera.y, 3, 3);
+                });
+                ctx.globalAlpha = 1;
+            }
+            
+            get isDead() { return this.particles.length === 0; }
         }
-
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                game.endTurn();
-            } else if (e.key === 'Escape') {
-                game.selectedTile = null;
-                game.selectedUnit = null;
-                game.movementMode = false;
-                game.renderGrid();
-                game.updateSelectionInfo();
+        
+        // Estado global
+        const game = {
+            keys: {},
+            player: new Player(),
+            world: new World(),
+            enemies: [],
+            projectiles: [],
+            particles: [],
+            camera: { x: 0, y: 0 },
+            lastSpawn: 0
+        };
+        
+        const world = game.world;
+        const player = game.player;
+        const inventory = new Inventory();
+        
+        // Input
+        window.addEventListener('keydown', e => {
+            game.keys[e.key] = true;
+            if (e.key.toLowerCase() === 'i') inventory.toggle();
+            if (e.key >= '1' && e.key <= '5') {
+                const idx = parseInt(e.key) - 1;
+                if (inventory.items[idx]) inventory.useItem(idx);
             }
         });
+        
+        window.addEventListener('keyup', e => {
+            game.keys[e.key] = false;
+        });
+        
+        // UI Updates
+        function updateUI() {
+            document.getElementById('health').textContent = Math.floor(player.health);
+            document.getElementById('maxHealth').textContent = player.maxHealth;
+            document.getElementById('level').textContent = player.level;
+            document.getElementById('exp').textContent = player.exp;
+            document.getElementById('pos').textContent = 
+                `${Math.floor(player.x/TILE_SIZE)},${Math.floor(player.y/TILE_SIZE)}`;
+        }
+        
+        // Loop
+        function update() {
+            player.update();
+            
+            // Cámara suave
+            game.camera.x += (player.x - canvas.width/2 - game.camera.x) * 0.1;
+            game.camera.y += (player.y - canvas.height/2 - game.camera.y) * 0.1;
+            
+            // Spawn enemigos
+            game.lastSpawn++;
+            if (game.lastSpawn > 180) {
+                const angle = Math.random() * Math.PI * 2;
+                const dist = 300 + Math.random() * 200;
+                const x = player.x + Math.cos(angle) * dist;
+                const y = player.y + Math.sin(angle) * dist;
+                
+                if (!world.isSolid(x, y)) {
+                    game.enemies.push(new Enemy(x, y));
+                }
+                game.lastSpawn = 0;
+            }
+            
+            // Updates
+            game.enemies.forEach(e => e.update());
+            game.projectiles.forEach(p => p.update());
+            game.projectiles = game.projectiles.filter(p => p.life > 0);
+            
+            game.particles.forEach(p => p.update());
+            game.particles = game.particles.filter(p => !p.isDead);
+            
+            // Level up
+            if (player.exp >= player.level * 100) {
+                player.exp -= player.level * 100;
+                player.level++;
+                player.maxHealth += 20;
+                player.health = player.maxHealth;
+            }
+            
+            updateUI();
+        }
+        
+        function draw() {
+            // Fondo
+            ctx.fillStyle = '#16213e';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Mundo
+            world.draw(game.camera);
+            
+            // Entidades
+            game.enemies.forEach(e => e.draw(game.camera));
+            game.projectiles.forEach(p => p.draw(game.camera));
+            player.draw(game.camera);
+            game.particles.forEach(p => p.draw(game.camera));
+            
+            // Minimapa
+            drawMinimap();
+        }
+        
+        function drawMinimap() {
+            const mapSize = 120;
+            const scale = 0.15;
+            const mx = canvas.width - mapSize - 10;
+            const my = 10;
+            
+            // Fondo
+            ctx.fillStyle = 'rgba(0,0,0,0.7)';
+            ctx.fillRect(mx, my, mapSize, mapSize);
+            ctx.strokeStyle = '#666';
+            ctx.strokeRect(mx, my, mapSize, mapSize);
+            
+            // Tiles
+            const centerX = Math.floor(player.x / TILE_SIZE);
+            const centerY = Math.floor(player.y / TILE_SIZE);
+            const range = 20;
+            
+            for(let x = centerX - range; x <= centerX + range; x++) {
+                for(let y = centerY - range; y <= centerY + range; y++) {
+                    const tile = world.getTile(x, y);
+                    const px = mx + mapSize/2 + (x - centerX) * 3;
+                    const py = my + mapSize/2 + (y - centerY) * 3;
+                    
+                    if (px >= mx && px <= mx + mapSize && py >= my && py <= my + mapSize) {
+                        ctx.fillStyle = tile.type.color;
+                        ctx.fillRect(px, py, 3, 3);
+                    }
+                }
+            }
+            
+            // Jugador en minimapa
+            ctx.fillStyle = '#fff';
+            ctx.beginPath();
+            ctx.arc(mx + mapSize/2, my + mapSize/2, 3, 0, Math.PI*2);
+            ctx.fill();
+            
+            // Enemigos en minimapa (rojos)
+            ctx.fillStyle = '#f00';
+            game.enemies.forEach(e => {
+                const ex = mx + mapSize/2 + (e.x - player.x) * 0.1;
+                const ey = my + mapSize/2 + (e.y - player.y) * 0.1;
+                if (ex > mx && ex < mx+mapSize && ey > my && ey < my+mapSize) {
+                    ctx.fillRect(ex-1, ey-1, 2, 2);
+                }
+            });
+        }
+        
+        function loop() {
+            update();
+            draw();
+            requestAnimationFrame(loop);
+        }
+        
+        // Iniciar
+        loop();
     </script>
 </body>
 </html>
