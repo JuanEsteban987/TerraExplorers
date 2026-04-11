@@ -3,682 +3,584 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Garry's Mod Web - P2P Edition</title>
+    <title>LEGACY BUILDER v1.0 [1986]</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, sans-serif; }
-        body { overflow: hidden; background: #1a1a1a; color: white; user-select: none; }
+        @import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
         
-        /* Menú Principal */
-        #mainMenu {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-            display: flex; flex-direction: column; justify-content: center; align-items: center;
+        * {
+            image-rendering: pixelated;
+            image-rendering: crisp-edges;
+        }
+        
+        body {
+            margin: 0;
+            padding: 20px;
+            background-color: #2b2b2b;
+            background-image: 
+                repeating-linear-gradient(0deg, transparent, transparent 2px, #222 2px, #222 4px),
+                repeating-linear-gradient(90deg, transparent, transparent 2px, #1a1a1a 2px, #1a1a1a 4px);
+            font-family: 'Courier New', Courier, monospace;
+            color: #00ff00;
+            overflow-x: hidden;
+        }
+
+        .crt-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                rgba(18, 16, 16, 0) 50%, 
+                rgba(0, 0, 0, 0.25) 50%
+            );
+            background-size: 100% 4px;
+            pointer-events: none;
             z-index: 1000;
+            animation: flicker 0.15s infinite;
         }
-        
-        .menu-title {
-            font-size: 72px; font-weight: bold; text-shadow: 0 0 20px rgba(0,0,0,0.5);
-            margin-bottom: 50px; letter-spacing: 3px;
+
+        @keyframes flicker {
+            0% { opacity: 0.97; }
+            50% { opacity: 1; }
+            100% { opacity: 0.98; }
         }
-        
-        .menu-btn {
-            background: rgba(255,255,255,0.1); border: 2px solid white; color: white;
-            padding: 20px 60px; margin: 10px; font-size: 24px; cursor: pointer;
-            transition: all 0.3s; border-radius: 5px; min-width: 300px;
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background-color: #c0c0c0;
+            border: 3px solid #000;
+            box-shadow: 
+                inset -3px -3px 0 #808080,
+                inset 3px 3px 0 #fff,
+                10px 10px 0 rgba(0,0,0,0.5);
+            padding: 8px;
+            position: relative;
         }
-        
-        .menu-btn:hover { background: white; color: #2a5298; transform: scale(1.05); }
-        
-        /* Menú de Pausa */
-        #pauseMenu {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.85); display: none;
-            flex-direction: column; justify-content: center; align-items: center;
-            z-index: 999;
+
+        .title-bar {
+            background: linear-gradient(90deg, #000080, #1084d0);
+            color: white;
+            padding: 4px 8px;
+            margin: -8px -8px 8px -8px;
+            font-weight: bold;
+            font-size: 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #000;
         }
-        
-        /* Multiplayer Panel */
-        #mpPanel {
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            background: rgba(30,30,30,0.95); border: 2px solid #555; padding: 30px;
-            border-radius: 10px; display: none; max-width: 600px; width: 90%;
+
+        .title-bar button {
+            background: #c0c0c0;
+            border: 2px outset #fff;
+            width: 20px;
+            height: 18px;
+            font-size: 12px;
+            line-height: 1;
+            cursor: pointer;
+            color: black;
         }
-        
-        textarea { width: 100%; height: 100px; margin: 10px 0; background: #222; color: #0f0;
-            border: 1px solid #555; padding: 10px; font-family: monospace; resize: vertical;
+
+        .title-bar button:active {
+            border-style: inset;
         }
-        
-        /* HUD */
-        #hud {
-            position: absolute; bottom: 20px; left: 20px;
-            background: rgba(0,0,0,0.5); padding: 15px; border-radius: 5px;
-            display: none; pointer-events: none;
+
+        h1 {
+            font-family: 'VT323', monospace;
+            font-size: 32px;
+            text-align: center;
+            color: #000;
+            text-shadow: 2px 2px 0 #808080;
+            margin: 10px 0;
+            letter-spacing: 4px;
+            text-transform: uppercase;
         }
-        
-        #crosshair {
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            width: 20px; height: 20px; border: 2px solid white; border-radius: 50%;
-            display: none; pointer-events: none;
+
+        .main-layout {
+            display: flex;
+            gap: 8px;
         }
-        
-        .tool-selector {
-            position: absolute; bottom: 20px; right: 20px;
-            background: rgba(0,0,0,0.7); padding: 10px; border-radius: 5px;
-            display: none;
+
+        .sidebar {
+            width: 180px;
+            background: #c0c0c0;
+            border: 2px outset #fff;
+            padding: 8px;
         }
-        
-        .tool-btn { padding: 10px 20px; margin: 2px; cursor: pointer; background: #333; border: none; color: white; }
-        .tool-btn.active { background: #2a5298; }
-        
-        canvas { display: block; }
-        
-        #chat {
-            position: absolute; bottom: 100px; left: 20px;
-            width: 400px; max-height: 200px; overflow-y: auto;
-            background: rgba(0,0,0,0.5); padding: 10px; display: none;
+
+        .panel-header {
+            background: #808080;
+            color: white;
+            padding: 2px 4px;
+            margin: -8px -8px 8px -8px;
+            font-size: 12px;
+            font-weight: bold;
+            border-bottom: 1px solid #000;
         }
-        
-        #chatInput {
-            position: absolute; bottom: 70px; left: 20px; width: 400px;
-            padding: 5px; display: none; background: rgba(0,0,0,0.7); color: white; border: 1px solid #555;
+
+        .tool-btn {
+            display: block;
+            width: 100%;
+            margin: 4px 0;
+            padding: 8px;
+            background: #c0c0c0;
+            border: 2px outset #fff;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            cursor: pointer;
+            text-align: left;
+            color: #000;
         }
+
+        .tool-btn:hover {
+            background: #d4d0c8;
+        }
+
+        .tool-btn:active {
+            border-style: inset;
+            background: #808080;
+        }
+
+        .tool-btn.active {
+            border-style: inset;
+            background: #000080;
+            color: white;
+        }
+
+        .color-palette {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 4px;
+            margin-top: 8px;
+        }
+
+        .color-btn {
+            width: 32px;
+            height: 32px;
+            border: 2px outset #fff;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .color-btn:hover {
+            transform: scale(1.1);
+        }
+
+        .color-btn.active::after {
+            content: '✓';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-weight: bold;
+            text-shadow: 1px 1px 0 #000;
+            font-size: 18px;
+        }
+
+        .workspace {
+            flex: 1;
+            background: #808080;
+            border: 2px inset #808080;
+            position: relative;
+            min-height: 500px;
+            overflow: auto;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(20, 32px);
+            grid-template-rows: repeat(15, 32px);
+            gap: 0;
+            background-image: 
+                linear-gradient(45deg, #909090 25%, transparent 25%), 
+                linear-gradient(-45deg, #909090 25%, transparent 25%), 
+                linear-gradient(45deg, transparent 75%, #909090 75%), 
+                linear-gradient(-45deg, transparent 75%, #909090 75%);
+            background-size: 32px 32px;
+            background-position: 0 0, 0 16px, 16px -16px, -16px 0px;
+            background-color: #707070;
+        }
+
+        .lego-piece {
+            position: absolute;
+            cursor: move;
+            box-shadow: 
+                inset -2px -2px 0 rgba(0,0,0,0.5),
+                inset 2px 2px 0 rgba(255,255,255,0.5),
+                4px 4px 0 rgba(0,0,0,0.3);
+            border: 2px solid rgba(0,0,0,0.3);
+            display: flex;
+            flex-wrap: wrap;
+            padding: 2px;
+            transition: transform 0.1s;
+        }
+
+        .lego-piece:hover {
+            filter: brightness(1.1);
+            z-index: 100;
+        }
+
+        .stud {
+            width: 8px;
+            height: 8px;
+            background: rgba(255,255,255,0.3);
+            border-radius: 50%;
+            margin: 2px;
+            box-shadow: inset 1px 1px 0 rgba(0,0,0,0.3);
+        }
+
+        .stats {
+            margin-top: 8px;
+            padding: 8px;
+            background: #000;
+            color: #0f0;
+            font-family: 'VT323', monospace;
+            font-size: 16px;
+            border: 2px inset #808080;
+        }
+
+        .size-selector {
+            margin: 8px 0;
+            font-size: 12px;
+            color: #000;
+        }
+
+        select {
+            font-family: 'Courier New', monospace;
+            background: #fff;
+            border: 2px inset #808080;
+            padding: 2px;
+            width: 100%;
+        }
+
+        .help-text {
+            font-size: 11px;
+            color: #000;
+            margin-top: 8px;
+            border-top: 1px solid #808080;
+            padding-top: 8px;
+        }
+
+        .mode-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            background: #f00;
+            border: 1px solid #000;
+            margin-right: 4px;
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
+
+        .hidden { display: none; }
     </style>
 </head>
 <body>
-
-    <!-- Menú Principal -->
-    <div id="mainMenu">
-        <div class="menu-title">GARRY'S MOD WEB</div>
-        <button class="menu-btn" onclick="startGame(false)">JUGAR SOLO</button>
-        <button class="menu-btn" onclick="showMultiplayer()">MULTIJUGADOR P2P</button>
-        <button class="menu-btn" onclick="toggleFullscreen()">PANTALLA COMPLETA</button>
-    </div>
-
-    <!-- Menú de Pausa -->
-    <div id="pauseMenu">
-        <h1 style="margin-bottom: 30px;">PAUSA</h1>
-        <button class="menu-btn" onclick="resumeGame()">REANUDAR</button>
-        <button class="menu-btn" onclick="location.reload()">SALIR AL MENÚ</button>
-    </div>
-
-    <!-- Panel Multiplayer -->
-    <div id="mpPanel">
-        <h2>Conexión P2P</h2>
-        <p>1. El Host crea una sala y copia la oferta</p>
-        <p>2. El Cliente pega la oferta y genera respuesta</p>
-        <p>3. El Host pega la respuesta</p>
-        
-        <button class="menu-btn" onclick="createHost()" style="font-size: 18px; padding: 10px;">CREAR SALA (HOST)</button>
-        <button class="menu-btn" onclick="joinRoom()" style="font-size: 18px; padding: 10px;">UNIRSE (CLIENTE)</button>
-        
-        <div id="hostSection" style="display:none; margin-top: 20px;">
-            <p>Tu oferta (copia y envía al otro jugador):</p>
-            <textarea id="offerText" readonly></textarea>
-            <p>Pega la respuesta del otro jugador:</p>
-            <textarea id="answerInput" placeholder="Pega aquí la respuesta..."></textarea>
-            <button class="menu-btn" onclick="completeConnection()" style="font-size: 16px; padding: 8px;">CONECTAR</button>
+    <div class="crt-overlay"></div>
+    
+    <div class="container">
+        <div class="title-bar">
+            <span>LEGACY_BUILDER.EXE - [RUNNING]</span>
+            <button onclick="alert('System Error: Cannot close legacy systems')" title="Close">×</button>
         </div>
         
-        <div id="clientSection" style="display:none; margin-top: 20px;">
-            <p>Pega la oferta del Host:</p>
-            <textarea id="offerInput" placeholder="Pega aquí la oferta..."></textarea>
-            <button class="menu-btn" onclick="createAnswer()" style="font-size: 16px; padding: 8px;">GENERAR RESPUESTA</button>
-            <p>Tu respuesta (copia y envía al Host):</p>
-            <textarea id="answerText" readonly></textarea>
+        <h1>▓▓▓ LEGO CONSTRUCTOR v1.0 ▓▓▓</h1>
+        
+        <div class="main-layout">
+            <div class="sidebar">
+                <div style="border: 2px outset #fff; margin-bottom: 8px;">
+                    <div class="panel-header">CONTROL PANEL</div>
+                    
+                    <div style="padding: 8px;">
+                        <button class="tool-btn active" onclick="setTool('build')">
+                            <span class="mode-indicator"></span>BUILD MODE
+                        </button>
+                        <button class="tool-btn" onclick="setTool('delete')">
+                            DELETE MODE
+                        </button>
+                        <button class="tool-btn" onclick="clearAll()">
+                            CLEAR ALL
+                        </button>
+                        
+                        <div class="size-selector">
+                            <label>BRICK SIZE:</label>
+                            <select id="brickSize" onchange="updateSize()">
+                                <option value="1x1">1 × 1</option>
+                                <option value="2x1">2 × 1</option>
+                                <option value="2x2" selected>2 × 2</option>
+                                <option value="4x2">4 × 2</option>
+                                <option value="4x1">4 × 1</option>
+                            </select>
+                        </div>
+                        
+                        <div style="margin-top: 12px; border: 2px inset #808080; padding: 8px; background: #000;">
+                            <div style="color: #0f0; font-family: 'VT323', monospace; font-size: 14px;">
+                                > STATUS: READY<br>
+                                > BLOCKS: <span id="blockCount">0</span><br>
+                                > MEM: 640K OK
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div style="border: 2px outset #fff;">
+                    <div class="panel-header">COLOR PALETTE</div>
+                    <div style="padding: 8px;">
+                        <div class="color-palette">
+                            <div class="color-btn active" style="background: #ff0000" onclick="setColor('#ff0000', this)" title="Classic Red"></div>
+                            <div class="color-btn" style="background: #0000ff" onclick="setColor('#0000ff', this)" title="Classic Blue"></div>
+                            <div class="color-btn" style="background: #ffff00" onclick="setColor('#ffff00', this)" title="Classic Yellow"></div>
+                            <div class="color-btn" style="background: #00aa00" onclick="setColor('#00aa00', this)" title="Classic Green"></div>
+                            <div class="color-btn" style="background: #ffffff" onclick="setColor('#ffffff', this)" title="Classic White"></div>
+                            <div class="color-btn" style="background: #000000" onclick="setColor('#000000', this)" title="Classic Black"></div>
+                            <div class="color-btn" style="background: #ff6600" onclick="setColor('#ff6600', this)" title="Classic Orange"></div>
+                            <div class="color-btn" style="background: #8b4513" onclick="setColor('#8b4513', this)" title="Classic Brown"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="help-text">
+                    <strong>INSTRUCTIONS:</strong><br>
+                    • Click grid to place<br>
+                    • Right-click to delete<br>
+                    • Select color first<br>
+                    • Build your legacy<br>
+                    <br>
+                    <em>© 1986 LEGACY SYS</em>
+                </div>
+            </div>
+            
+            <div class="workspace" id="workspace">
+                <div class="grid" id="grid" onclick="handleGridClick(event)">
+                </div>
+            </div>
         </div>
         
-        <button class="menu-btn" onclick="closeMP()" style="font-size: 16px; margin-top: 20px;">CERRAR</button>
+        <div class="stats">
+            > SYSTEM READY_ | COORDINATES: <span id="coords">0,0</span> | LAST_ACTION: <span id="lastAction">NONE</span>
+        </div>
     </div>
-
-    <!-- HUD -->
-    <div id="hud">
-        <div>Health: 100</div>
-        <div>Tool: <span id="currentTool">Physics Gun</span></div>
-        <div>Props: <span id="propCount">0</span></div>
-    </div>
-
-    <div id="crosshair"></div>
-
-    <div class="tool-selector" id="tools">
-        <button class="tool-btn active" onclick="setTool('phys')">Physics Gun</button>
-        <button class="tool-btn" onclick="setTool('spawn')">Spawn Menu</button>
-        <button class="tool-btn" onclick="setTool('remover')">Remover</button>
-        <button class="tool-btn" onclick="setTool('balloon')">Globo</button>
-    </div>
-
-    <div id="chat"></div>
-    <input type="text" id="chatInput" placeholder="Escribe y presiona Enter..." maxlength="100">
-
-    <!-- Scripts -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/cannon.js/0.6.2/cannon.min.js"></script>
 
     <script>
-        // Variables Globales
-        let scene, camera, renderer, world;
-        let player = { x: 0, y: 5, z: 10, vx: 0, vy: 0, vz: 0, rotation: 0 };
-        let objects = []; // { mesh, body, id, type }
-        let raycaster = new THREE.Raycaster();
-        let mouse = new THREE.Vector2();
-        let heldObject = null;
-        let currentTool = 'phys';
-        let isPaused = false;
-        let isMultiplayer = false;
-        let peerConnection = null;
-        let dataChannel = null;
-        let remotePlayers = {}; // id -> { mesh, x, y, z, rx, ry }
-        let myId = Math.random().toString(36).substr(2, 9);
-        let propIdCounter = 0;
+        let currentTool = 'build';
+        let currentColor = '#ff0000';
+        let currentSize = '2x2';
+        let blockCount = 0;
+        let occupied = new Set();
         
-        // Controles
-        const keys = {};
-        let mouseX = 0, mouseY = 0;
-        let isPointerLocked = false;
-
-        // Inicialización Three.js y Cannon.js
-        function initEngine() {
-            // Three.js
-            scene = new THREE.Scene();
-            scene.background = new THREE.Color(0x87CEEB);
-            scene.fog = new THREE.Fog(0x87CEEB, 10, 100);
-
-            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-            
-            renderer = new THREE.WebGLRenderer({ antialias: true });
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            renderer.shadowMap.enabled = true;
-            document.body.appendChild(renderer.domElement);
-
-            // Luces
-            const ambientLight = new THREE.AmbientLight(0x404040, 0.6);
-            scene.add(ambientLight);
-
-            const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
-            dirLight.position.set(50, 100, 50);
-            dirLight.castShadow = true;
-            dirLight.shadow.camera.left = -50;
-            dirLight.shadow.camera.right = 50;
-            dirLight.shadow.camera.top = 50;
-            dirLight.shadow.camera.bottom = -50;
-            scene.add(dirLight);
-
-            // Cannon.js
-            world = new CANNON.World();
-            world.gravity.set(0, -20, 0);
-            world.broadphase = new CANNON.NaiveBroadphase();
-            world.solver.iterations = 10;
-
-            // Materiales físicos
-            const physicsMaterial = new CANNON.Material("physics");
-            const physicsContactMaterial = new CANNON.ContactMaterial(physicsMaterial, physicsMaterial, {
-                friction: 0.5,
-                restitution: 0.3
-            });
-            world.addContactMaterial(physicsContactMaterial);
-
-            // Suelo
-            const groundShape = new CANNON.Box(new CANNON.Vec3(100, 1, 100));
-            const groundBody = new CANNON.Body({ mass: 0, material: physicsMaterial });
-            groundBody.addShape(groundShape);
-            groundBody.position.set(0, -1, 0);
-            world.addBody(groundBody);
-
-            const groundGeo = new THREE.PlaneGeometry(200, 200);
-            const groundMat = new THREE.MeshStandardMaterial({ 
-                color: 0x3a7a3a,
-                roughness: 0.8
-            });
-            const groundMesh = new THREE.Mesh(groundGeo, groundMat);
-            groundMesh.rotation.x = -Math.PI / 2;
-            groundMesh.receiveShadow = true;
-            scene.add(groundMesh);
-
-            // Grid helper
-            const gridHelper = new THREE.GridHelper(200, 50, 0x000000, 0x000000);
-            gridHelper.position.y = 0.01;
-            gridHelper.material.opacity = 0.2;
-            gridHelper.material.transparent = true;
-            scene.add(gridHelper);
-
-            // Spawn inicial de props
-            spawnProp('box', { x: 5, y: 5, z: 5 }, { r: 1, g: 0.5, b: 0.2 });
-            spawnProp('sphere', { x: -5, y: 8, z: -5 }, { r: 0.2, g: 0.5, b: 1 });
-            spawnProp('cylinder', { x: 0, y: 10, z: -8 }, { r: 0.8, g: 0.2, b: 0.8 });
-
-            // Eventos
-            setupEvents();
-        }
-
-        function spawnProp(type, pos, color, sendNetwork = true) {
-            const id = propIdCounter++;
-            let mesh, body, shape;
-
-            const material = new THREE.MeshStandardMaterial({ 
-                color: new THREE.Color(color.r, color.g, color.b),
-                roughness: 0.4,
-                metalness: 0.3
-            });
-
-            if (type === 'box') {
-                const size = 2 + Math.random();
-                const geo = new THREE.BoxGeometry(size, size, size);
-                mesh = new THREE.Mesh(geo, material);
-                shape = new CANNON.Box(new CANNON.Vec3(size/2, size/2, size/2));
-            } else if (type === 'sphere') {
-                const radius = 1 + Math.random();
-                const geo = new THREE.SphereGeometry(radius, 32, 16);
-                mesh = new THREE.Mesh(geo, material);
-                shape = new CANNON.Sphere(radius);
-            } else if (type === 'cylinder') {
-                const geo = new THREE.CylinderGeometry(1, 1, 4, 16);
-                mesh = new THREE.Mesh(geo, material);
-                shape = new CANNON.Cylinder(1, 1, 4, 16);
-                const q = new CANNON.Quaternion();
-                q.setFromAxisAngle(new CANNON.Vec3(1,0,0),-Math.PI/2);
-                shape.transformAllPoints(new CANNON.Vec3(0,0,0), q);
-            }
-
-            mesh.castShadow = true;
-            mesh.receiveShadow = true;
-            mesh.position.set(pos.x, pos.y, pos.z);
-            scene.add(mesh);
-
-            body = new CANNON.Body({ mass: 5 });
-            body.addShape(shape);
-            body.position.set(pos.x, pos.y, pos.z);
-            world.addBody(body);
-
-            const obj = { mesh, body, id, type, color };
-            objects.push(obj);
-
-            document.getElementById('propCount').textContent = objects.length;
-
-            // Enviar por red si es necesario
-            if (sendNetwork && dataChannel && dataChannel.readyState === 'open') {
-                sendData({ type: 'spawn', data: { type, pos, color, id } });
-            }
-
-            return obj;
-        }
-
-        function removeObject(obj) {
-            scene.remove(obj.mesh);
-            world.remove(obj.body);
-            objects = objects.filter(o => o !== obj);
-            document.getElementById('propCount').textContent = objects.length;
-        }
-
-        // Control del jugador
-        function updatePlayer(delta) {
-            if (isPaused) return;
-
-            const speed = 10;
-            const jumpSpeed = 10;
-            
-            // Dirección según cámara
-            const forward = new THREE.Vector3(0, 0, -1).applyAxisAngle(new THREE.Vector3(0, 1, 0), player.rotation);
-            const right = new THREE.Vector3(1, 0, 0).applyAxisAngle(new THREE.Vector3(0, 1, 0), player.rotation);
-
-            let dx = 0, dz = 0;
-
-            if (keys['w'] || keys['W']) { dx += forward.x; dz += forward.z; }
-            if (keys['s'] || keys['S']) { dx -= forward.x; dz -= forward.z; }
-            if (keys['a'] || keys['A']) { dx -= right.x; dz -= right.z; }
-            if (keys['d'] || keys['D']) { dx += right.x; dz += right.z; }
-
-            // Normalizar
-            if (dx !== 0 || dz !== 0) {
-                const len = Math.sqrt(dx*dx + dz*dz);
-                dx = (dx/len) * speed;
-                dz = (dz/len) * speed;
-            }
-
-            // Aplicar física simple
-            player.x += dx * delta;
-            player.z += dz * delta;
-
-            // Gravedad simple
-            player.vy -= 30 * delta;
-            player.y += player.vy * delta;
-
-            // Colisión con suelo
-            if (player.y < 1.7) {
-                player.y = 1.7;
-                player.vy = 0;
-                if (keys[' ']) player.vy = jumpSpeed;
-            }
-
-            // Actualizar cámara
-            camera.position.set(player.x, player.y, player.z);
-            camera.rotation.y = player.rotation;
-            camera.rotation.x = mouseY * 0.002;
-            camera.rotation.y = player.rotation - mouseX * 0.002;
-
-            // Enviar posición en multiplayer
-            if (isMultiplayer && dataChannel && dataChannel.readyState === 'open') {
-                if (Math.random() < 0.1) { // Limitar frecuencia
-                    sendData({ 
-                        type: 'pos', 
-                        data: { 
-                            x: player.x, y: player.y, z: player.z, 
-                            rx: camera.rotation.x, ry: camera.rotation.y 
-                        } 
-                    });
-                }
-            }
-        }
-
-        // Herramientas
-        function shootRay() {
-            raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
-            const intersects = raycaster.intersectObjects(objects.map(o => o.mesh));
-            
-            if (intersects.length > 0) {
-                const hit = intersects[0];
-                const obj = objects.find(o => o.mesh === hit.object);
-                return { obj, point: hit.point, distance: hit.distance };
-            }
-            return null;
-        }
-
-        function useTool() {
-            const hit = shootRay();
-            
-            if (currentTool === 'spawn') {
-                // Spawn frente al jugador
-                const forward = new THREE.Vector3(0, 0, -1).applyAxisAngle(new THREE.Vector3(0, 1, 0), player.rotation - mouseX * 0.002);
-                const pos = {
-                    x: player.x + forward.x * 5,
-                    y: player.y,
-                    z: player.z + forward.z * 5
-                };
-                const types = ['box', 'sphere', 'cylinder'];
-                const type = types[Math.floor(Math.random() * types.length)];
-                const color = { r: Math.random(), g: Math.random(), b: Math.random() };
-                spawnProp(type, pos, color);
-            }
-            else if (currentTool === 'remover' && hit) {
-                removeObject(hit.obj);
-                sendData({ type: 'remove', data: { id: hit.obj.id } });
-            }
-            else if (currentTool === 'phys' && hit) {
-                if (hit.distance < 20) {
-                    // Agarrar objeto (simplificado - aplica fuerza hacia adelante)
-                    const forward = new THREE.Vector3(0, 0, -1).applyAxisAngle(new THREE.Vector3(0, 1, 0), player.rotation - mouseX * 0.002);
-                    hit.obj.body.velocity.x += forward.x * 10;
-                    hit.obj.body.velocity.y += forward.y * 10 + 5;
-                    hit.obj.body.velocity.z += forward.z * 10;
-                }
-            }
-            else if (currentTool === 'balloon') {
-                if (hit) {
-                    const forward = new THREE.Vector3(0, 0, -1).applyAxisAngle(new THREE.Vector3(0, 1, 0), player.rotation - mouseX * 0.002);
-                    const pos = {
-                        x: player.x + forward.x * 3,
-                        y: player.y + forward.y * 3,
-                        z: player.z + forward.z * 3
-                    };
-                    const obj = spawnProp('sphere', pos, { r: 1, g: 0, b: 0 });
-                    obj.body.mass = 0.5;
-                    // Hacer que flote
-                    obj.body.applyForce(new CANNON.Vec3(0, 50, 0), obj.body.position);
-                }
-            }
-        }
-
-        // Multiplayer WebRTC
-        async function createHost() {
-            document.getElementById('hostSection').style.display = 'block';
-            
-            peerConnection = new RTCPeerConnection({
-                iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
-            });
-
-            dataChannel = peerConnection.createDataChannel('game', { ordered: true });
-            setupDataChannel();
-
-            const offer = await peerConnection.createOffer();
-            await peerConnection.setLocalDescription(offer);
-            
-            // Esperar a que se recopilen los ICE candidates
-            setTimeout(() => {
-                document.getElementById('offerText').value = btoa(JSON.stringify(peerConnection.localDescription));
-            }, 1000);
-        }
-
-        function joinRoom() {
-            document.getElementById('clientSection').style.display = 'block';
-        }
-
-        async function createAnswer() {
-            const offerStr = document.getElementById('offerInput').value;
-            if (!offerStr) return alert('Pega la oferta primero');
-
-            const offer = JSON.parse(atob(offerStr));
-            
-            peerConnection = new RTCPeerConnection({
-                iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
-            });
-
-            peerConnection.ondatachannel = (event) => {
-                dataChannel = event.channel;
-                setupDataChannel();
-            };
-
-            await peerConnection.setRemoteDescription(offer);
-            const answer = await peerConnection.createAnswer();
-            await peerConnection.setLocalDescription(answer);
-
-            setTimeout(() => {
-                document.getElementById('answerText').value = btoa(JSON.stringify(peerConnection.localDescription));
-            }, 1000);
-        }
-
-        async function completeConnection() {
-            const answerStr = document.getElementById('answerInput').value;
-            if (!answerStr) return alert('Pega la respuesta primero');
-            
-            const answer = JSON.parse(atob(answerStr));
-            await peerConnection.setRemoteDescription(answer);
-            isMultiplayer = true;
-            closeMP();
-            startGame(true);
-        }
-
-        function setupDataChannel() {
-            dataChannel.onopen = () => {
-                console.log('Conexión P2P establecida');
-                addChatMessage('Sistema: Jugador conectado');
-            };
-            
-            dataChannel.onmessage = (event) => {
-                const msg = JSON.parse(event.data);
-                handleNetworkMessage(msg);
-            };
-        }
-
-        function sendData(data) {
-            if (dataChannel && dataChannel.readyState === 'open') {
-                dataChannel.send(JSON.stringify(data));
-            }
-        }
-
-        function handleNetworkMessage(msg) {
-            if (msg.type === 'pos') {
-                // Actualizar jugador remoto
-                if (!remotePlayers[msg.id]) {
-                    createRemotePlayer(msg.id);
-                }
-                remotePlayers[msg.id].x = msg.data.x;
-                remotePlayers[msg.id].y = msg.data.y;
-                remotePlayers[msg.id].z = msg.data.z;
-                remotePlayers[msg.id].rx = msg.data.rx;
-                remotePlayers[msg.id].ry = msg.data.ry;
-            }
-            else if (msg.type === 'spawn') {
-                spawnProp(msg.data.type, msg.data.pos, msg.data.color, false);
-            }
-            else if (msg.type === 'remove') {
-                const obj = objects.find(o => o.id === msg.data.id);
-                if (obj) removeObject(obj);
-            }
-            else if (msg.type === 'chat') {
-                addChatMessage(`Jugador: ${msg.text}`);
-            }
-        }
-
-        function createRemotePlayer(id) {
-            const geo = new THREE.CapsuleGeometry(0.5, 1.8, 4, 8);
-            const mat = new THREE.MeshStandardMaterial({ color: 0xff0000 });
-            const mesh = new THREE.Mesh(geo, mat);
-            scene.add(mesh);
-            remotePlayers[id] = { mesh, x: 0, y: 5, z: 0, rx: 0, ry: 0 };
-        }
-
-        // UI Functions
-        function startGame(multiplayer) {
-            isMultiplayer = multiplayer;
-            document.getElementById('mainMenu').style.display = 'none';
-            document.getElementById('hud').style.display = 'block';
-            document.getElementById('crosshair').style.display = 'block';
-            document.getElementById('tools').style.display = 'block';
-            document.getElementById('chat').style.display = 'block';
-            
-            initEngine();
-            requestPointerLock();
-            animate();
-        }
-
-        function showMultiplayer() {
-            document.getElementById('mpPanel').style.display = 'block';
-        }
-
-        function closeMP() {
-            document.getElementById('mpPanel').style.display = 'none';
-        }
-
-        function resumeGame() {
-            isPaused = false;
-            document.getElementById('pauseMenu').style.display = 'none';
-            requestPointerLock();
-        }
-
         function setTool(tool) {
             currentTool = tool;
-            document.getElementById('currentTool').textContent = 
-                tool === 'phys' ? 'Physics Gun' :
-                tool === 'spawn' ? 'Spawn Menu' :
-                tool === 'remover' ? 'Remover' : 'Globo';
+            document.querySelectorAll('.tool-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if(btn.textContent.toLowerCase().includes(tool)) {
+                    btn.classList.add('active');
+                }
+            });
+            logAction(`TOOL_CHANGED_${tool.toUpperCase()}`);
+        }
+        
+        function setColor(color, element) {
+            currentColor = color;
+            document.querySelectorAll('.color-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            element.classList.add('active');
+            logAction(`COLOR_SELECT_${color}`);
+        }
+        
+        function updateSize() {
+            currentSize = document.getElementById('brickSize').value;
+            logAction(`SIZE_SELECT_${currentSize}`);
+        }
+        
+        function handleGridClick(event) {
+            if(event.button !== 0) return; // Only left click
             
-            document.querySelectorAll('.tool-btn').forEach(btn => btn.classList.remove('active'));
-            event.target.classList.add('active');
-        }
-
-        function requestPointerLock() {
-            renderer.domElement.requestPointerLock();
-        }
-
-        function toggleFullscreen() {
-            if (!document.fullscreenElement) {
-                document.documentElement.requestFullscreen();
-            } else {
-                document.exitFullscreen();
+            const grid = document.getElementById('grid');
+            const rect = grid.getBoundingClientRect();
+            const x = Math.floor((event.clientX - rect.left) / 32) * 32;
+            const y = Math.floor((event.clientY - rect.top) / 32) * 32;
+            
+            if(currentTool === 'build') {
+                placeBlock(x, y);
             }
+            
+            updateCoords(x, y);
         }
-
-        function addChatMessage(text) {
-            const chat = document.getElementById('chat');
-            const div = document.createElement('div');
-            div.textContent = text;
-            chat.appendChild(div);
-            chat.scrollTop = chat.scrollHeight;
-        }
-
-        // Event Listeners
-        function setupEvents() {
-            document.addEventListener('keydown', (e) => {
-                keys[e.key] = true;
-                if (e.key === 'Escape') {
-                    isPaused = !isPaused;
-                    document.getElementById('pauseMenu').style.display = isPaused ? 'flex' : 'none';
-                    if (isPaused) document.exitPointerLock();
-                }
-                if (e.key === 'Enter' && document.getElementById('chatInput').style.display === 'none') {
-                    document.getElementById('chatInput').style.display = 'block';
-                    document.getElementById('chatInput').focus();
-                    document.exitPointerLock();
-                }
-            });
-
-            document.addEventListener('keyup', (e) => {
-                keys[e.key] = false;
-            });
-
-            document.addEventListener('mousemove', (e) => {
-                if (document.pointerLockElement === renderer.domElement) {
-                    mouseX += e.movementX;
-                    mouseY += e.movementY;
-                    mouseY = Math.max(-500, Math.min(500, mouseY));
-                }
-            });
-
-            document.addEventListener('mousedown', (e) => {
-                if (e.button === 0 && !isPaused) useTool();
-            });
-
-            document.getElementById('chatInput').addEventListener('keydown', (e) => {
-                if (e.key === 'Enter') {
-                    const text = e.target.value;
-                    if (text) {
-                        addChatMessage(`Yo: ${text}`);
-                        sendData({ type: 'chat', text });
-                        e.target.value = '';
+        
+        function placeBlock(x, y) {
+            const [w, h] = currentSize.split('x').map(n => parseInt(n) * 32);
+            
+            // Check bounds
+            if(x + w > 640 || y + h > 480) {
+                alert('ERROR: Out of bounds!');
+                return;
+            }
+            
+            // Check collision
+            for(let i = x; i < x + w; i += 32) {
+                for(let j = y; j < y + h; j += 32) {
+                    if(occupied.has(`${i},${j}`)) {
+                        logAction('COLLISION_DETECTED');
+                        return;
                     }
-                    e.target.style.display = 'none';
-                    requestPointerLock();
                 }
-            });
-
-            window.addEventListener('resize', () => {
-                if (camera && renderer) {
-                    camera.aspect = window.innerWidth / window.innerHeight;
-                    camera.updateProjectionMatrix();
-                    renderer.setSize(window.innerWidth, window.innerHeight);
-                }
-            });
-        }
-
-        // Loop principal
-        const clock = new THREE.Clock();
-
-        function animate() {
-            requestAnimationFrame(animate);
-            
-            if (!isPaused) {
-                const delta = clock.getDelta();
-                
-                // Física
-                world.step(1/60, delta, 3);
-                
-                // Actualizar objetos físicos
-                objects.forEach(obj => {
-                    obj.mesh.position.copy(obj.body.position);
-                    obj.mesh.quaternion.copy(obj.body.quaternion);
-                });
-
-                // Actualizar jugador
-                updatePlayer(delta);
-
-                // Actualizar jugadores remotos
-                Object.values(remotePlayers).forEach(p => {
-                    p.mesh.position.set(p.x, p.y, p.z);
-                    p.mesh.rotation.x = p.rx;
-                    p.mesh.rotation.y = p.ry;
-                });
             }
-
-            renderer.render(scene, camera);
+            
+            // Create block
+            const block = document.createElement('div');
+            block.className = 'lego-piece';
+            block.style.left = x + 'px';
+            block.style.top = y + 'px';
+            block.style.width = (w - 4) + 'px';
+            block.style.height = (h - 4) + 'px';
+            block.style.backgroundColor = currentColor;
+            
+            // Add studs
+            const studsX = parseInt(currentSize.split('x')[0]);
+            const studsY = parseInt(currentSize.split('x')[1]);
+            for(let i = 0; i < studsX * studsY; i++) {
+                const stud = document.createElement('div');
+                stud.className = 'stud';
+                block.appendChild(stud);
+            }
+            
+            // Make draggable
+            let isDragging = false;
+            let startX, startY, initialLeft, initialTop;
+            
+            block.addEventListener('mousedown', (e) => {
+                if(e.button === 2) { // Right click to delete
+                    e.preventDefault();
+                    removeBlock(block, x, y, w, h);
+                    return;
+                }
+                isDragging = true;
+                startX = e.clientX;
+                startY = e.clientY;
+                initialLeft = parseInt(block.style.left);
+                initialTop = parseInt(block.style.top);
+                block.style.zIndex = 1000;
+            });
+            
+            document.addEventListener('mousemove', (e) => {
+                if(!isDragging) return;
+                const dx = Math.round((e.clientX - startX) / 32) * 32;
+                const dy = Math.round((e.clientY - startY) / 32) * 32;
+                
+                // Boundary check
+                let newX = initialLeft + dx;
+                let newY = initialTop + dy;
+                
+                if(newX >= 0 && newX + w <= 640 && newY >= 0 && newY + h <= 480) {
+                    block.style.left = newX + 'px';
+                    block.style.top = newY + 'px';
+                }
+            });
+            
+            document.addEventListener('mouseup', () => {
+                if(isDragging) {
+                    isDragging = false;
+                    block.style.zIndex = '';
+                    // Update occupied
+                    updateOccupied(block, w, h);
+                }
+            });
+            
+            // Right click delete
+            block.addEventListener('contextmenu', (e) => {
+                e.preventDefault();
+                removeBlock(block, x, y, w, h);
+            });
+            
+            document.getElementById('grid').appendChild(block);
+            
+            // Mark occupied
+            for(let i = x; i < x + w; i += 32) {
+                for(let j = y; j < y + h; j += 32) {
+                    occupied.add(`${i},${j}`);
+                }
+            }
+            
+            blockCount++;
+            document.getElementById('blockCount').textContent = blockCount;
+            logAction(`BLOCK_PLACED_${currentSize}`);
         }
+        
+        function removeBlock(block, x, y, w, h) {
+            const left = parseInt(block.style.left);
+            const top = parseInt(block.style.top);
+            
+            for(let i = left; i < left + w; i += 32) {
+                for(let j = top; j < top + h; j += 32) {
+                    occupied.delete(`${i},${j}`);
+                }
+            }
+            
+            block.remove();
+            blockCount--;
+            document.getElementById('blockCount').textContent = blockCount;
+            logAction('BLOCK_DELETED');
+        }
+        
+        function updateOccupied(block, w, h) {
+            const x = parseInt(block.style.left);
+            const y = parseInt(block.style.top);
+            
+            // Clear old positions would require tracking, simplified here
+            occupied.clear();
+            document.querySelectorAll('.lego-piece').forEach(b => {
+                const bx = parseInt(b.style.left);
+                const by = parseInt(b.style.top);
+                const bw = parseInt(b.style.width) + 4;
+                const bh = parseInt(b.style.height) + 4;
+                
+                for(let i = bx; i < bx + bw; i += 32) {
+                    for(let j = by; j < by + bh; j += 32) {
+                        occupied.add(`${i},${j}`);
+                    }
+                }
+            });
+        }
+        
+        function clearAll() {
+            if(confirm('WARNING: Delete all blocks? (Y/N)')) {
+                document.getElementById('grid').innerHTML = '';
+                occupied.clear();
+                blockCount = 0;
+                document.getElementById('blockCount').textContent = 0;
+                logAction('MEMORY_CLEARED');
+            }
+        }
+        
+        function updateCoords(x, y) {
+            document.getElementById('coords').textContent = `${x},${y}`;
+        }
+        
+        function logAction(action) {
+            document.getElementById('lastAction').textContent = action;
+        }
+        
+        // Prevent context menu on grid
+        document.getElementById('grid').addEventListener('contextmenu', e => e.preventDefault());
+        
+        // Mouse tracking
+        document.getElementById('grid').addEventListener('mousemove', (e) => {
+            const rect = e.target.getBoundingClientRect();
+            const x = Math.floor((e.clientX - rect.left) / 32) * 32;
+            const y = Math.floor((e.clientY - rect.top) / 32) * 32;
+            updateCoords(x, y);
+        });
+        
+        // Initialize
+        logAction('SYSTEM_INIT_OK');
     </script>
 </body>
 </html>
