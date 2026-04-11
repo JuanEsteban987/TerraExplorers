@@ -3,259 +3,246 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PC Builder Simulator 3D</title>
+    <title>PC Builder Simulator 3D - Fixed</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { overflow: hidden; font-family: 'Courier New', monospace; }
+        * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
+        body { overflow: hidden; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #000; }
         
-        #gameCanvas { display: block; }
+        #gameCanvas { display: block; width: 100vw; height: 100vh; }
         
         #ui {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: 100;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; z-index: 100;
         }
         
         #crosshair {
-            position: absolute;
-            top: 50%;
-            left: 50%;
+            position: absolute; top: 50%; left: 50%;
             transform: translate(-50%, -50%);
-            width: 20px;
-            height: 20px;
-            border: 2px solid rgba(0, 255, 0, 0.8);
-            border-radius: 50%;
-            background: rgba(0, 255, 0, 0.1);
+            width: 20px; height: 20px;
+            border: 2px solid #0f0; border-radius: 50%;
+            background: rgba(0,255,0,0.1);
+            box-shadow: 0 0 10px rgba(0,255,0,0.5);
         }
         
+        #crosshair::before, #crosshair::after {
+            content: ''; position: absolute; background: #0f0;
+        }
+        #crosshair::before { top: 9px; left: 2px; width: 16px; height: 2px; }
+        #crosshair::after { top: 2px; left: 9px; width: 2px; height: 16px; }
+        
         #controls {
-            position: absolute;
-            bottom: 20px;
-            left: 20px;
-            color: white;
-            background: rgba(0, 0, 0, 0.8);
-            padding: 15px;
-            border-radius: 5px;
-            font-size: 14px;
-            line-height: 1.5;
+            position: absolute; bottom: 20px; left: 20px;
+            color: white; background: rgba(0,0,0,0.8);
+            padding: 15px; border-radius: 8px; font-size: 14px;
+            line-height: 1.6; border: 1px solid #333;
+        }
+        
+        #interactionPrompt {
+            position: absolute; bottom: 150px; left: 50%;
+            transform: translateX(-50%);
+            color: #0f0; font-size: 18px; font-weight: bold;
+            text-shadow: 0 0 10px rgba(0,255,0,0.8);
+            background: rgba(0,0,0,0.7); padding: 10px 20px;
+            border-radius: 20px; display: none;
         }
         
         #phone {
-            position: absolute;
-            bottom: -400px;
-            left: 50%;
+            position: absolute; bottom: -600px; left: 50%;
             transform: translateX(-50%);
-            width: 300px;
-            height: 500px;
-            background: #1a1a1a;
-            border-radius: 30px;
-            border: 8px solid #333;
-            pointer-events: auto;
-            transition: bottom 0.3s;
-            overflow: hidden;
+            width: 320px; height: 580px;
+            background: #1a1a1a; border-radius: 40px;
+            border: 12px solid #333; pointer-events: auto;
+            transition: bottom 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,0.8);
         }
         
         #phone.open { bottom: 20px; }
         
         #phoneScreen {
-            width: 100%;
-            height: 100%;
+            width: 100%; height: 100%;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            padding: 20px;
-            color: white;
+            padding: 20px; color: white; position: relative;
         }
         
         .phone-header {
-            text-align: center;
-            font-size: 18px;
-            margin-bottom: 20px;
+            text-align: center; font-size: 20px; margin-bottom: 30px;
             border-bottom: 2px solid rgba(255,255,255,0.3);
-            padding-bottom: 10px;
+            padding-bottom: 15px; font-weight: bold;
+        }
+        
+        .app-grid {
+            display: grid; grid-template-columns: repeat(2, 1fr);
+            gap: 20px; padding: 20px;
         }
         
         .app-icon {
-            width: 60px;
-            height: 60px;
-            background: rgba(255,255,255,0.2);
-            border-radius: 15px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            margin: 10px;
-            cursor: pointer;
-            transition: transform 0.2s;
-            font-size: 24px;
+            aspect-ratio: 1; background: rgba(255,255,255,0.2);
+            border-radius: 20px; display: flex; flex-direction: column;
+            align-items: center; justify-content: center; cursor: pointer;
+            transition: all 0.2s; border: 2px solid transparent;
         }
         
-        .app-icon:hover { transform: scale(1.1); background: rgba(255,255,255,0.3); }
+        .app-icon:hover { transform: scale(1.05); background: rgba(255,255,255,0.3); border-color: white; }
+        .app-icon span { font-size: 32px; margin-bottom: 5px; }
+        .app-icon label { font-size: 12px; font-weight: bold; }
         
-        #shopScreen { display: none; height: 100%; overflow-y: auto; }
+        #shopScreen { display: none; height: 100%; overflow-y: auto; padding: 10px; }
+        .shop-header { display: flex; align-items: center; margin-bottom: 20px; gap: 10px; }
+        .back-btn { background: rgba(255,255,255,0.2); border: none; color: white; padding: 8px 15px; border-radius: 8px; cursor: pointer; }
+        
         .shop-item {
-            background: rgba(255,255,255,0.1);
-            margin: 10px 0;
-            padding: 15px;
-            border-radius: 10px;
-            cursor: pointer;
-            border: 2px solid transparent;
-        }
-        .shop-item:hover { border-color: #fff; }
-        .shop-item.selected { border-color: #00ff00; background: rgba(0,255,0,0.2); }
-        
-        #notification {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            background: rgba(0, 0, 0, 0.9);
-            color: #0f0;
-            padding: 15px;
-            border-radius: 5px;
-            border-left: 4px solid #0f0;
-            display: none;
-            max-width: 300px;
+            background: rgba(255,255,255,0.1); margin: 10px 0;
+            padding: 15px; border-radius: 12px; cursor: pointer;
+            border: 2px solid transparent; transition: all 0.2s;
         }
         
-        #computerScreen {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 800px;
-            height: 600px;
-            background: #000;
-            border: 20px solid #333;
-            border-radius: 10px;
-            display: none;
-            pointer-events: auto;
+        .shop-item:hover { border-color: #fff; background: rgba(255,255,255,0.2); }
+        .shop-item.selected { border-color: #0f0; background: rgba(0,255,0,0.2); }
+        .shop-item .price { color: #0f0; font-weight: bold; font-size: 18px; }
+        .shop-item .desc { font-size: 12px; opacity: 0.8; margin-top: 5px; }
+        
+        #buyBtn { width: 100%; margin-top: 20px; padding: 15px; font-size: 16px; background: #4CAF50; color: white; border: none; border-radius: 8px; cursor: pointer; }
+        #buyBtn:disabled { background: #666; cursor: not-allowed; }
+        
+        #moneyDisplay { position: absolute; top: 20px; right: 20px; background: rgba(0,0,0,0.8); color: #0f0; padding: 10px 20px; border-radius: 20px; font-weight: bold; }
+        
+        #computerInterface {
+            position: fixed; top: 50%; left: 50%;
+            transform: translate(-50%, -50%) scale(0.8);
+            width: 900px; height: 700px; background: #000;
+            border: 30px solid #333; border-radius: 10px;
+            display: none; opacity: 0; transition: all 0.3s;
+            box-shadow: 0 0 50px rgba(0,0,0,0.9);
         }
         
-        #bios {
-            width: 100%;
-            height: 100%;
-            background: #000080;
-            color: #fff;
-            padding: 20px;
-            font-family: 'Courier New', monospace;
-            font-size: 16px;
-            overflow-y: auto;
+        #computerInterface.active { display: block; opacity: 1; transform: translate(-50%, -50%) scale(1); }
+        
+        #monitorScreen {
+            width: 100%; height: 100%; position: relative;
+            overflow: hidden; font-family: 'Courier New', monospace;
         }
         
-        #windows1 {
-            width: 100%;
-            height: 100%;
-            background: #c0c0c0;
-            display: none;
+        .screen-off { background: #111 !important; }
+        
+        #biosScreen {
+            width: 100%; height: 100%; background: #000080;
+            color: white; padding: 30px; font-size: 16px;
+            line-height: 1.5; display: none;
+        }
+        
+        #installScreen {
+            width: 100%; height: 100%; background: #c0c0c0;
+            display: none; color: #000; padding: 40px;
+            text-align: center;
+        }
+        
+        .progress-bar {
+            width: 80%; height: 30px; background: #fff;
+            border: 2px solid #000; margin: 20px auto;
             position: relative;
         }
         
-        .win1-header {
-            background: linear-gradient(90deg, #000080, #1084d0);
-            color: white;
-            padding: 5px;
-            font-weight: bold;
+        .progress-fill {
+            height: 100%; background: #000080; width: 0%;
+            transition: width 0.3s;
         }
         
-        .win1-content {
-            padding: 20px;
+        #windowsScreen {
+            width: 100%; height: 100%; background: #008080;
+            display: none; position: relative;
         }
         
-        .win1-icon {
-            width: 80px;
-            text-align: center;
-            margin: 10px;
-            cursor: pointer;
-            display: inline-block;
+        .win95-taskbar {
+            position: absolute; bottom: 0; left: 0; right: 0;
+            height: 40px; background: #c0c0c0;
+            border-top: 2px solid #fff; display: flex; align-items: center;
+            padding: 0 5px;
         }
-        .win1-icon:hover { background: #000080; color: white; }
+        
+        .start-btn {
+            background: #c0c0c0; border: 2px outset #fff;
+            padding: 5px 15px; font-weight: bold; cursor: pointer;
+            display: flex; align-items: center; gap: 5px;
+        }
+        
+        .desktop-icons {
+            padding: 20px; display: flex; flex-direction: column;
+            gap: 20px; flex-wrap: wrap; height: calc(100% - 40px);
+        }
+        
+        .desktop-icon {
+            width: 80px; text-align: center; color: white;
+            cursor: pointer; padding: 5px; border: 1px solid transparent;
+        }
+        
+        .desktop-icon:hover { background: rgba(0,0,128,0.3); border: 1px dotted white; }
+        .desktop-icon .icon { font-size: 32px; margin-bottom: 5px; }
+        .desktop-icon .label { font-size: 12px; text-shadow: 1px 1px 2px black; }
+        
+        #pcEditModal {
+            position: fixed; top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            width: 600px; background: rgba(30,30,30,0.95);
+            border: 3px solid #0f0; border-radius: 10px;
+            padding: 30px; display: none; color: white;
+            box-shadow: 0 0 30px rgba(0,255,0,0.3);
+        }
+        
+        #pcEditModal h2 { color: #0f0; margin-bottom: 20px; text-align: center; }
+        
+        .slots-grid {
+            display: grid; grid-template-columns: repeat(3, 1fr);
+            gap: 15px; margin: 20px 0;
+        }
+        
+        .slot {
+            aspect-ratio: 1; background: rgba(0,0,0,0.5);
+            border: 2px dashed #666; border-radius: 10px;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            cursor: pointer; transition: all 0.2s; position: relative;
+        }
+        
+        .slot:hover { border-color: #0f0; background: rgba(0,255,0,0.1); }
+        .slot.filled { border-color: #0f0; border-style: solid; background: rgba(0,50,0,0.3); }
+        .slot .slot-icon { font-size: 24px; }
+        .slot .slot-name { font-size: 10px; margin-top: 5px; text-align: center; }
         
         #doorbell {
-            position: absolute;
-            top: 20px;
-            left: 50%;
+            position: absolute; top: 30px; left: 50%;
             transform: translateX(-50%);
-            background: #ff6600;
-            color: white;
-            padding: 20px 40px;
-            border-radius: 10px;
-            font-size: 24px;
-            display: none;
+            background: linear-gradient(135deg, #ff6b6b, #ee5a5a);
+            color: white; padding: 20px 40px;
+            border-radius: 15px; font-size: 20px; font-weight: bold;
+            display: none; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
             animation: pulse 1s infinite;
         }
         
-        @keyframes pulse {
-            0%, 100% { transform: translateX(-50%) scale(1); }
-            50% { transform: translateX(-50%) scale(1.1); }
+        @keyframes pulse { 0%, 100% { transform: translateX(-50%) scale(1); } 50% { transform: translateX(-50%) scale(1.05); } }
+        
+        .close-btn { position: absolute; top: 10px; right: 15px; background: none; border: none; color: #f00; font-size: 24px; cursor: pointer; }
+        
+        #notification {
+            position: absolute; top: 100px; right: -400px;
+            width: 350px; background: rgba(0,0,0,0.9);
+            color: #0f0; padding: 20px; border-radius: 10px;
+            border-left: 4px solid #0f0; transition: right 0.3s;
+            pointer-events: auto;
         }
         
-        .inventory {
-            position: absolute;
-            bottom: 100px;
-            left: 50%;
-            transform: translateX(-50%);
-            display: flex;
-            gap: 10px;
-            background: rgba(0,0,0,0.8);
-            padding: 10px;
-            border-radius: 10px;
+        #notification.show { right: 20px; }
+        
+        .component-list {
+            max-height: 200px; overflow-y: auto;
+            background: rgba(0,0,0,0.3); padding: 10px;
+            border-radius: 5px; margin: 10px 0;
         }
         
-        .inv-item {
-            width: 50px;
-            height: 50px;
-            background: rgba(255,255,255,0.2);
-            border: 2px solid #666;
-            border-radius: 5px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            font-size: 24px;
-        }
+        .component-item { padding: 8px; border-bottom: 1px solid #333; cursor: pointer; }
+        .component-item:hover { background: rgba(0,255,0,0.1); }
+        .component-item.selected { color: #0f0; }
         
-        .inv-item.active { border-color: #0f0; background: rgba(0,255,0,0.3); }
-        .inv-item.has-item { border-color: #fff; }
-        
-        #assemblyUI {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: rgba(0,0,0,0.95);
-            padding: 30px;
-            border-radius: 10px;
-            color: white;
-            display: none;
-            text-align: center;
-            max-width: 400px;
-        }
-        
-        .component-slot {
-            border: 2px dashed #666;
-            padding: 15px;
-            margin: 10px;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-        
-        .component-slot:hover { border-color: #0f0; }
-        .component-slot.installed { border-color: #0f0; background: rgba(0,255,0,0.1); }
-        
-        button {
-            background: #4CAF50;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 16px;
-            margin: 5px;
-        }
-        
-        button:hover { background: #45a049; }
-        button:disabled { background: #666; cursor: not-allowed; }
+        .hidden { display: none !important; }
     </style>
 </head>
 <body>
@@ -263,596 +250,569 @@
     
     <div id="ui">
         <div id="crosshair"></div>
+        <div id="moneyDisplay">💰 $<span id="moneyVal">500</span></div>
+        
         <div id="controls">
-            <strong>🎮 CONTROLES:</strong><br>
-            WASD - Moverse<br>
-            MOUSE - Mirar<br>
-            E - Interactuar<br>
-            P - Abrir Celular<br>
-            ESC - Cerrar/Cancelar<br>
-            <br>
-            <span id="objective">Objetivo: Arma tu PC</span>
+            <strong>🎮 CONTROLES</strong><br>
+            <span style="color:#0f0">WASD</span> - Moverse | <span style="color:#0f0">MOUSE</span> - Mirar<br>
+            <span style="color:#0f0">E</span> - Interactuar | <span style="color:#0f0">P</span> - Celular<br>
+            <span style="color:#0f0">ESC</span> - Cerrar/Cancelar<br><br>
+            <span id="currentTask" style="color:#ffd700">Objetivo: Examina la PC (torre)</span>
         </div>
         
-        <div class="inventory" id="inventory">
-            <div class="inv-item" id="slot0"></div>
-            <div class="inv-item" id="slot1"></div>
-            <div class="inv-item" id="slot2"></div>
-            <div class="inv-item" id="slot3"></div>
-        </div>
+        <div id="interactionPrompt"></div>
         
-        <div id="phone">
-            <div id="phoneScreen">
-                <div class="phone-header">📱 Mi Celular</div>
-                <div id="homeScreen">
-                    <div class="app-icon" onclick="openShop()">🛒</div>
-                    <div class="app-icon" onclick="alert('Batería: 87%')">🔋</div>
-                    <div class="app-icon" onclick="alert('Sin señal')">📡</div>
-                    <div class="app-icon" onclick="alert('No hay fotos')">📷</div>
-                    <div style="margin-top: 20px; font-size: 12px; opacity: 0.7;">
-                        Banco: $<span id="money">500</span>
-                    </div>
-                </div>
-                <div id="shopScreen">
-                    <button onclick="closeShop()" style="margin-bottom: 10px;">← Volver</button>
-                    <h3>🛒 Tienda Online</h3>
-                    <div class="shop-item" onclick="selectItem('usb')">
-                        💾 USB Windows 1.0 - $50<br>
-                        <small>Sistema operativo retro</small>
-                    </div>
-                    <div class="shop-item" onclick="selectItem('mouse')">
-                        🖱️ Mouse USB - $25<br>
-                        <small>Para controlar la PC</small>
-                    </div>
-                    <div class="shop-item" onclick="selectItem('keyboard')">
-                        ⌨️ Teclado USB - $40<br>
-                        <small>Para escribir</small>
-                    </div>
-                    <div class="shop-item" onclick="selectItem('ram')">
-                        🧠 RAM DDR4 8GB - $80<br>
-                        <small>Memoria para la PC</small>
-                    </div>
-                    <button id="buyBtn" onclick="buyItem()" disabled>Comprar</button>
-                </div>
-            </div>
-        </div>
+        <div id="doorbell">🔔 ¡Entrega en la puerta!</div>
         
         <div id="notification"></div>
-        <div id="doorbell">🔔 ¡Toc toc! ¡Entrega!</div>
         
-        <div id="assemblyUI">
-            <h2>🔧 Modo Ensamblaje</h2>
-            <div id="assemblySlots"></div>
-            <button onclick="closeAssembly()">Cerrar</button>
-            <button onclick="finishAssembly()" id="finishBtn" style="display:none;">Encender PC</button>
+        <!-- Celular -->
+        <div id="phone">
+            <div id="phoneScreen">
+                <div class="phone-header">📱 Smartphone</div>
+                
+                <div id="homeScreen" class="app-grid">
+                    <div class="app-icon" onclick="openShop()">
+                        <span>🛒</span><label>Tienda</label>
+                    </div>
+                    <div class="app-icon" onclick="showNotification('💵 Saldo: $' + gameState.money)">
+                        <span>💳</span><label>Banco</label>
+                    </div>
+                    <div class="app-icon" onclick="showNotification('📡 Sin señal')">
+                        <span>📶</span><label>Red</label>
+                    </div>
+                    <div class="app-icon" onclick="showNotification('🔋 Batería: 87%')">
+                        <span>🔋</span><label>Estado</label>
+                    </div>
+                </div>
+                
+                <div id="shopScreen">
+                    <div class="shop-header">
+                        <button class="back-btn" onclick="closeShop()">←</button>
+                        <span style="font-size:18px;font-weight:bold;">PC Shop</span>
+                    </div>
+                    
+                    <div class="shop-item" onclick="selectProduct('usb', 50, this)">
+                        <div style="display:flex;justify-content:space-between;align-items:center;">
+                            <span>💾 USB Windows 1.0</span>
+                            <span class="price">$50</span>
+                        </div>
+                        <div class="desc">Sistema operativo retro funcional. Necesario para instalar.</div>
+                    </div>
+                    
+                    <div class="shop-item" onclick="selectProduct('mouse', 25, this)">
+                        <div style="display:flex;justify-content:space-between;align-items:center;">
+                            <span>🖱️ Mouse USB</span>
+                            <span class="price">$25</span>
+                        </div>
+                        <div class="desc">Mouse óptico para controlar el cursor.</div>
+                    </div>
+                    
+                    <div class="shop-item" onclick="selectProduct('keyboard', 40, this)">
+                        <div style="display:flex;justify-content:space-between;align-items:center;">
+                            <span>⌨️ Teclado USB</span>
+                            <span class="price">$40</span>
+                        </div>
+                        <div class="desc">Teclado mecánico para escribir.</div>
+                    </div>
+                    
+                    <div class="shop-item" onclick="selectProduct('ram', 80, this)">
+                        <div style="display:flex;justify-content:space-between;align-items:center;">
+                            <span>🧠 RAM DDR4 8GB</span>
+                            <span class="price">$80</span>
+                        </div>
+                        <div class="desc">Memoria RAM para la placa madre.</div>
+                    </div>
+                    
+                    <button id="buyBtn" onclick="buyProduct()" disabled>Selecciona un producto</button>
+                </div>
+            </div>
         </div>
         
-        <div id="computerScreen">
-            <div id="bios">
-                <div id="bootText"></div>
-            </div>
-            <div id="windows1">
-                <div class="win1-header">MS-DOS Executive</div>
-                <div class="win1-content">
-                    <div class="win1-icon" onclick="alert('MS-DOS Prompt abierto')">🖥️<br>Command</div>
-                    <div class="win1-icon" onclick="alert('Escribiendo...')">📝<br>Write</div>
-                    <div class="win1-icon" onclick="alert('Calculando... 2+2=4')">🧮<br>Calc</div>
-                    <div class="win1-icon" onclick="alert('Reversi iniciado')">⚫<br>Reversi</div>
-                    <div class="win1-icon" onclick="alert('Reloj: 12:00 PM')">🕐<br>Clock</div>
-                    <div class="win1-icon" onclick="alert('Paint abierto (simulado)')">🎨<br>Paint</div>
+        <!-- Interfaz PC -->
+        <div id="computerInterface">
+            <div id="monitorScreen" class="screen-off">
+                <div id="biosScreen"></div>
+                <div id="installScreen">
+                    <h2>💿 Instalando Windows 1.0</h2>
+                    <p>Copiando archivos del sistema...</p>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="installProgress"></div>
+                    </div>
+                    <p id="installStatus">Preparando...</p>
                 </div>
+                <div id="windowsScreen">
+                    <div class="desktop-icons">
+                        <div class="desktop-icon" onclick="alert('MS-DOS Executive\nVersión 1.01')">
+                            <div class="icon">🖥️</div>
+                            <div class="label">MS-DOS</div>
+                        </div>
+                        <div class="desktop-icon" onclick="alert('Write\nProcesador de textos')">
+                            <div class="icon">📝</div>
+                            <div class="label">Write</div>
+                        </div>
+                        <div class="desktop-icon" onclick="alert('Calculadora\n2+2=4')">
+                            <div class="icon">🧮</div>
+                            <div class="label">Calc</div>
+                        </div>
+                        <div class="desktop-icon" onclick="alert('Reversi\nJuego iniciado')">
+                            <div class="icon">⚫</div>
+                            <div class="label">Reversi</div>
+                        </div>
+                        <div class="desktop-icon" onclick="alert('Reloj\n12:00 PM')">
+                            <div class="icon">🕐</div>
+                            <div class="label">Clock</div>
+                        </div>
+                        <div class="desktop-icon" onclick="alert('Paint\nModo dibujo')">
+                            <div class="icon">🎨</div>
+                            <div class="label">Paint</div>
+                        </div>
+                    </div>
+                    <div class="win95-taskbar">
+                        <div class="start-btn" onclick="alert('Menú Inicio')">🪟 Start</div>
+                        <div style="margin-left:auto; border: 2px inset #fff; padding: 5px 10px;">12:00 PM</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Modal Edición PC -->
+        <div id="pcEditModal">
+            <button class="close-btn" onclick="closePcEdit()">×</button>
+            <h2>🔧 Panel de Conexiones</h2>
+            <p style="text-align:center; margin-bottom:20px; opacity:0.8;">Arrastra los componentes a los slots o haz clic para conectar</p>
+            
+            <div class="slots-grid">
+                <div class="slot" id="slot-usb" onclick="connectDevice('usb')">
+                    <span class="slot-icon">🔌</span>
+                    <span class="slot-name">USB Puerto 1</span>
+                </div>
+                <div class="slot" id="slot-mouse" onclick="connectDevice('mouse')">
+                    <span class="slot-icon">🖱️</span>
+                    <span class="slot-name">USB Mouse</span>
+                </div>
+                <div class="slot" id="slot-keyboard" onclick="connectDevice('keyboard')">
+                    <span class="slot-icon">⌨️</span>
+                    <span class="slot-name">USB Keyboard</span>
+                </div>
+            </div>
+            
+            <div style="margin-top:20px; padding:15px; background:rgba(0,0,0,0.5); border-radius:8px;">
+                <strong style="color:#0f0">Inventario:</strong>
+                <div id="inventoryList" style="margin-top:10px;">
+                    <em style="opacity:0.5">Vacío</em>
+                </div>
+            </div>
+            
+            <div id="installSection" style="margin-top:20px; display:none;">
+                <button onclick="startWindowsInstall()" style="width:100%; padding:15px; background:#000080; color:white; border:none; border-radius:8px; cursor:pointer; font-size:16px;">
+                    💿 Instalar Windows desde USB
+                </button>
             </div>
         </div>
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script>
-        // Game State
-        const state = {
+        // Estado del juego
+        const gameState = {
             money: 500,
             inventory: [],
             pcBuilt: false,
-            pcOn: false,
-            hasUSB: false,
-            hasMouse: false,
-            hasKeyboard: false,
-            doorHasPackage: false,
-            selectedItem: null,
-            assemblyMode: false,
-            components: {
-                motherboard: false,
-                cpu: false,
-                ram: false,
-                gpu: false,
-                psu: false,
-                storage: false
-            }
+            pcPowered: false,
+            windowsInstalled: false,
+            currentScreen: 'off', // off, bios, installing, windows
+            connectedDevices: {
+                usb: false,
+                mouse: false,
+                keyboard: false
+            },
+            orderedPackage: null,
+            packageArrived: false,
+            selectedProduct: null,
+            selectedPrice: 0
         };
 
         // Three.js Setup
         const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x202020);
-        scene.fog = new THREE.Fog(0x202020, 1, 50);
+        scene.background = new THREE.Color(0x101020);
+        scene.fog = new THREE.Fog(0x101020, 1, 30);
 
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-        const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('gameCanvas') });
+        const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('gameCanvas'), antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
-        // Lighting
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+        // Iluminación
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
         scene.add(ambientLight);
 
         const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
-        dirLight.position.set(10, 20, 10);
+        dirLight.position.set(5, 10, 5);
         dirLight.castShadow = true;
+        dirLight.shadow.camera.near = 0.1;
+        dirLight.shadow.camera.far = 50;
+        dirLight.shadow.camera.left = -10;
+        dirLight.shadow.camera.right = 10;
+        dirLight.shadow.camera.top = 10;
+        dirLight.shadow.camera.bottom = -10;
         scene.add(dirLight);
 
-        // Room
-        const roomGeometry = new THREE.BoxGeometry(20, 10, 20);
-        const roomMaterial = new THREE.MeshStandardMaterial({ 
-            color: 0x808080, 
-            side: THREE.BackSide 
-        });
-        const room = new THREE.Mesh(roomGeometry, roomMaterial);
+        // Habitación
+        const roomGeo = new THREE.BoxGeometry(20, 10, 20);
+        const roomMat = new THREE.MeshStandardMaterial({ color: 0x505050, side: THREE.BackSide });
+        const room = new THREE.Mesh(roomGeo, roomMat);
         room.receiveShadow = true;
         scene.add(room);
 
-        // Floor
-        const floorGeometry = new THREE.PlaneGeometry(20, 20);
-        const floorMaterial = new THREE.MeshStandardMaterial({ color: 0x654321 });
-        const floor = new THREE.Mesh(floorGeometry, floorMaterial);
+        // Suelo
+        const floorGeo = new THREE.PlaneGeometry(20, 20);
+        const floorMat = new THREE.MeshStandardMaterial({ color: 0x3d2817 });
+        const floor = new THREE.Mesh(floorGeo, floorMat);
         floor.rotation.x = -Math.PI / 2;
         floor.position.y = -5;
         floor.receiveShadow = true;
         scene.add(floor);
 
-        // Desk
-        const deskGeometry = new THREE.BoxGeometry(6, 0.2, 3);
-        const deskMaterial = new THREE.MeshStandardMaterial({ color: 0x8B4513 });
-        const desk = new THREE.Mesh(deskGeometry, deskMaterial);
-        desk.position.set(0, -1, -3);
-        desk.castShadow = true;
+        // Escritorio
+        const deskGeo = new THREE.BoxGeometry(8, 0.2, 4);
+        const deskMat = new THREE.MeshStandardMaterial({ color: 0x8B4513 });
+        const desk = new THREE.Mesh(deskGeo, deskMat);
+        desk.position.set(0, -1.5, -2);
         desk.receiveShadow = true;
+        desk.castShadow = true;
         scene.add(desk);
 
-        // Desk legs
-        const legGeometry = new THREE.BoxGeometry(0.2, 2, 0.2);
-        const legMaterial = new THREE.MeshStandardMaterial({ color: 0x333333 });
-        [-2.8, 2.8].forEach(x => {
-            [-1.3, 1.3].forEach(z => {
-                const leg = new THREE.Mesh(legGeometry, legMaterial);
-                leg.position.set(x, -2, -3 + z);
-                leg.castShadow = true;
-                scene.add(leg);
-            });
+        // Patas del escritorio
+        const legGeo = new THREE.BoxGeometry(0.3, 3, 0.3);
+        const legMat = new THREE.MeshStandardMaterial({ color: 0x222222 });
+        [[-3.5, -1.8], [3.5, -1.8], [-3.5, 1.8], [3.5, 1.8]].forEach(([x, z]) => {
+            const leg = new THREE.Mesh(legGeo, legMat);
+            leg.position.set(x, -3, -2 + z);
+            leg.castShadow = true;
+            scene.add(leg);
         });
 
-        // PC Case (unassembled)
-        const caseGeometry = new THREE.BoxGeometry(1.5, 3, 3.5);
-        const caseMaterial = new THREE.MeshStandardMaterial({ color: 0x222222 });
-        const pcCase = new THREE.Mesh(caseGeometry, caseMaterial);
-        pcCase.position.set(-2, -0.4, -3);
-        pcCase.castShadow = true;
-        pcCase.userData = { type: 'pcCase', name: 'PC Case (Vacía)' };
-        scene.add(pcCase);
+        // Torre de PC (Case)
+        const caseGroup = new THREE.Group();
+        
+        // Caja principal
+        const caseBodyGeo = new THREE.BoxGeometry(2, 4.5, 4.5);
+        const caseBodyMat = new THREE.MeshStandardMaterial({ color: 0x1a1a1a });
+        const caseBody = new THREE.Mesh(caseBodyGeo, caseBodyMat);
+        caseBody.castShadow = true;
+        caseGroup.add(caseBody);
+
+        // Panel lateral transparente (para ver adentro)
+        const sidePanelGeo = new THREE.BoxGeometry(2.05, 4, 4);
+        const sidePanelMat = new THREE.MeshStandardMaterial({ 
+            color: 0x000000, 
+            transparent: true, 
+            opacity: 0.3 
+        });
+        const sidePanel = new THREE.Mesh(sidePanelGeo, sidePanelMat);
+        sidePanel.position.x = 0;
+        caseGroup.add(sidePanel);
+
+        // Botón de encendido
+        const powerBtnGeo = new THREE.CylinderGeometry(0.15, 0.15, 0.1, 16);
+        const powerBtnMat = new THREE.MeshStandardMaterial({ color: 0x333333 });
+        const powerBtn = new THREE.Mesh(powerBtnGeo, powerBtnMat);
+        powerBtn.rotation.x = Math.PI / 2;
+        powerBtn.position.set(0, 1.5, 2.3);
+        caseGroup.add(powerBtn);
+
+        // LEDs indicadores
+        const ledGeo = new THREE.SphereGeometry(0.1, 8, 8);
+        const ledMat = new THREE.MeshBasicMaterial({ color: 0x330000 });
+        const powerLed = new THREE.Mesh(ledGeo, ledMat);
+        powerLed.position.set(-0.5, 1.5, 2.25);
+        caseGroup.add(powerLed);
+
+        // Puertos USB frontales
+        const usbPortGeo = new THREE.BoxGeometry(0.4, 0.15, 0.1);
+        const usbPortMat = new THREE.MeshStandardMaterial({ color: 0x000000 });
+        const usbPort1 = new THREE.Mesh(usbPortGeo, usbPortMat);
+        usbPort1.position.set(0.5, 1.2, 2.26);
+        caseGroup.add(usbPort1);
+        
+        const usbPort2 = new THREE.Mesh(usbPortGeo, usbPortMat);
+        usbPort2.position.set(1.1, 1.2, 2.26);
+        caseGroup.add(usbPort2);
+
+        // Posición de la torre
+        caseGroup.position.set(-5, -2.25, -2);
+        caseGroup.userData = { type: 'pcCase', name: 'PC Tower' };
+        scene.add(caseGroup);
 
         // Monitor
-        const monitorGeometry = new THREE.BoxGeometry(3, 2, 0.2);
-        const monitorMaterial = new THREE.MeshStandardMaterial({ color: 0x111111 });
-        const monitor = new THREE.Mesh(monitorGeometry, monitorMaterial);
-        monitor.position.set(1.5, 0.5, -3);
-        monitor.castShadow = true;
-        monitor.userData = { type: 'monitor', name: 'Monitor' };
-        scene.add(monitor);
+        const monitorGroup = new THREE.Group();
+        
+        // Pantalla
+        const monitorFrameGeo = new THREE.BoxGeometry(5, 3.5, 0.3);
+        const monitorFrameMat = new THREE.MeshStandardMaterial({ color: 0x111111 });
+        const monitorFrame = new THREE.Mesh(monitorFrameGeo, monitorFrameMat);
+        monitorFrame.castShadow = true;
+        monitorGroup.add(monitorFrame);
 
-        // Monitor stand
-        const standGeometry = new THREE.BoxGeometry(0.5, 1, 0.5);
-        const stand = new THREE.Mesh(standGeometry, legMaterial);
-        stand.position.set(1.5, -0.5, -3);
-        stand.castShadow = true;
-        scene.add(stand);
+        // Pantalla (iluminada)
+        const screenGeo = new THREE.PlaneGeometry(4.6, 3.1);
+        const screenMat = new THREE.MeshBasicMaterial({ color: 0x000000 });
+        const screenMesh = new THREE.Mesh(screenGeo, screenMat);
+        screenMesh.position.z = 0.16;
+        monitorGroup.add(screenMesh);
 
-        // Screen glow (off initially)
-        const screenGeometry = new THREE.PlaneGeometry(2.8, 1.8);
-        const screenMaterial = new THREE.MeshBasicMaterial({ color: 0x000000 });
-        const screen = new THREE.Mesh(screenGeometry, screenMaterial);
-        screen.position.set(0, 0, 0.11);
-        monitor.add(screen);
+        // Base
+        const standGeo = new THREE.BoxGeometry(1, 1.5, 1);
+        const stand = new THREE.Mesh(standGeo, legMat);
+        stand.position.set(0, -2.25, 0);
+        monitorGroup.add(stand);
 
-        // Door
-        const doorGeometry = new THREE.BoxGeometry(3, 6, 0.3);
-        const doorMaterial = new THREE.MeshStandardMaterial({ color: 0x4a3000 });
-        const door = new THREE.Mesh(doorGeometry, doorMaterial);
-        door.position.set(0, -2, -9.8);
-        door.userData = { type: 'door', name: 'Puerta' };
-        scene.add(door);
+        const baseGeo = new THREE.BoxGeometry(3, 0.2, 2);
+        const base = new THREE.Mesh(baseGeo, legMat);
+        base.position.set(0, -3, 0.5);
+        monitorGroup.add(base);
 
-        // Doorknob
-        const knobGeometry = new THREE.SphereGeometry(0.1);
-        const knobMaterial = new THREE.MeshStandardMaterial({ color: 0xffd700 });
-        const knob = new THREE.Mesh(knobGeometry, knobMaterial);
-        knob.position.set(1, 0, 0.2);
-        door.add(knob);
+        monitorGroup.position.set(0, 0.5, -4);
+        monitorGroup.userData = { type: 'monitor', name: 'Monitor' };
+        scene.add(monitorGroup);
 
-        // Package (hidden initially)
-        const packageGeometry = new THREE.BoxGeometry(1, 0.8, 1);
-        const packageMaterial = new THREE.MeshStandardMaterial({ color: 0x8B4513 });
-        const package = new THREE.Mesh(packageGeometry, packageMaterial);
-        package.position.set(0, -4.5, -8);
+        // Teclado y Mouse (invisibles hasta conectarlos)
+        const keyboardGeo = new THREE.BoxGeometry(3, 0.1, 1);
+        const keyboardMat = new THREE.MeshStandardMaterial({ color: 0xdddddd });
+        const keyboard = new THREE.Mesh(keyboardGeo, keyboardMat);
+        keyboard.position.set(0, -1.35, -1);
+        keyboard.visible = false;
+        keyboard.userData = { type: 'keyboardObject', name: 'Teclado' };
+        scene.add(keyboard);
+
+        const mouseGeo = new THREE.BoxGeometry(0.5, 0.15, 0.8);
+        const mouseMat = new THREE.MeshStandardMaterial({ color: 0xffffff });
+        const mouse = new THREE.Mesh(mouseGeo, mouseMat);
+        mouse.position.set(2, -1.35, -1);
+        mouse.visible = false;
+        mouse.userData = { type: 'mouseObject', name: 'Mouse' };
+        scene.add(mouse);
+
+        // USB Drive (objeto físico)
+        const usbGeo = new THREE.BoxGeometry(0.3, 0.1, 0.6);
+        const usbMat = new THREE.MeshStandardMaterial({ color: 0x00ff00 });
+        const usbMesh = new THREE.Mesh(usbGeo, usbMat);
+        usbMesh.position.set(-5, -3.8, -2);
+        usbMesh.visible = false;
+        usbMesh.userData = { type: 'usbObject', name: 'USB Windows' };
+        scene.add(usbMesh);
+
+        // Puerta
+        const doorGroup = new THREE.Group();
+        const doorGeo = new THREE.BoxGeometry(3, 7, 0.3);
+        const doorMat = new THREE.MeshStandardMaterial({ color: 0x4a3000 });
+        const door = new THREE.Mesh(doorGeo, doorMat);
+        door.castShadow = true;
+        doorGroup.add(door);
+
+        const knobGeo = new THREE.SphereGeometry(0.15);
+        const knobMat = new THREE.MeshStandardMaterial({ color: 0xffd700 });
+        const knob = new THREE.Mesh(knobGeo, knobMat);
+        knob.position.set(1.2, 0, 0.2);
+        doorGroup.add(knob);
+
+        doorGroup.position.set(0, -1.5, -9.7);
+        doorGroup.userData = { type: 'door', name: 'Puerta' };
+        scene.add(doorGroup);
+
+        // Paquete
+        const packageGeo = new THREE.BoxGeometry(1.5, 1, 1.5);
+        const packageMat = new THREE.MeshStandardMaterial({ color: 0x8B4513 });
+        const package = new THREE.Mesh(packageGeo, packageMat);
+        package.position.set(0, -4.5, -8.5);
         package.visible = false;
+        package.castShadow = true;
         package.userData = { type: 'package', name: 'Paquete' };
         scene.add(package);
 
-        // Package tape
-        const tapeGeometry = new THREE.BoxGeometry(1.02, 0.1, 1.02);
-        const tapeMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 });
-        const tape = new THREE.Mesh(tapeGeometry, tapeMaterial);
+        // Cinta del paquete
+        const tapeGeo = new THREE.BoxGeometry(1.52, 0.1, 1.52);
+        const tapeMat = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+        const tape = new THREE.Mesh(tapeGeo, tapeMat);
+        tape.position.y = 0.2;
         package.add(tape);
 
-        // Component meshes (for assembly)
-        const components = {
-            motherboard: createComponent(0x228b22, 'Placa Madre', 'motherboard'),
-            cpu: createComponent(0xff0000, 'CPU', 'cpu'),
-            ram: createComponent(0x0000ff, 'RAM', 'ram'),
-            gpu: createComponent(0x800080, 'GPU', 'gpu'),
-            psu: createComponent(0x808080, 'Fuente', 'psu'),
-            storage: createComponent(0xffa500, 'Disco', 'storage')
-        };
+        // Posición inicial del jugador
+        camera.position.set(0, 0, 6);
+        camera.lookAt(0, 0, -2);
 
-        function createComponent(color, name, type) {
-            const geo = new THREE.BoxGeometry(0.3, 0.3, 0.3);
-            const mat = new THREE.MeshStandardMaterial({ color: color });
-            const mesh = new THREE.Mesh(geo, mat);
-            mesh.visible = false;
-            mesh.userData = { type: type, name: name, isComponent: true };
-            scene.add(mesh);
-            return mesh;
-        }
+        // Controles
+        let moveForward = false, moveBackward = false, moveLeft = false, moveRight = false;
+        let isLocked = false;
+        let raycaster = new THREE.Raycaster();
+        let mouseVector = new THREE.Vector2(0, 0);
 
-        // Position components around the case when in assembly mode
-        const componentPositions = [
-            { x: -3.5, y: 0.5, z: -2 },
-            { x: -3.5, y: 0, z: -2 },
-            { x: -3.5, y: -0.5, z: -2 },
-            { x: -0.5, y: 0.5, z: -2 },
-            { x: -0.5, y: 0, z: -2 },
-            { x: -0.5, y: -0.5, z: -2 }
-        ];
-
-        let componentIndex = 0;
-        Object.values(components).forEach(comp => {
-            comp.position.copy(pcCase.position).add({
-                x: componentPositions[componentIndex].x - pcCase.position.x,
-                y: componentPositions[componentIndex].y,
-                z: componentPositions[componentIndex].z - pcCase.position.z
-            });
-            componentIndex++;
-        });
-
-        // USB Drive (when bought)
-        const usbGeometry = new THREE.BoxGeometry(0.1, 0.3, 0.1);
-        const usbMaterial = new THREE.MeshStandardMaterial({ color: 0x00ff00 });
-        const usbDrive = new THREE.Mesh(usbGeometry, usbMaterial);
-        usbDrive.visible = false;
-        usbDrive.userData = { type: 'usb', name: 'USB Windows 1.0' };
-        scene.add(usbDrive);
-
-        // Mouse and Keyboard
-        const mouseGeometry = new THREE.BoxGeometry(0.4, 0.15, 0.6);
-        const mouseMaterial = new THREE.MeshStandardMaterial({ color: 0xffffff });
-        const mouse = new THREE.Mesh(mouseGeometry, mouseMaterial);
-        mouse.position.set(2.5, -0.8, -2);
-        mouse.visible = false;
-        mouse.userData = { type: 'mouse', name: 'Mouse USB' };
-        scene.add(mouse);
-
-        const kbGeometry = new THREE.BoxGeometry(2.5, 0.1, 0.8);
-        const kbMaterial = new THREE.MeshStandardMaterial({ color: 0xdddddd });
-        const keyboard = new THREE.Mesh(kbGeometry, kbMaterial);
-        keyboard.position.set(1.5, -0.85, -1.5);
-        keyboard.visible = false;
-        keyboard.userData = { type: 'keyboard', name: 'Teclado USB' };
-        scene.add(keyboard);
-
-        // Player controls
-        camera.position.set(0, 0, 5);
-        
-        const velocity = new THREE.Vector3();
-        const direction = new THREE.Vector3();
-        let moveForward = false;
-        let moveBackward = false;
-        let moveLeft = false;
-        let moveRight = false;
-        
-        let prevTime = performance.now();
-        let isPointerLocked = false;
-
-        document.addEventListener('keydown', (event) => {
-            switch(event.code) {
+        document.addEventListener('keydown', (e) => {
+            if (document.getElementById('computerInterface').style.display === 'block') return;
+            
+            switch(e.code) {
                 case 'KeyW': moveForward = true; break;
-                case 'KeyA': moveLeft = true; break;
                 case 'KeyS': moveBackward = true; break;
+                case 'KeyA': moveLeft = true; break;
                 case 'KeyD': moveRight = true; break;
+                case 'KeyE': handleInteraction(); break;
                 case 'KeyP': togglePhone(); break;
-                case 'KeyE': interact(); break;
-                case 'Escape': closeAll(); break;
+                case 'Escape': closeAllInterfaces(); break;
             }
         });
 
-        document.addEventListener('keyup', (event) => {
-            switch(event.code) {
+        document.addEventListener('keyup', (e) => {
+            switch(e.code) {
                 case 'KeyW': moveForward = false; break;
-                case 'KeyA': moveLeft = false; break;
                 case 'KeyS': moveBackward = false; break;
+                case 'KeyA': moveLeft = false; break;
                 case 'KeyD': moveRight = false; break;
             }
         });
 
-        document.addEventListener('mousemove', (event) => {
-            if (!isPointerLocked) return;
-            const movementX = event.movementX || event.mozMovementX || event.webkitMovementX || 0;
-            const movementY = event.movementY || event.mozMovementY || event.webkitMovementY || 0;
-            
-            camera.rotation.y -= movementX * 0.002;
-            camera.rotation.x -= movementY * 0.002;
-            camera.rotation.x = Math.max(-Math.PI/2, Math.min(Math.PI/2, camera.rotation.x));
+        document.addEventListener('mousemove', (e) => {
+            if (!isLocked) return;
+            camera.rotation.y -= e.movementX * 0.002;
+            camera.rotation.x -= e.movementY * 0.002;
+            camera.rotation.x = Math.max(-Math.PI/2.5, Math.min(Math.PI/2.5, camera.rotation.x));
         });
 
         document.addEventListener('click', () => {
-            if (!isPointerLocked && !isPhoneOpen() && !isAssemblyOpen() && !state.pcOn) {
+            if (!isLocked && !isAnyInterfaceOpen()) {
                 document.body.requestPointerLock();
             }
         });
 
         document.addEventListener('pointerlockchange', () => {
-            isPointerLocked = document.pointerLockElement === document.body;
+            isLocked = document.pointerLockElement === document.body;
         });
 
-        // Raycaster for interaction
-        const raycaster = new THREE.Raycaster();
-        const center = new THREE.Vector2(0, 0);
+        function isAnyInterfaceOpen() {
+            return document.getElementById('phone').classList.contains('open') ||
+                   document.getElementById('pcEditModal').style.display === 'block' ||
+                   document.getElementById('computerInterface').style.display === 'block';
+        }
 
-        function interact() {
-            raycaster.setFromCamera(center, camera);
+        function handleInteraction() {
+            raycaster.setFromCamera(mouseVector, camera);
             const intersects = raycaster.intersectObjects(scene.children, true);
             
             if (intersects.length > 0) {
                 const obj = intersects[0].object;
-                const type = obj.userData.type || obj.parent?.userData?.type;
+                const parent = obj.parent;
                 
-                switch(type) {
-                    case 'pcCase':
-                        if (!state.pcBuilt) openAssembly();
-                        else if (state.hasUSB && !state.pcOn) insertUSB();
-                        break;
-                    case 'monitor':
-                        if (state.pcOn) toggleComputer();
-                        break;
-                    case 'door':
-                        checkDoor();
-                        break;
-                    case 'package':
-                        collectPackage();
-                        break;
-                    case 'motherboard':
-                    case 'cpu':
-                    case 'ram':
-                    case 'gpu':
-                    case 'psu':
-                    case 'storage':
-                        if (state.assemblyMode) installComponent(type);
-                        break;
-                    case 'usb':
-                        if (!state.hasUSB) pickupUSB();
-                        break;
+                // Detectar tipo de objeto
+                if (parent?.userData?.type === 'pcCase' || obj.userData?.type === 'pcCase') {
+                    openPcEdit();
+                }
+                else if (parent?.userData?.type === 'monitor' || obj.userData?.type === 'monitor') {
+                    toggleMonitor();
+                }
+                else if (obj.userData?.type === 'package' || parent?.userData?.type === 'package') {
+                    collectPackage();
+                }
+                else if (obj.userData?.type === 'door' || parent?.userData?.type === 'door') {
+                    checkDoor();
                 }
             }
         }
 
-        function openAssembly() {
-            state.assemblyMode = true;
-            document.getElementById('assemblyUI').style.display = 'block';
+        function getLookingAt() {
+            raycaster.setFromCamera(mouseVector, camera);
+            const intersects = raycaster.intersectObjects(scene.children, true);
+            
+            if (intersects.length > 0) {
+                const obj = intersects[0].object;
+                const parent = obj.parent;
+                
+                if (parent?.userData?.type === 'pcCase' || obj.userData?.type === 'pcCase') return 'pcCase';
+                if (parent?.userData?.type === 'monitor' || obj.userData?.type === 'monitor') return 'monitor';
+                if (obj.userData?.type === 'package' || parent?.userData?.type === 'package') return 'package';
+                if (obj.userData?.type === 'door' || parent?.userData?.type === 'door') return 'door';
+            }
+            return null;
+        }
+
+        // Loop de actualización de prompt
+        setInterval(() => {
+            if (isAnyInterfaceOpen()) {
+                document.getElementById('interactionPrompt').style.display = 'none';
+                return;
+            }
+            
+            const looking = getLookingAt();
+            const prompt = document.getElementById('interactionPrompt');
+            
+            if (looking === 'pcCase') {
+                prompt.textContent = '[E] Abrir Panel de Conexiones';
+                prompt.style.display = 'block';
+            } else if (looking === 'monitor') {
+                if (gameState.pcPowered) {
+                    prompt.textContent = '[E] ' + (gameState.currentScreen === 'off' ? 'Encender Monitor' : 'Usar PC');
+                } else {
+                    prompt.textContent = '[E] Verificar Monitor (PC apagada)';
+                }
+                prompt.style.display = 'block';
+            } else if (looking === 'package') {
+                prompt.textContent = '[E] Recoger Paquete';
+                prompt.style.display = 'block';
+            } else if (looking === 'door') {
+                prompt.textContent = '[E] Revisar Puerta';
+                prompt.style.display = 'block';
+            } else {
+                prompt.style.display = 'none';
+            }
+        }, 100);
+
+        function openPcEdit() {
             document.exitPointerLock();
-            updateAssemblyUI();
+            document.getElementById('pcEditModal').style.display = 'block';
+            updateInventoryDisplay();
+            updateSlots();
         }
 
-        function closeAssembly() {
-            state.assemblyMode = false;
-            document.getElementById('assemblyUI').style.display = 'none';
-            Object.values(components).forEach(c => c.visible = false);
+        function closePcEdit() {
+            document.getElementById('pcEditModal').style.display = 'none';
+            if (!isAnyInterfaceOpen()) document.body.requestPointerLock();
         }
 
-        function isAssemblyOpen() {
-            return document.getElementById('assemblyUI').style.display === 'block';
-        }
-
-        function updateAssemblyUI() {
-            const slots = document.getElementById('assemblySlots');
-            slots.innerHTML = '';
-            
-            const comps = [
-                { key: 'motherboard', name: 'Placa Madre' },
-                { key: 'cpu', name: 'Procesador' },
-                { key: 'ram', name: 'Memoria RAM' },
-                { key: 'gpu', name: 'Tarjeta Gráfica' },
-                { key: 'psu', name: 'Fuente de Poder' },
-                { key: 'storage', name: 'Disco Duro' }
-            ];
-            
-            let allInstalled = true;
-            
-            comps.forEach(comp => {
-                const div = document.createElement('div');
-                div.className = `component-slot ${state.components[comp.key] ? 'installed' : ''}`;
-                div.textContent = state.components[comp.key] ? `✅ ${comp.name}` : `⬜ ${comp.name}`;
-                div.onclick = () => selectComponent(comp.key);
-                slots.appendChild(div);
-                
-                if (!state.components[comp.key]) allInstalled = false;
-            });
-            
-            if (allInstalled) {
-                document.getElementById('finishBtn').style.display = 'inline-block';
+        function toggleMonitor() {
+            if (!gameState.pcPowered) {
+                showNotification('⚠️ Primero debes encender la PC desde el panel de conexiones');
+                return;
             }
-        }
-
-        function selectComponent(key) {
-            if (!state.components[key]) {
-                Object.values(components).forEach(c => c.visible = (c.userData.type === key));
-                showNotification(`Haz clic en el componente ${key} para instalarlo`);
-            }
-        }
-
-        function installComponent(type) {
-            state.components[type] = true;
-            components[type].visible = false;
-            showNotification(`✅ ${components[type].userData.name} instalado`);
-            updateAssemblyUI();
-        }
-
-        function finishAssembly() {
-            state.pcBuilt = true;
-            closeAssembly();
-            pcCase.material.color.setHex(0x444444);
-            showNotification('🎉 PC ensamblada correctamente');
-            document.getElementById('objective').textContent = 'Objetivo: Compra una USB con Windows 1.0';
-        }
-
-        function togglePhone() {
-            const phone = document.getElementById('phone');
-            phone.classList.toggle('open');
-            if (phone.classList.contains('open')) {
-                document.exitPointerLock();
-            } else {
-                document.body.requestPointerLock();
-            }
-        }
-
-        function isPhoneOpen() {
-            return document.getElementById('phone').classList.contains('open');
-        }
-
-        function openShop() {
-            document.getElementById('homeScreen').style.display = 'none';
-            document.getElementById('shopScreen').style.display = 'block';
-        }
-
-        function closeShop() {
-            document.getElementById('shopScreen').style.display = 'none';
-            document.getElementById('homeScreen').style.display = 'block';
-            document.querySelectorAll('.shop-item').forEach(i => i.classList.remove('selected'));
-            state.selectedItem = null;
-            document.getElementById('buyBtn').disabled = true;
-        }
-
-        function selectItem(item) {
-            state.selectedItem = item;
-            document.querySelectorAll('.shop-item').forEach(i => i.classList.remove('selected'));
-            event.currentTarget.classList.add('selected');
-            document.getElementById('buyBtn').disabled = false;
-        }
-
-        function buyItem() {
-            const prices = { usb: 50, mouse: 25, keyboard: 40, ram: 80 };
-            if (state.money >= prices[state.selectedItem]) {
-                state.money -= prices[state.selectedItem];
-                document.getElementById('money').textContent = state.money;
-                
-                // Simulate delivery
-                showNotification('📦 Pedido realizado. Llegará en 10 segundos...');
+            
+            const compInterface = document.getElementById('computerInterface');
+            if (compInterface.style.display === 'block') {
+                compInterface.classList.remove('active');
                 setTimeout(() => {
-                    state.doorHasPackage = true;
-                    package.visible = true;
-                    document.getElementById('doorbell').style.display = 'block';
-                    showNotification('🔔 ¡Toc toc! Tu pedido ha llegado');
-                }, 10000);
-                
-                closeShop();
-                togglePhone();
-            }
-        }
-
-        function checkDoor() {
-            if (state.doorHasPackage) {
-                showNotification('Hay un paquete en la puerta');
-            }
-        }
-
-        function collectPackage() {
-            if (!state.doorHasPackage) return;
-            
-            package.visible = false;
-            state.doorHasPackage = false;
-            document.getElementById('doorbell').style.display = 'none';
-            
-            // Determine what was bought
-            if (state.money <= 450 && !state.hasUSB) {
-                state.hasUSB = true;
-                usbDrive.visible = true;
-                usbDrive.position.set(0, -4, -8);
-                showNotification('💾 USB con Windows 1.0 obtenida');
-                document.getElementById('objective').textContent = 'Objetivo: Inserta la USB en la PC';
-            } else if (state.money <= 475 && !state.hasMouse) {
-                state.hasMouse = true;
-                mouse.visible = true;
-                showNotification('🖱️ Mouse obtenido');
-            } else if (state.money <= 460 && !state.hasKeyboard) {
-                state.hasKeyboard = true;
-                keyboard.visible = true;
-                showNotification('⌨️ Teclado obtenido');
-            }
-            
-            updateInventory();
-        }
-
-        function pickupUSB() {
-            // Add to inventory
-            if (state.inventory.length < 4) {
-                state.inventory.push('usb');
-                usbDrive.visible = false;
-                updateInventory();
-                showNotification('USB guardada en inventario. Acércate a la PC para usarla.');
-            }
-        }
-
-        function updateInventory() {
-            state.inventory.forEach((item, i) => {
-                const slot = document.getElementById(`slot${i}`);
-                slot.classList.add('has-item');
-                if (item === 'usb') slot.textContent = '💾';
-            });
-        }
-
-        function insertUSB() {
-            showNotification('💾 Insertando USB e instalando Windows 1.0...');
-            setTimeout(() => {
-                state.pcOn = true;
-                screen.material.color.setHex(0x000080);
-                screenMaterial.emissive = new THREE.Color(0x000080);
-                screenMaterial.emissiveIntensity = 0.5;
-                showNotification('✅ Windows 1.0 instalado. La PC está lista');
-                document.getElementById('objective').textContent = 'Objetivo: Enciende el monitor para usar la PC';
-            }, 3000);
-        }
-
-        function toggleComputer() {
-            const compScreen = document.getElementById('computerScreen');
-            const bios = document.getElementById('bios');
-            const win1 = document.getElementById('windows1');
-            
-            if (compScreen.style.display === 'block') {
-                compScreen.style.display = 'none';
-                document.body.requestPointerLock();
+                    compInterface.style.display = 'none';
+                    if (!isAnyInterfaceOpen()) document.body.requestPointerLock();
+                }, 300);
             } else {
-                compScreen.style.display = 'block';
                 document.exitPointerLock();
-                bootSequence();
+                compInterface.style.display = 'block';
+                setTimeout(() => compInterface.classList.add('active'), 10);
+                
+                if (gameState.currentScreen === 'off') {
+                    bootSequence();
+                }
             }
         }
 
         function bootSequence() {
-            const bootText = document.getElementById('bootText');
+            const bios = document.getElementById('biosScreen');
+            const monitor = document.getElementById('monitorScreen');
+            const screenMesh = monitorGroup.children[1];
+            
+            monitor.classList.remove('screen-off');
+            bios.style.display = 'block';
+            
+            // Sonido de encendido (simulado)
+            screenMesh.material.color.setHex(0x000080);
+            
             const lines = [
                 'AWARD MODULAR BIOS v4.51PG',
                 'Copyright (C) 1984-95 Award Software Inc.',
@@ -861,93 +821,280 @@
                 'Memory Test: 640K OK',
                 '',
                 'Detecting USB devices...',
-                'USB Device Found: Windows 1.0 Installation Media',
+                gameState.connectedDevices.mouse ? 'USB Mouse detected' : 'No mouse detected',
+                gameState.connectedDevices.keyboard ? 'USB Keyboard detected' : 'No keyboard detected',
+                gameState.connectedDevices.usb ? 'USB Storage detected' : 'No boot device',
                 '',
-                'Booting from USB...',
-                'Loading MS-DOS...',
-                'Starting Windows 1.01...'
+                'Checking for OS...'
             ];
             
-            let i = 0;
-            bootText.innerHTML = '';
-            
-            function addLine() {
-                if (i < lines.length) {
-                    bootText.innerHTML += lines[i] + '<br>';
-                    i++;
-                    setTimeout(addLine, 500);
-                } else {
-                    setTimeout(() => {
-                        document.getElementById('bios').style.display = 'none';
-                        document.getElementById('windows1').style.display = 'block';
-                    }, 1000);
-                }
+            if (!gameState.connectedDevices.usb && !gameState.windowsInstalled) {
+                lines.push('ERROR: No operating system found!');
+                lines.push('Insert USB drive with OS');
             }
             
-            addLine();
+            let html = '';
+            lines.forEach(line => html += line + '<br>');
+            bios.innerHTML = html;
+            
+            gameState.currentScreen = 'bios';
+            
+            setTimeout(() => {
+                if (gameState.windowsInstalled) {
+                    bootToWindows();
+                } else if (gameState.connectedDevices.usb) {
+                    document.getElementById('installSection').style.display = 'block';
+                    showNotification('💾 USB detectado. Abre el panel de la PC para instalar Windows.');
+                }
+            }, 2000);
+        }
+
+        function startWindowsInstall() {
+            closePcEdit();
+            const bios = document.getElementById('biosScreen');
+            const install = document.getElementById('installScreen');
+            
+            bios.style.display = 'none';
+            install.style.display = 'block';
+            gameState.currentScreen = 'installing';
+            
+            let progress = 0;
+            const bar = document.getElementById('installProgress');
+            const status = document.getElementById('installStatus');
+            
+            const interval = setInterval(() => {
+                progress += 5;
+                bar.style.width = progress + '%';
+                
+                if (progress < 30) status.textContent = 'Copiando archivos del sistema...';
+                else if (progress < 60) status.textContent = 'Instalando componentes...';
+                else if (progress < 90) status.textContent = 'Configurando hardware...';
+                else status.textContent = 'Finalizando instalación...';
+                
+                if (progress >= 100) {
+                    clearInterval(interval);
+                    gameState.windowsInstalled = true;
+                    gameState.currentScreen = 'windows';
+                    setTimeout(() => {
+                        install.style.display = 'none';
+                        bootToWindows();
+                        showNotification('✅ Windows 1.0 instalado correctamente');
+                    }, 1000);
+                }
+            }, 200);
+        }
+
+        function bootToWindows() {
+            document.getElementById('biosScreen').style.display = 'none';
+            document.getElementById('installScreen').style.display = 'none';
+            document.getElementById('windowsScreen').style.display = 'block';
+            gameState.currentScreen = 'windows';
+            
+            // Cambiar color de pantalla 3D
+            monitorGroup.children[1].material.color.setHex(0x008080);
+        }
+
+        function updateInventoryDisplay() {
+            const invList = document.getElementById('inventoryList');
+            if (gameState.inventory.length === 0) {
+                invList.innerHTML = '<em style="opacity:0.5">Vacío</em>';
+            } else {
+                invList.innerHTML = gameState.inventory.map(item => {
+                    const icons = { usb: '💾', mouse: '🖱️', keyboard: '⌨️', ram: '🧠' };
+                    return `<div class="component-item" onclick="selectFromInventory('${item}')">${icons[item]} ${item.toUpperCase()}</div>`;
+                }).join('');
+            }
+        }
+
+        function updateSlots() {
+            document.getElementById('slot-usb').className = 'slot ' + (gameState.connectedDevices.usb ? 'filled' : '');
+            document.getElementById('slot-mouse').className = 'slot ' + (gameState.connectedDevices.mouse ? 'filled' : '');
+            document.getElementById('slot-keyboard').className = 'slot ' + (gameState.connectedDevices.keyboard ? 'filled' : '');
+            
+            // Mostrar botón de instalación si hay USB conectado y no hay Windows
+            if (gameState.connectedDevices.usb && !gameState.windowsInstalled) {
+                document.getElementById('installSection').style.display = 'block';
+            } else {
+                document.getElementById('installSection').style.display = 'none';
+            }
+        }
+
+        function connectDevice(type) {
+            if (gameState.inventory.includes(type) && !gameState.connectedDevices[type]) {
+                gameState.connectedDevices[type] = true;
+                
+                // Remover del inventario
+                const idx = gameState.inventory.indexOf(type);
+                if (idx > -1) gameState.inventory.splice(idx, 1);
+                
+                // Mostrar objeto físico
+                if (type === 'mouse') mouse.visible = true;
+                if (type === 'keyboard') keyboard.visible = true;
+                if (type === 'usb') {
+                    usbMesh.visible = true;
+                    usbMesh.position.set(-5, -1.2, -2); // Insertado en la PC
+                }
+                
+                // Encender LED de power si todos los esenciales están conectados
+                if (gameState.connectedDevices.mouse && gameState.connectedDevices.keyboard) {
+                    gameState.pcPowered = true;
+                    powerLed.material.color.setHex(0x00ff00);
+                    showNotification('⚡ PC encendida. Periféricos detectados.');
+                }
+                
+                updateInventoryDisplay();
+                updateSlots();
+                showNotification(`✅ ${type.charAt(0).toUpperCase() + type.slice(1)} conectado`);
+            } else if (gameState.connectedDevices[type]) {
+                showNotification('⚠️ Ya está conectado');
+            } else {
+                showNotification('❌ No tienes este dispositivo en el inventario');
+            }
+        }
+
+        function selectFromInventory(item) {
+            // Seleccionar para conectar
+            if (item === 'usb') connectDevice('usb');
+            else if (item === 'mouse') connectDevice('mouse');
+            else if (item === 'keyboard') connectDevice('keyboard');
+        }
+
+        // Tienda
+        function openShop() {
+            document.getElementById('homeScreen').style.display = 'none';
+            document.getElementById('shopScreen').style.display = 'block';
+        }
+
+        function closeShop() {
+            document.getElementById('shopScreen').style.display = 'none';
+            document.getElementById('homeScreen').style.display = 'grid';
+            document.querySelectorAll('.shop-item').forEach(i => i.classList.remove('selected'));
+            gameState.selectedProduct = null;
+            document.getElementById('buyBtn').disabled = true;
+            document.getElementById('buyBtn').textContent = 'Selecciona un producto';
+        }
+
+        function selectProduct(product, price, element) {
+            gameState.selectedProduct = product;
+            gameState.selectedPrice = price;
+            
+            document.querySelectorAll('.shop-item').forEach(i => i.classList.remove('selected'));
+            element.classList.add('selected');
+            
+            document.getElementById('buyBtn').disabled = false;
+            document.getElementById('buyBtn').textContent = `Comprar por $${price}`;
+        }
+
+        function buyProduct() {
+            if (gameState.money >= gameState.selectedPrice) {
+                gameState.money -= gameState.selectedPrice;
+                document.getElementById('moneyVal').textContent = gameState.money;
+                
+                // Simular entrega
+                showNotification('📦 Pedido realizado. Llegará en 10 segundos...');
+                gameState.orderedPackage = gameState.selectedProduct;
+                
+                setTimeout(() => {
+                    gameState.packageArrived = true;
+                    package.visible = true;
+                    document.getElementById('doorbell').style.display = 'block';
+                    showNotification('🔔 ¡Tu pedido ha llegado a la puerta!');
+                }, 10000);
+                
+                closeShop();
+            }
+        }
+
+        function collectPackage() {
+            if (!gameState.packageArrived) return;
+            
+            package.visible = false;
+            gameState.packageArrived = false;
+            document.getElementById('doorbell').style.display = 'none';
+            
+            if (gameState.orderedPackage) {
+                gameState.inventory.push(gameState.orderedPackage);
+                showNotification(`📦 ${gameState.orderedPackage.toUpperCase()} añadido al inventario`);
+                gameState.orderedPackage = null;
+            }
+        }
+
+        function checkDoor() {
+            if (gameState.packageArrived) {
+                showNotification('Hay un paquete esperando fuera');
+            } else {
+                showNotification('La puerta está cerrada');
+            }
+        }
+
+        function togglePhone() {
+            const phone = document.getElementById('phone');
+            if (phone.classList.contains('open')) {
+                phone.classList.remove('open');
+                if (!isAnyInterfaceOpen()) document.body.requestPointerLock();
+            } else {
+                document.exitPointerLock();
+                phone.classList.add('open');
+            }
         }
 
         function showNotification(text) {
             const notif = document.getElementById('notification');
             notif.textContent = text;
-            notif.style.display = 'block';
-            setTimeout(() => {
-                notif.style.display = 'none';
-            }, 4000);
+            notif.classList.add('show');
+            setTimeout(() => notif.classList.remove('show'), 3000);
         }
 
-        function closeAll() {
+        function closeAllInterfaces() {
             document.getElementById('phone').classList.remove('open');
-            document.getElementById('assemblyUI').style.display = 'none';
-            document.getElementById('computerScreen').style.display = 'none';
-            closeAssembly();
+            document.getElementById('pcEditModal').style.display = 'none';
+            document.getElementById('computerInterface').classList.remove('active');
+            setTimeout(() => {
+                document.getElementById('computerInterface').style.display = 'none';
+            }, 300);
             document.body.requestPointerLock();
         }
 
-        // Animation loop
+        // Animación
+        let prevTime = performance.now();
         function animate() {
             requestAnimationFrame(animate);
             
             const time = performance.now();
             const delta = (time - prevTime) / 1000;
             
-            if (isPointerLocked) {
-                velocity.x -= velocity.x * 10.0 * delta;
-                velocity.z -= velocity.z * 10.0 * delta;
+            if (isLocked) {
+                const speed = 5;
+                const direction = new THREE.Vector3();
                 
-                direction.z = Number(moveForward) - Number(moveBackward);
-                direction.x = Number(moveRight) - Number(moveLeft);
+                if (moveForward) direction.z -= 1;
+                if (moveBackward) direction.z += 1;
+                if (moveLeft) direction.x -= 1;
+                if (moveRight) direction.x += 1;
+                
                 direction.normalize();
+                direction.multiplyScalar(speed * delta);
                 
-                if (moveForward || moveBackward) velocity.z -= direction.z * 100.0 * delta;
-                if (moveLeft || moveRight) velocity.x -= direction.x * 100.0 * delta;
+                camera.translateX(direction.x);
+                camera.translateZ(direction.z);
                 
-                camera.translateX(-velocity.x * delta);
-                camera.translateZ(-velocity.z * delta);
-                
-                // Keep player in room bounds
+                // Límites de la habitación
                 camera.position.x = Math.max(-9, Math.min(9, camera.position.x));
                 camera.position.z = Math.max(-9, Math.min(9, camera.position.z));
-                camera.position.y = Math.max(-2, Math.min(4, camera.position.y));
+                camera.position.y = Math.max(-3, Math.min(4, camera.position.y));
+            }
+            
+            // Animar paquete
+            if (package.visible) {
+                package.rotation.y += 0.01;
+                package.position.y = -4.5 + Math.sin(time * 0.002) * 0.1;
             }
             
             prevTime = time;
-            
-            // Animate package if present
-            if (package.visible) {
-                package.rotation.y += 0.01;
-                package.position.y = -4.5 + Math.sin(time * 0.003) * 0.1;
-            }
-            
-            // Animate USB
-            if (usbDrive.visible) {
-                usbDrive.rotation.y += 0.02;
-            }
-            
             renderer.render(scene, camera);
         }
 
-        // Handle window resize
+        // Redimensionar
         window.addEventListener('resize', () => {
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
@@ -956,10 +1103,10 @@
 
         animate();
         
-        // Initial notification
+        // Tutorial inicial
         setTimeout(() => {
-            showNotification('¡Bienvenido! Arma tu PC. Acércate al case y presiona E');
-        }, 1000);
+            showNotification('👋 Acércate a la torre de PC y presiona E');
+        }, 2000);
     </script>
 </body>
 </html>
