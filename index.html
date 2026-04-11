@@ -3,893 +3,1138 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RPG 2D Procedural con Inventario</title>
+    <title>RPG 2D Multiplayer - Claims & Races</title>
     <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            margin: 0;
-            padding: 0;
-            background: #0d1117;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            font-family: 'Courier New', monospace;
-            color: white;
+            background: #0a0a0a;
+            color: #fff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             overflow: hidden;
+            user-select: none;
         }
         
-        #gameContainer {
-            position: relative;
-            box-shadow: 0 0 30px rgba(0, 255, 136, 0.3);
-        }
-        
-        canvas {
-            image-rendering: pixelated;
-            cursor: crosshair;
-        }
-        
-        #ui {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            font-size: 14px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.9);
-            pointer-events: none;
-            background: rgba(0,0,0,0.6);
-            padding: 10px;
-            border-radius: 8px;
-            border: 1px solid #333;
-        }
-        
-        #inventoryUI {
+        #gameCanvas {
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            background: rgba(20, 20, 30, 0.95);
-            border: 2px solid #666;
-            border-radius: 10px;
-            padding: 20px;
-            display: none;
-            grid-template-columns: repeat(5, 60px);
-            grid-gap: 10px;
-            box-shadow: 0 0 20px rgba(0,0,0,0.8);
+            border: 2px solid #333;
+            cursor: crosshair;
         }
         
-        .inv-slot {
-            width: 60px;
+        /* UI Overlay */
+        .ui-layer {
+            position: absolute;
+            pointer-events: none;
+        }
+        
+        /* Network UI */
+        #networkPanel {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(20, 20, 30, 0.95);
+            padding: 20px;
+            border-radius: 10px;
+            border: 1px solid #444;
+            min-width: 300px;
+            pointer-events: auto;
+            z-index: 100;
+        }
+        
+        #networkPanel h3 { color: #4ade80; margin-bottom: 10px; }
+        #networkPanel button {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            margin: 5px;
+            border-radius: 5px;
+            cursor: pointer;
+            width: calc(50% - 10px);
+        }
+        #networkPanel button:hover { background: #1d4ed8; }
+        #networkPanel textarea {
+            width: 100%;
             height: 60px;
-            background: rgba(50, 50, 60, 0.8);
-            border: 2px solid #444;
+            margin: 10px 0;
+            background: #1a1a2e;
+            color: #fff;
+            border: 1px solid #333;
+            font-size: 10px;
+            resize: none;
+        }
+        
+        /* Hotbar */
+        #hotbar {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 5px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 10px;
+            border-radius: 10px;
+            border: 2px solid #555;
+        }
+        
+        .hotbar-slot {
+            width: 50px;
+            height: 50px;
+            background: rgba(50, 50, 60, 0.9);
+            border: 2px solid #666;
             border-radius: 5px;
             display: flex;
             align-items: center;
             justify-content: center;
-            cursor: pointer;
             font-size: 24px;
             position: relative;
+            cursor: pointer;
+            pointer-events: auto;
             transition: all 0.2s;
         }
         
-        .inv-slot:hover {
-            border-color: #0f0;
-            background: rgba(70, 70, 80, 0.9);
+        .hotbar-slot.active {
+            border-color: #fbbf24;
+            transform: translateY(-5px);
+            box-shadow: 0 0 10px rgba(251, 191, 36, 0.5);
         }
         
-        .inv-slot.selected {
-            border-color: #gold;
-            background: rgba(100, 100, 50, 0.8);
-            box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+        .hotbar-slot .key {
+            position: absolute;
+            top: 2px;
+            left: 4px;
+            font-size: 10px;
+            color: #aaa;
         }
         
-        .item-count {
+        .hotbar-slot .amount {
             position: absolute;
             bottom: 2px;
-            right: 5px;
+            right: 4px;
             font-size: 12px;
-            color: #fff;
             font-weight: bold;
+            color: #fff;
         }
         
-        #controls {
+        /* Race Selector */
+        #raceModal {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 200;
+        }
+        
+        .race-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 250px);
+            gap: 20px;
+        }
+        
+        .race-card {
+            background: linear-gradient(135deg, #1e293b, #0f172a);
+            border: 2px solid #334155;
+            border-radius: 15px;
+            padding: 20px;
+            cursor: pointer;
+            transition: transform 0.3s, border-color 0.3s;
+            text-align: center;
+        }
+        
+        .race-card:hover {
+            transform: scale(1.05);
+            border-color: #60a5fa;
+        }
+        
+        .race-card h2 { color: #fbbf24; margin-bottom: 10px; }
+        .race-card .icon { font-size: 48px; margin-bottom: 10px; }
+        .race-stats { font-size: 14px; color: #94a3b8; text-align: left; margin-top: 10px; }
+        .race-stats div { margin: 5px 0; }
+        
+        /* Skills Panel */
+        #skillsPanel {
             position: absolute;
-            bottom: 10px;
-            left: 10px;
-            font-size: 12px;
-            color: #aaa;
+            top: 20px;
+            left: 20px;
+            background: rgba(20, 20, 30, 0.95);
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid #444;
+            display: none;
+            pointer-events: auto;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .skill-node {
+            background: #1e293b;
+            border: 1px solid #475569;
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 5px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .skill-node:hover { background: #334155; }
+        .skill-node.unlocked { border-color: #4ade80; background: rgba(74, 222, 128, 0.1); }
+        .skill-node.locked { opacity: 0.5; pointer-events: none; }
+        
+        /* Claim Indicators */
+        #claimInfo {
+            position: absolute;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.8);
+            padding: 10px 20px;
+            border-radius: 20px;
+            border: 2px solid #fbbf24;
+            display: none;
+        }
+        
+        /* Player Tags */
+        .player-tag {
+            position: absolute;
             background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 12px;
+            pointer-events: none;
+            transform: translate(-50%, -100%);
+            margin-top: -30px;
+        }
+        
+        /* Status Bars */
+        #statusBars {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            width: 200px;
+        }
+        
+        .bar {
+            height: 20px;
+            background: #1a1a2e;
+            border: 1px solid #333;
+            border-radius: 10px;
+            margin-bottom: 5px;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .bar-fill {
+            height: 100%;
+            transition: width 0.3s;
+        }
+        
+        .hp-fill { background: linear-gradient(90deg, #ef4444, #dc2626); }
+        .xp-fill { background: linear-gradient(90deg, #3b82f6, #2563eb); }
+        .claim-fill { background: linear-gradient(90deg, #fbbf24, #f59e0b); }
+        
+        .bar-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 12px;
+            font-weight: bold;
+            text-shadow: 1px 1px 2px black;
+        }
+        
+        /* Loading/Saving */
+        #saveIndicator {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(34, 197, 94, 0.9);
+            color: black;
             padding: 10px;
             border-radius: 5px;
-        }
-        
-        #tooltip {
-            position: absolute;
-            background: rgba(0,0,0,0.9);
-            border: 1px solid #666;
-            padding: 8px;
-            border-radius: 4px;
-            pointer-events: none;
             display: none;
-            z-index: 1000;
-            font-size: 12px;
-            max-width: 200px;
+            font-weight: bold;
         }
-        
-        .rarity-common { color: #fff; }
-        .rarity-rare { color: #4488ff; }
-        .rarity-epic { color: #a855f7; }
-        .rarity-legendary { color: #fbbf24; }
     </style>
 </head>
 <body>
-    <div id="gameContainer">
-        <canvas id="gameCanvas" width="900" height="700"></canvas>
-        
-        <div id="ui">
-            <div>❤️ Vida: <span id="health">100</span>/<span id="maxHealth">100</span></div>
-            <div>⚔️ Nivel: <span id="level">1</span> | 🎯 Exp: <span id="exp">0</span></div>
-            <div>📍 Pos: <span id="pos">0,0</span></div>
-            <div>🗡️ Arma: <span id="currentWeapon">Espada</span></div>
-            <div style="margin-top:10px; color:#0f0">Presiona 'I' para inventario</div>
-        </div>
-        
-        <div id="inventoryUI"></div>
-        
-        <div id="tooltip"></div>
-        
-        <div id="controls">
-            WASD/Flechas: Mover | Espacio: Atacar | I: Inventario<br>
-            Click: Usar item | 1-5: Hotbar rápida | E: Recoger
+
+    <!-- Canvas -->
+    <canvas id="gameCanvas" width="1000" height="700"></canvas>
+    
+    <!-- Race Selection -->
+    <div id="raceModal">
+        <div class="race-grid">
+            <div class="race-card" onclick="selectRace('human')">
+                <div class="icon">👨‍🌾</div>
+                <h2>Humano</h2>
+                <p>Equilibrado y adaptable</p>
+                <div class="race-stats">
+                    <div>❤️ Vida: +20%</div>
+                    <div>⚔️ Daño: Normal</div>
+                    <div>🛡️ Defensa: Normal</div>
+                    <div>🏃 Velocidad: Normal</div>
+                    <div>🔧 Habilidad: Comercio</div>
+                </div>
+            </div>
+            
+            <div class="race-card" onclick="selectRace('elf')">
+                <div class="icon">🧝‍♂️</div>
+                <h2>Elfo</h2>
+                <p>Rápido y preciso</p>
+                <div class="race-stats">
+                    <div>❤️ Vida: -10%</div>
+                    <div>⚔️ Daño: +30% a distancia</div>
+                    <div>🏃 Velocidad: +25%</div>
+                    <div>🌲 Especial: Caminar bosques</div>
+                    <div>🔧 Habilidad: Arquería</div>
+                </div>
+            </div>
+            
+            <div class="race-card" onclick="selectRace('dwarf')">
+                <div class="icon">🧔</div>
+                <h2>Enano</h2>
+                <p>Resistente y fuerte</p>
+                <div class="race-stats">
+                    <div>❤️ Vida: +50%</div>
+                    <div>⚔️ Daño: +20% melee</div>
+                    <div>🏃 Velocidad: -20%</div>
+                    <div>🛡️ Defensa: +30%</div>
+                    <div>🔧 Habilidad: Minería</div>
+                </div>
+            </div>
+            
+            <div class="race-card" onclick="selectRace('orc')">
+                <div class="icon">👹</div>
+                <h2>Orco</h2>
+                <p>Brutal y agresivo</p>
+                <div class="race-stats">
+                    <div>❤️ Vida: +30%</div>
+                    <div>⚔️ Daño: +40%</div>
+                    <div>🛡️ Defensa: Normal</div>
+                    <div>🏃 Velocidad: +10%</div>
+                    <div>🔧 Habilidad: Berserk</div>
+                </div>
+            </div>
         </div>
     </div>
 
+    <!-- Network Panel -->
+    <div id="networkPanel">
+        <h3>🌐 Multiplayer</h3>
+        <div id="connectionStatus">Desconectado</div>
+        <div style="margin-top: 10px;">
+            <button onclick="hostGame()">Crear Sala</button>
+            <button onclick="joinGame()">Unirse</button>
+        </div>
+        <div id="sdpExchange" style="display: none; margin-top: 10px;">
+            <small>Intercambiar SDP:</small>
+            <textarea id="sdpText" placeholder="Copia este texto y envíalo al otro jugador..."></textarea>
+            <button onclick="copySDP()">Copiar</button>
+            <button onclick="pasteSDP()">Pegar Respuesta</button>
+        </div>
+        <div id="playersList" style="margin-top: 10px; font-size: 12px; color: #888;"></div>
+    </div>
+
+    <!-- Status -->
+    <div id="statusBars">
+        <div class="bar">
+            <div class="bar-fill hp-fill" id="hpBar" style="width: 100%"></div>
+            <div class="bar-text">❤️ <span id="hpText">100/100</span></div>
+        </div>
+        <div class="bar">
+            <div class="bar-fill xp-fill" id="xpBar" style="width: 0%"></div>
+            <div class="bar-text">⭐ <span id="xpText">Nivel 1</span></div>
+        </div>
+        <div class="bar">
+            <div class="bar-fill claim-fill" id="claimBar" style="width: 100%"></div>
+            <div class="bar-text">🏠 <span id="claimText">Claims: 10/10</span></div>
+        </div>
+    </div>
+
+    <!-- Hotbar -->
+    <div id="hotbar"></div>
+
+    <!-- Skills -->
+    <div id="skillsPanel">
+        <h3>🎆 Árbol de Habilidades</h3>
+        <div id="skillPoints">Puntos: 0</div>
+        <div id="skillTree"></div>
+    </div>
+
+    <!-- Claim Info -->
+    <div id="claimInfo">
+        <span id="claimText2">Terreno Libre</span>
+    </div>
+
+    <!-- Save Indicator -->
+    <div id="saveIndicator">💾 Guardando...</div>
+
     <script>
-        const canvas = document.getElementById('gameCanvas');
-        const ctx = canvas.getContext('2d');
-        const invUI = document.getElementById('inventoryUI');
-        const tooltip = document.getElementById('tooltip');
-        
-        // Configuración
+        // ==================== CONFIGURACIÓN ====================
         const TILE_SIZE = 32;
-        const WORLD_SIZE = 100; // Tamaño del mundo en tiles (100x100)
-        const VIEW_DIST = 15; // Distancia de visión
+        const CHUNK_SIZE = 16; // 16x16 tiles = 1 chunk claimable
+        const VIEW_RADIUS = 20;
         
-        // Generador de ruido simple (Perlin-like)
-        class SimpleNoise {
-            constructor(seed = Math.random()) {
-                this.seed = seed;
-                this.perm = new Array(512);
-                for(let i=0; i<256; i++) this.perm[i] = i;
-                for(let i=255; i>0; i--) {
-                    const j = Math.floor((seed * (i+1)) % 256);
-                    [this.perm[i], this.perm[j]] = [this.perm[j], this.perm[i]];
-                }
-                for(let i=0; i<256; i++) this.perm[i+256] = this.perm[i];
+        const RACES = {
+            human: { name: 'Humano', hp: 1.2, dmg: 1.0, def: 1.0, spd: 1.0, skill: 'trading', icon: '👨‍🌾', color: '#fcd34d' },
+            elf: { name: 'Elfo', hp: 0.9, dmg: 1.3, def: 0.8, spd: 1.25, skill: 'archery', icon: '🧝‍♂️', color: '#4ade80' },
+            dwarf: { name: 'Enano', hp: 1.5, dmg: 1.2, def: 1.3, spd: 0.8, skill: 'mining', icon: '🧔', color: '#60a5fa' },
+            orc: { name: 'Orco', hp: 1.3, dmg: 1.4, def: 1.0, spd: 1.1, skill: 'berserk', icon: '👹', color: '#ef4444' }
+        };
+
+        const SKILLS = {
+            trading: [
+                { id: 'trade1', name: 'Comerciante Novato', cost: 1, effect: 'Mejores precios' },
+                { id: 'trade2', name: 'Comerciante Experto', cost: 2, effect: 'Más claims', req: 'trade1' },
+                { id: 'trade3', name: 'Magnate', cost: 3, effect: 'Ingresos pasivos', req: 'trade2' }
+            ],
+            archery: [
+                { id: 'arch1', name: 'Puntería', cost: 1, effect: '+20% daño a distancia' },
+                { id: 'arch2', name: 'Flechas Rápidas', cost: 2, effect: 'Ataque +50% veloc', req: 'arch1' },
+                { id: 'arch3', name: 'Ojo de Halcón', cost: 3, effect: 'Critico +25%', req: 'arch2' }
+            ],
+            mining: [
+                { id: 'mine1', name: 'Minero', cost: 1, effect: 'Minar más rápido' },
+                { id: 'mine2', name: 'Fortuna', cost: 2, effect: 'Doble drop minerales', req: 'mine1' },
+                { id: 'mine3', name: 'Excavador', cost: 3, effect: 'Claims subterráneos', req: 'mine2' }
+            ],
+            berserk: [
+                { id: 'bers1', name: 'Furia', cost: 1, effect: '+15% daño bajo 50% HP' },
+                { id: 'bers2', name: 'Ira', cost: 2, effect: '+30% daño bajo 25% HP', req: 'bers1' },
+                { id: 'bers3', name: 'Berserker', cost: 3, effect: 'Inmortalidad 3s', req: 'bers2' }
+            ]
+        };
+
+        // ==================== BASE DE DATOS ====================
+        class SaveManager {
+            constructor() {
+                this.db = null;
+                this.init();
             }
             
-            noise2D(x, y) {
-                const X = Math.floor(x) & 255;
-                const Y = Math.floor(y) & 255;
-                const fx = x - Math.floor(x);
-                const fy = y - Math.floor(y);
-                
-                const u = fx * fx * (3 - 2 * fx);
-                const v = fy * fy * (3 - 2 * fy);
-                
-                const A = this.perm[X] + Y;
-                const B = this.perm[X+1] + Y;
-                
-                // Simplificación para 2D
-                return (this.perm[A] % 256 / 255) * (1-u) * (1-v) + 
-                       (this.perm[B] % 256 / 255) * u * (1-v) +
-                       (this.perm[A+1] % 256 / 255) * (1-u) * v +
-                       (this.perm[B+1] % 256 / 255) * u * v;
+            async init() {
+                return new Promise((resolve) => {
+                    const request = indexedDB.open('RPGWorld', 1);
+                    request.onupgradeneeded = (e) => {
+                        const db = e.target.result;
+                        db.createObjectStore('players', { keyPath: 'id' });
+                        db.createObjectStore('chunks', { keyPath: 'key' });
+                        db.createObjectStore('claims', { keyPath: 'chunkKey' });
+                    };
+                    request.onsuccess = (e) => {
+                        this.db = e.target.result;
+                        resolve();
+                    };
+                });
+            }
+            
+            async savePlayer(id, data) {
+                if (!this.db) await this.init();
+                const tx = this.db.transaction(['players'], 'readwrite');
+                const store = tx.objectStore('players');
+                await store.put({ id, ...data, timestamp: Date.now() });
+                this.showSave();
+            }
+            
+            async loadPlayer(id) {
+                if (!this.db) await this.init();
+                return new Promise((resolve) => {
+                    const tx = this.db.transaction(['players'], 'readonly');
+                    const store = tx.objectStore('players');
+                    const req = store.get(id);
+                    req.onsuccess = () => resolve(req.result);
+                });
+            }
+            
+            async saveClaim(chunkKey, ownerId, data) {
+                if (!this.db) return;
+                const tx = this.db.transaction(['claims'], 'readwrite');
+                const store = tx.objectStore('claims');
+                await store.put({ chunkKey, ownerId, ...data });
+            }
+            
+            async loadClaims() {
+                if (!this.db) return [];
+                return new Promise((resolve) => {
+                    const tx = this.db.transaction(['claims'], 'readonly');
+                    const store = tx.objectStore('claims');
+                    const req = store.getAll();
+                    req.onsuccess = () => resolve(req.result);
+                });
+            }
+            
+            showSave() {
+                const el = document.getElementById('saveIndicator');
+                el.style.display = 'block';
+                setTimeout(() => el.style.display = 'none', 2000);
             }
         }
-        
-        const noise = new SimpleNoise();
-        
-        // Tipos de terreno
-        const TERRAIN = {
-            WATER: { id: 0, color: '#1e3a8a', solid: true, name: 'Agua' },
-            SAND: { id: 1, color: '#fde047', solid: false, name: 'Arena' },
-            GRASS: { id: 2, color: '#16a34a', solid: false, name: 'Pasto' },
-            FOREST: { id: 3, color: '#14532d', solid: false, name: 'Bosque' },
-            MOUNTAIN: { id: 4, color: '#57534e', solid: true, name: 'Montaña' },
-            SNOW: { id: 5, color: '#f3f4f6', solid: false, name: 'Nieve' }
-        };
-        
-        // Items
-        const ITEMS = {
-            sword: { name: 'Espada de Hierro', icon: '🗡️', type: 'weapon', damage: 15, rarity: 'common' },
-            bow: { name: 'Arco', icon: '🏹', type: 'weapon', damage: 12, range: true, rarity: 'common' },
-            potion: { name: 'Poción de Vida', icon: '🧪', type: 'consumable', heal: 40, rarity: 'common' },
-            armor: { name: 'Armadura', icon: '🛡️', type: 'armor', defense: 5, rarity: 'rare' },
-            chest: { name: 'Cofre', icon: '📦', type: 'container', rarity: 'epic' },
-            gold: { name: 'Oro', icon: '🪙', type: 'currency', rarity: 'common' },
-            gem: { name: 'Gema', icon: '💎', type: 'currency', rarity: 'rare' },
-            axe: { name: 'Hacha', icon: '🪓', type: 'weapon', damage: 20, rarity: 'rare' }
-        };
-        
-        // Generación del mundo
-        class World {
+
+        const saveManager = new SaveManager();
+
+        // ==================== RED P2P ====================
+        class NetworkManager {
             constructor() {
-                this.tiles = new Map();
-                this.items = [];
-                this.generate();
+                this.conn = null;
+                this.isHost = false;
+                this.peers = new Map();
+                this.myId = Math.random().toString(36).substr(2, 9);
+                this.onData = null;
             }
             
-            getTile(x, y) {
-                const key = `${Math.floor(x)},${Math.floor(y)}`;
-                if (!this.tiles.has(key)) {
-                    this.generateTile(x, y);
-                }
-                return this.tiles.get(key);
-            }
-            
-            generateTile(x, y) {
-                // Múltiples octavas de ruido para terreno más natural
-                let val = 0;
-                let amp = 1;
-                let freq = 0.03;
+            async host() {
+                this.isHost = true;
+                this.conn = new RTCPeerConnection({
+                    iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
+                });
                 
-                for(let i=0; i<3; i++) {
-                    val += noise.noise2D(x * freq, y * freq) * amp;
-                    amp *= 0.5;
-                    freq *= 2;
-                }
+                this.dataChannel = this.conn.createDataChannel('game', {
+                    ordered: true
+                });
                 
-                // Normalizar a 0-1
-                val = (val + 1) / 2;
+                this.setupDataChannel(this.dataChannel);
                 
-                let type;
-                if (val < 0.25) type = TERRAIN.WATER;
-                else if (val < 0.3) type = TERRAIN.SAND;
-                else if (val < 0.6) type = TERRAIN.GRASS;
-                else if (val < 0.75) type = TERRAIN.FOREST;
-                else if (val < 0.9) type = TERRAIN.MOUNTAIN;
-                else type = TERRAIN.SNOW;
+                const offer = await this.conn.createOffer();
+                await this.conn.setLocalDescription(offer);
                 
-                this.tiles.set(`${x},${y}`, { type, x, y });
+                document.getElementById('sdpExchange').style.display = 'block';
+                document.getElementById('sdpText').value = JSON.stringify(offer);
+                document.getElementById('connectionStatus').textContent = 'Esperando conexión...';
                 
-                // Spawn items aleatorios
-                if (Math.random() < 0.02 && type.solid === false) {
-                    const itemKeys = Object.keys(ITEMS);
-                    const randomItem = itemKeys[Math.floor(Math.random() * itemKeys.length)];
-                    this.items.push({
-                        x: x * TILE_SIZE + TILE_SIZE/2,
-                        y: y * TILE_SIZE + TILE_SIZE/2,
-                        type: randomItem,
-                        id: Math.random()
-                    });
-                }
-            }
-            
-            generate() {
-                // Generar área inicial
-                for(let x=-20; x<20; x++) {
-                    for(let y=-20; y<20; y++) {
-                        this.generateTile(x, y);
+                this.conn.onicecandidate = (e) => {
+                    if (!e.candidate) {
+                        document.getElementById('sdpText').value = JSON.stringify(this.conn.localDescription);
                     }
+                };
+            }
+            
+            async join() {
+                this.isHost = false;
+                const offer = JSON.parse(prompt('Pega la oferta del host:'));
+                
+                this.conn = new RTCPeerConnection({
+                    iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
+                });
+                
+                this.conn.ondatachannel = (e) => {
+                    this.setupDataChannel(e.channel);
+                };
+                
+                await this.conn.setRemoteDescription(offer);
+                const answer = await this.conn.createAnswer();
+                await this.conn.setLocalDescription(answer);
+                
+                document.getElementById('sdpExchange').style.display = 'block';
+                document.getElementById('sdpText').value = JSON.stringify(answer);
+                document.getElementById('connectionStatus').textContent = 'Esperando aceptación...';
+            }
+            
+            async acceptAnswer() {
+                const answer = JSON.parse(document.getElementById('sdpText').value);
+                await this.conn.setRemoteDescription(answer);
+            }
+            
+            setupDataChannel(channel) {
+                channel.onopen = () => {
+                    document.getElementById('connectionStatus').textContent = 'Conectado!';
+                    document.getElementById('connectionStatus').style.color = '#4ade80';
+                    game.connected = true;
+                    this.send({ type: 'join', id: this.myId, data: game.player.getData() });
+                };
+                
+                channel.onmessage = (e) => {
+                    const data = JSON.parse(e.data);
+                    this.handleMessage(data);
+                };
+                
+                this.channel = channel;
+            }
+            
+            handleMessage(data) {
+                if (data.type === 'join') {
+                    this.peers.set(data.id, data.data);
+                    if (this.isHost) {
+                        // Enviar mundo actual y claims
+                        this.send({ 
+                            type: 'world', 
+                            chunks: game.world.chunks,
+                            claims: game.claims
+                        });
+                    }
+                    updatePlayerList();
+                } else if (data.type === 'world') {
+                    // Cliente recibe mundo
+                    game.world.chunks = data.chunks || {};
+                    game.claims = data.claims || {};
+                } else if (data.type === 'update') {
+                    this.peers.set(data.id, data.data);
+                } else if (data.type === 'claim') {
+                    game.claims[data.chunk] = { owner: data.owner, time: Date.now() };
+                }
+                
+                if (this.onData) this.onData(data);
+            }
+            
+            send(data) {
+                if (this.channel && this.channel.readyState === 'open') {
+                    this.channel.send(JSON.stringify({ ...data, id: this.myId }));
                 }
             }
             
-            draw(camera) {
-                const startX = Math.floor(camera.x / TILE_SIZE) - 1;
-                const startY = Math.floor(camera.y / TILE_SIZE) - 1;
-                const endX = startX + Math.ceil(canvas.width / TILE_SIZE) + 2;
-                const endY = startY + Math.ceil(canvas.height / TILE_SIZE) + 2;
+            broadcastPos(x, y) {
+                this.send({ type: 'update', id: this.myId, x, y, hp: game.player.hp });
+            }
+        }
+
+        const network = new NetworkManager();
+
+        // ==================== SISTEMA DE CLAIMS ====================
+        class ClaimSystem {
+            constructor() {
+                this.claims = {}; // "cx,cy" -> { owner, time, name }
+                this.maxClaims = 10;
+                this.usedClaims = 0;
+                this.loadClaims();
+            }
+            
+            async loadClaims() {
+                const saved = await saveManager.loadClaims();
+                saved.forEach(c => {
+                    this.claims[c.chunkKey] = c;
+                });
+                this.updateCount();
+            }
+            
+            getChunkKey(x, y) {
+                const cx = Math.floor(x / (CHUNK_SIZE * TILE_SIZE));
+                const cy = Math.floor(y / (CHUNK_SIZE * TILE_SIZE));
+                return `${cx},${cy}`;
+            }
+            
+            claim(x, y, playerId) {
+                const key = this.getChunkKey(x, y);
+                if (this.claims[key]) return false;
+                if (this.usedClaims >= this.maxClaims) return false;
                 
-                for(let x=startX; x<=endX; x++) {
-                    for(let y=startY; y<=endY; y++) {
-                        const tile = this.getTile(x, y);
-                        const screenX = x * TILE_SIZE - camera.x;
-                        const screenY = y * TILE_SIZE - camera.y;
-                        
-                        // Dibujar tile
-                        ctx.fillStyle = tile.type.color;
-                        ctx.fillRect(screenX, screenY, TILE_SIZE, TILE_SIZE);
-                        
-                        // Detalle textura
-                        ctx.fillStyle = 'rgba(0,0,0,0.1)';
-                        if ((x+y)%2 === 0) {
-                            ctx.fillRect(screenX, screenY, TILE_SIZE, 2);
-                            ctx.fillRect(screenX, screenY+TILE_SIZE-2, TILE_SIZE, 2);
+                this.claims[key] = {
+                    owner: playerId,
+                    time: Date.now(),
+                    name: `${playerId}'s Land`
+                };
+                
+                saveManager.saveClaim(key, playerId, this.claims[key]);
+                network.send({ type: 'claim', chunk: key, owner: playerId });
+                this.updateCount();
+                return true;
+            }
+            
+            isOwner(x, y, playerId) {
+                const key = this.getChunkKey(x, y);
+                const claim = this.claims[key];
+                return !claim || claim.owner === playerId;
+            }
+            
+            getOwner(x, y) {
+                const key = this.getChunkKey(x, y);
+                return this.claims[key]?.owner || null;
+            }
+            
+            updateCount() {
+                this.usedClaims = Object.keys(this.claims).filter(k => 
+                    this.claims[k].owner === game.player.id
+                ).length;
+                
+                const pct = (this.usedClaims / this.maxClaims) * 100;
+                document.getElementById('claimBar').style.width = pct + '%';
+                document.getElementById('claimText').textContent = `Claims: ${this.usedClaims}/${this.maxClaims}`;
+            }
+            
+            draw(ctx, camera) {
+                // Dibujar bordes de claims visibles
+                ctx.strokeStyle = '#fbbf24';
+                ctx.lineWidth = 2;
+                
+                const startX = Math.floor(camera.x / (CHUNK_SIZE * TILE_SIZE)) - 1;
+                const startY = Math.floor(camera.y / (CHUNK_SIZE * TILE_SIZE)) - 1;
+                const endX = startX + Math.ceil(canvas.width / (CHUNK_SIZE * TILE_SIZE)) + 1;
+                const endY = startY + Math.ceil(canvas.height / (CHUNK_SIZE * TILE_SIZE)) + 1;
+                
+                for (let cx = startX; cx <= endX; cx++) {
+                    for (let cy = startY; cy <= endY; cy++) {
+                        const key = `${cx},${cy}`;
+                        const claim = this.claims[key];
+                        if (claim) {
+                            const x = cx * CHUNK_SIZE * TILE_SIZE - camera.x;
+                            const y = cy * CHUNK_SIZE * TILE_SIZE - camera.y;
+                            const size = CHUNK_SIZE * TILE_SIZE;
+                            
+                            if (claim.owner === game.player.id) {
+                                ctx.strokeStyle = 'rgba(74, 222, 128, 0.5)';
+                                ctx.fillStyle = 'rgba(74, 222, 128, 0.1)';
+                            } else {
+                                ctx.strokeStyle = 'rgba(239, 68, 68, 0.5)';
+                                ctx.fillStyle = 'rgba(239, 68, 68, 0.1)';
+                            }
+                            
+                            ctx.fillRect(x, y, size, size);
+                            ctx.strokeRect(x, y, size, size);
+                            
+                            // Nombre
+                            ctx.fillStyle = '#fff';
+                            ctx.font = '12px Arial';
+                            ctx.fillText(claim.name || claim.owner, x + 5, y + 15);
                         }
                     }
                 }
-                
-                // Dibujar items en el suelo
-                this.items.forEach((item, idx) => {
-                    const screenX = item.x - camera.x;
-                    const screenY = item.y - camera.y;
-                    
-                    if (screenX > -50 && screenX < canvas.width + 50 && 
-                        screenY > -50 && screenY < canvas.height + 50) {
-                        
-                        // Animación flotante
-                        const bounce = Math.sin(Date.now() / 200) * 3;
-                        
-                        ctx.fillStyle = 'rgba(0,0,0,0.3)';
-                        ctx.beginPath();
-                        ctx.ellipse(screenX, screenY + 10, 10, 5, 0, 0, Math.PI*2);
-                        ctx.fill();
-                        
-                        ctx.font = '24px Arial';
-                        ctx.textAlign = 'center';
-                        ctx.fillText(ITEMS[item.type].icon, screenX, screenY + bounce);
-                        
-                        // Indicador de rareza
-                        const rarity = ITEMS[item.type].rarity;
-                        const colors = { common: '#fff', rare: '#4488ff', epic: '#a855f7', legendary: '#fbbf24' };
-                        ctx.fillStyle = colors[rarity] || '#fff';
-                        ctx.beginPath();
-                        ctx.arc(screenX + 10, screenY - 8, 3, 0, Math.PI*2);
-                        ctx.fill();
-                    }
-                });
-            }
-            
-            isSolid(x, y) {
-                const tile = this.getTile(Math.floor(x/TILE_SIZE), Math.floor(y/TILE_SIZE));
-                return tile.type.solid;
             }
         }
-        
-        // Inventario
-        class Inventory {
-            constructor(size = 25) {
-                this.size = size;
-                this.items = new Array(size).fill(null);
-                this.open = false;
-                this.selectedSlot = 0;
-                this.hotbar = 5;
-                
-                // Items iniciales
-                this.addItem('sword');
-                this.addItem('potion', 3);
-            }
-            
-            addItem(type, quantity = 1) {
-                const item = ITEMS[type];
-                
-                // Apilar items consumables y currency
-                if (item.type === 'consumable' || item.type === 'currency') {
-                    const existing = this.items.find(i => i && i.type === type);
-                    if (existing) {
-                        existing.quantity += quantity;
-                        return true;
-                    }
-                }
-                
-                // Buscar slot vacío
-                const emptySlot = this.items.findIndex(i => i === null);
-                if (emptySlot !== -1) {
-                    this.items[emptySlot] = { type, quantity, ...item };
-                    return true;
-                }
-                return false;
-            }
-            
-            removeItem(index) {
-                if (this.items[index]) {
-                    this.items[index].quantity--;
-                    if (this.items[index].quantity <= 0) {
-                        this.items[index] = null;
-                    }
-                }
-            }
-            
-            useItem(index) {
-                const item = this.items[index];
-                if (!item) return;
-                
-                if (item.type === 'consumable') {
-                    if (item.heal) {
-                        player.heal(item.heal);
-                        this.removeItem(index);
-                    }
-                } else if (item.type === 'weapon') {
-                    player.equipWeapon(item);
-                } else if (item.type === 'armor') {
-                    player.defense += item.defense;
-                    this.removeItem(index);
-                }
-            }
-            
-            toggle() {
-                this.open = !this.open;
-                invUI.style.display = this.open ? 'grid' : 'none';
-                this.render();
-            }
-            
-            render() {
-                invUI.innerHTML = '';
-                
-                this.items.forEach((item, idx) => {
-                    const slot = document.createElement('div');
-                    slot.className = 'inv-slot';
-                    if (idx === this.selectedSlot) slot.classList.add('selected');
-                    
-                    if (item) {
-                        slot.innerHTML = `
-                            ${item.icon}
-                            ${item.quantity > 1 ? `<span class="item-count">${item.quantity}</span>` : ''}
-                        `;
-                        
-                        const rarity = item.rarity || 'common';
-                        slot.classList.add(`rarity-${rarity}`);
-                        
-                        slot.onmouseenter = (e) => this.showTooltip(e, item);
-                        slot.onmouseleave = () => this.hideTooltip();
-                    }
-                    
-                    slot.onclick = () => {
-                        this.selectedSlot = idx;
-                        this.useItem(idx);
-                        this.render();
-                    };
-                    
-                    invUI.appendChild(slot);
-                });
-            }
-            
-            showTooltip(e, item) {
-                tooltip.style.display = 'block';
-                tooltip.style.left = e.pageX + 10 + 'px';
-                tooltip.style.top = e.pageY + 10 + 'px';
-                
-                const rarityColors = { common: 'white', rare: '#4488ff', epic: '#a855f7', legendary: '#fbbf24' };
-                
-                tooltip.innerHTML = `
-                    <div style="color: ${rarityColors[item.rarity]}; font-weight: bold; margin-bottom: 4px;">
-                        ${item.name}
-                    </div>
-                    <div style="color: #aaa;">Tipo: ${item.type}</div>
-                    ${item.damage ? `<div style="color: #ff6666;">Daño: ${item.damage}</div>` : ''}
-                    ${item.defense ? `<div style="color: #6666ff;">Defensa: ${item.defense}</div>` : ''}
-                    ${item.heal ? `<div style="color: #66ff66;">Cura: ${item.heal} HP</div>` : ''}
-                `;
-            }
-            
-            hideTooltip() {
-                tooltip.style.display = 'none';
-            }
-        }
-        
-        // Entidades
+
+        // ==================== JUEGO PRINCIPAL ====================
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
         class Player {
             constructor() {
+                this.id = network.myId;
                 this.x = 0;
                 this.y = 0;
-                this.size = 16;
-                this.speed = 3;
-                this.health = 100;
-                this.maxHealth = 100;
+                this.vx = 0;
+                this.vy = 0;
+                this.race = null;
+                this.hp = 100;
+                this.maxHp = 100;
                 this.level = 1;
-                this.exp = 0;
-                this.defense = 0;
-                this.weapon = ITEMS.sword;
-                this.direction = { x: 1, y: 0 };
-                this.attackCooldown = 0;
-                this.invulnerable = 0;
+                this.xp = 0;
+                this.skills = {};
+                this.inventory = new Array(36).fill(null);
+                this.hotbar = new Array(9).fill(null);
+                this.selectedSlot = 0;
+                this.claimBlocks = 10;
+                
+                // Stats base modificados por raza
+                this.stats = {
+                    str: 10, dex: 10, int: 10, vit: 10
+                };
+            }
+            
+            setRace(raceKey) {
+                this.race = raceKey;
+                const r = RACES[raceKey];
+                this.maxHp = 100 * r.hp;
+                this.hp = this.maxHp;
+                this.speed = 4 * r.spd;
+                this.damageMult = r.dmg;
+                this.defense = r.def;
+                
+                // Setup hotbar inicial según raza
+                if (raceKey === 'elf') {
+                    this.hotbar[0] = { type: 'bow', damage: 15 * r.dmg, icon: '🏹', qty: 1 };
+                } else if (raceKey === 'dwarf') {
+                    this.hotbar[0] = { type: 'pickaxe', damage: 10, icon: '⛏️', qty: 1 };
+                } else {
+                    this.hotbar[0] = { type: 'sword', damage: 20 * r.dmg, icon: '🗡️', qty: 1 };
+                }
+                
+                this.hotbar[1] = { type: 'potion', heal: 30, icon: '🧪', qty: 5 };
+                this.updateHotbarUI();
+            }
+            
+            getData() {
+                return {
+                    x: this.x, y: this.y, hp: this.hp, 
+                    maxHp: this.maxHp, race: this.race,
+                    level: this.level, id: this.id
+                };
             }
             
             update() {
-                let dx = 0;
-                let dy = 0;
+                // Movimiento
+                if (game.keys['w'] || game.keys['ArrowUp']) this.vy = -this.speed;
+                else if (game.keys['s'] || game.keys['ArrowDown']) this.vy = this.speed;
+                else this.vy = 0;
                 
-                if (game.keys['w'] || game.keys['ArrowUp']) dy = -1;
-                if (game.keys['s'] || game.keys['ArrowDown']) dy = 1;
-                if (game.keys['a'] || game.keys['ArrowLeft']) dx = -1;
-                if (game.keys['d'] || game.keys['ArrowRight']) dx = 1;
+                if (game.keys['a'] || game.keys['ArrowLeft']) this.vx = -this.speed;
+                else if (game.keys['d'] || game.keys['ArrowRight']) this.vx = this.speed;
+                else this.vx = 0;
                 
-                if (dx !== 0 && dy !== 0) {
-                    dx *= 0.707;
-                    dy *= 0.707;
+                // Check claims antes de mover
+                const nextX = this.x + this.vx;
+                const nextY = this.y + this.vy;
+                
+                if (game.claims.isOwner(nextX, this.y, this.id)) this.x = nextX;
+                if (game.claims.isOwner(this.x, nextY, this.id)) this.y = nextY;
+                
+                // Limites mundo infinito (generación procedural)
+                const tileX = Math.floor(this.x / TILE_SIZE);
+                const tileY = Math.floor(this.y / TILE_SIZE);
+                game.world.getTile(tileX, tileY); // Genera si no existe
+                
+                // Sync red
+                if (game.frame % 10 === 0) {
+                    network.broadcastPos(this.x, this.y);
                 }
                 
-                // Movimiento con colisión
-                const newX = this.x + dx * this.speed;
-                const newY = this.y + dy * this.speed;
-                
-                if (!world.isSolid(newX, this.y)) this.x = newX;
-                if (!world.isSolid(this.x, newY)) this.y = newY;
-                
-                if (dx !== 0 || dy !== 0) {
-                    this.direction = { x: dx || this.direction.x, y: dy || this.direction.y };
+                // Guardado auto cada 5s
+                if (game.frame % 300 === 0) {
+                    saveManager.savePlayer(this.id, this.getData());
                 }
-                
-                // Recoger items cercanos
-                if (game.keys['e']) {
-                    this.pickupItems();
-                }
-                
-                // Ataque
-                if (this.attackCooldown > 0) this.attackCooldown--;
-                if (game.keys[' '] && this.attackCooldown <= 0) {
-                    this.attack();
-                    this.attackCooldown = 20;
-                }
-                
-                if (this.invulnerable > 0) this.invulnerable--;
             }
             
-            pickupItems() {
-                world.items = world.items.filter(item => {
-                    const dist = Math.hypot(item.x - this.x, item.y - this.y);
-                    if (dist < 40) {
-                        if (inventory.addItem(item.type)) {
-                            game.particles.push(new Particle(item.x, item.y, '#gold', 10));
-                            return false;
-                        }
-                    }
-                    return true;
+            updateHotbarUI() {
+                const container = document.getElementById('hotbar');
+                container.innerHTML = '';
+                
+                for (let i = 0; i < 9; i++) {
+                    const slot = document.createElement('div');
+                    slot.className = 'hotbar-slot' + (i === this.selectedSlot ? ' active' : '');
+                    slot.innerHTML = `
+                        <span class="key">${i + 1}</span>
+                        ${this.hotbar[i] ? this.hotbar[i].icon : ''}
+                        ${this.hotbar[i]?.qty > 1 ? `<span class="amount">${this.hotbar[i].qty}</span>` : ''}
+                    `;
+                    slot.onclick = () => { this.selectedSlot = i; this.updateHotbarUI(); };
+                    container.appendChild(slot);
+                }
+            }
+            
+            useItem() {
+                const item = this.hotbar[this.selectedSlot];
+                if (!item) return;
+                
+                if (item.type === 'potion' && item.qty > 0) {
+                    this.hp = Math.min(this.maxHp, this.hp + item.heal);
+                    item.qty--;
+                    if (item.qty <= 0) this.hotbar[this.selectedSlot] = null;
+                    this.updateHotbarUI();
+                } else if (['sword', 'bow', 'pickaxe'].includes(item.type)) {
+                    this.attack(item);
+                }
+            }
+            
+            attack(item) {
+                // Lógica de ataque simple
+                game.particles.push(new Particle(this.x, this.y, '#ff0', 5));
+            }
+            
+            gainXp(amount) {
+                this.xp += amount;
+                const needed = this.level * 100;
+                if (this.xp >= needed) {
+                    this.xp -= needed;
+                    this.level++;
+                    this.skillPoints = (this.skillPoints || 0) + 1;
+                    this.updateSkillsUI();
+                }
+                this.updateBars();
+            }
+            
+            updateBars() {
+                const hpPct = (this.hp / this.maxHp) * 100;
+                document.getElementById('hpBar').style.width = hpPct + '%';
+                document.getElementById('hpText').textContent = `${Math.floor(this.hp)}/${Math.floor(this.maxHp)}`;
+                
+                const xpPct = (this.xp / (this.level * 100)) * 100;
+                document.getElementById('xpBar').style.width = xpPct + '%';
+                document.getElementById('xpText').textContent = `Nivel ${this.level}`;
+            }
+            
+            updateSkillsUI() {
+                const container = document.getElementById('skillTree');
+                container.innerHTML = '';
+                if (!this.race) return;
+                
+                const skills = SKILLS[RACES[this.race].skill];
+                skills.forEach(skill => {
+                    const div = document.createElement('div');
+                    div.className = 'skill-node ' + (this.skills[skill.id] ? 'unlocked' : 'locked');
+                    div.innerHTML = `
+                        <div>
+                            <div style="font-weight: bold">${skill.name}</div>
+                            <div style="font-size: 11px; color: #aaa">${skill.effect}</div>
+                        </div>
+                        <div style="color: #fbbf24">${skill.cost}p</div>
+                    `;
+                    div.onclick = () => this.unlockSkill(skill);
+                    container.appendChild(div);
                 });
-            }
-            
-            attack() {
-                // Lógica de ataque similar a antes
-                if (this.weapon.range) {
-                    // Proyectil
-                    game.projectiles.push(new Projectile(
-                        this.x, this.y, 
-                        this.direction.x, this.direction.y,
-                        this.weapon.damage
-                    ));
-                } else {
-                    // Melé
-                    const hitX = this.x + this.direction.x * 30;
-                    const hitY = this.y + this.direction.y * 30;
-                    
-                    game.enemies.forEach(enemy => {
-                        if (Math.hypot(enemy.x - hitX, enemy.y - hitY) < 40) {
-                            enemy.takeDamage(this.weapon.damage);
-                        }
-                    });
-                }
-            }
-            
-            equipWeapon(item) {
-                this.weapon = item;
-                document.getElementById('currentWeapon').textContent = item.name;
-            }
-            
-            heal(amount) {
-                this.health = Math.min(this.maxHealth, this.health + amount);
-            }
-            
-            takeDamage(amount) {
-                if (this.invulnerable > 0) return;
-                const actualDamage = Math.max(1, amount - this.defense);
-                this.health -= actualDamage;
-                this.invulnerable = 30;
                 
-                if (this.health <= 0) {
-                    this.respawn();
-                }
+                document.getElementById('skillPoints').textContent = `Puntos: ${this.skillPoints || 0}`;
             }
             
-            respawn() {
-                this.x = 0;
-                this.y = 0;
-                this.health = this.maxHealth;
-                game.enemies = [];
+            unlockSkill(skill) {
+                if (this.skills[skill.id]) return;
+                if ((this.skillPoints || 0) < skill.cost) return;
+                if (skill.req && !this.skills[skill.req]) return;
+                
+                this.skillPoints -= skill.cost;
+                this.skills[skill.id] = true;
+                this.updateSkillsUI();
             }
             
-            draw(camera) {
-                const screenX = this.x - camera.x;
-                const screenY = this.y - camera.y;
+            draw(ctx, camera) {
+                const sx = this.x - camera.x;
+                const sy = this.y - camera.y;
                 
                 // Sombra
                 ctx.fillStyle = 'rgba(0,0,0,0.3)';
                 ctx.beginPath();
-                ctx.ellipse(screenX, screenY + 12, 12, 6, 0, 0, Math.PI*2);
+                ctx.arc(sx, sy + 10, 12, 0, Math.PI*2);
                 ctx.fill();
                 
                 // Cuerpo
-                ctx.fillStyle = this.invulnerable > 0 && Math.floor(Date.now()/100)%2 === 0 ? 
-                    'rgba(78, 204, 163, 0.5)' : '#4ecca3';
-                ctx.fillRect(screenX - 10, screenY - 15, 20, 30);
-                
-                // Cabeza
-                ctx.fillStyle = '#f4d03f';
-                ctx.fillRect(screenX - 8, screenY - 22, 16, 14);
-                
-                // Arma
-                ctx.fillStyle = '#silver';
-                ctx.fillRect(screenX + this.direction.x * 15 - 2, screenY + this.direction.y * 15, 4, 4);
-            }
-        }
-        
-        // Enemigo
-        class Enemy {
-            constructor(x, y) {
-                this.x = x;
-                this.y = y;
-                this.size = 16;
-                this.speed = 1.5 + Math.random();
-                this.health = 40;
-                this.maxHealth = 40;
-            }
-            
-            update() {
-                const dx = game.player.x - this.x;
-                const dy = game.player.y - this.y;
-                const dist = Math.hypot(dx, dy);
-                
-                if (dist < 300 && dist > 20) {
-                    const moveX = (dx/dist) * this.speed;
-                    const moveY = (dy/dist) * this.speed;
-                    
-                    if (!world.isSolid(this.x + moveX, this.y)) this.x += moveX;
-                    if (!world.isSolid(this.x, this.y + moveY)) this.y += moveY;
+                if (this.race) {
+                    ctx.fillStyle = RACES[this.race].color;
+                } else {
+                    ctx.fillStyle = '#fff';
                 }
+                ctx.fillRect(sx - 10, sy - 15, 20, 30);
                 
-                if (dist < 25) {
-                    game.player.takeDamage(10);
-                }
-            }
-            
-            takeDamage(dmg) {
-                this.health -= dmg;
-                game.particles.push(new Particle(this.x, this.y, '#ff0000', 8));
+                // Nombre
+                ctx.fillStyle = '#fff';
+                ctx.font = '12px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText(`Tú (Nvl ${this.level})`, sx, sy - 25);
                 
-                if (this.health <= 0) {
-                    game.player.exp += 25;
-                    const idx = game.enemies.indexOf(this);
-                    if (idx > -1) game.enemies.splice(idx, 1);
-                }
-            }
-            
-            draw(camera) {
-                const screenX = this.x - camera.x;
-                const screenY = this.y - camera.y;
-                
-                ctx.fillStyle = '#e63946';
-                ctx.fillRect(screenX - 12, screenY - 12, 24, 24);
-                
-                // Ojos
-                ctx.fillStyle = '#000';
-                ctx.fillRect(screenX - 6, screenY - 6, 4, 4);
-                ctx.fillRect(screenX + 2, screenY - 6, 4, 4);
-                
-                // Barra vida
-                if (this.health < this.maxHealth) {
-                    ctx.fillStyle = 'red';
-                    ctx.fillRect(screenX - 12, screenY - 18, 24, 4);
-                    ctx.fillStyle = '#0f0';
-                    ctx.fillRect(screenX - 12, screenY - 18, 24 * (this.health/this.maxHealth), 4);
-                }
-            }
-        }
-        
-        // Proyectil
-        class Projectile {
-            constructor(x, y, dx, dy, damage) {
-                this.x = x;
-                this.y = y;
-                this.dx = dx;
-                this.dy = dy;
-                this.damage = damage;
-                this.life = 60;
-            }
-            
-            update() {
-                this.x += this.dx * 8;
-                this.y += this.dy * 8;
-                this.life--;
-                
-                // Colisión con enemigos
-                game.enemies.forEach(enemy => {
-                    if (Math.hypot(enemy.x - this.x, enemy.y - this.y) < 20) {
-                        enemy.takeDamage(this.damage);
-                        this.life = 0;
-                    }
-                });
-                
-                // Colisión con terreno sólido
-                if (world.isSolid(this.x, this.y)) this.life = 0;
-            }
-            
-            draw(camera) {
+                // Barra vida pequeña
+                ctx.fillStyle = 'red';
+                ctx.fillRect(sx - 15, sy - 20, 30, 3);
                 ctx.fillStyle = '#0f0';
-                ctx.beginPath();
-                ctx.arc(this.x - camera.x, this.y - camera.y, 4, 0, Math.PI*2);
-                ctx.fill();
+                ctx.fillRect(sx - 15, sy - 20, 30 * (this.hp/this.maxHp), 3);
             }
         }
-        
-        // Partícula
+
+        class World {
+            constructor() {
+                this.chunks = {};
+                this.seed = Math.random();
+            }
+            
+            getTile(tx, ty) {
+                // Generación procedural simple usando ruido
+                const key = `${tx},${ty}`;
+                if (!this.chunks[key]) {
+                    // Ruido simple basado en coordenadas y seed
+                    const noise = Math.sin(tx * 12.9898 + ty * 78.233 + this.seed) * 43758.5453;
+                    const val = (noise - Math.floor(noise));
+                    
+                    let type = 'grass';
+                    if (val < 0.2) type = 'water';
+                    else if (val < 0.3) type = 'sand';
+                    else if (val < 0.7) type = 'grass';
+                    else if (val < 0.9) type = 'forest';
+                    else type = 'stone';
+                    
+                    this.chunks[key] = { type, x: tx, y: ty };
+                }
+                return this.chunks[key];
+            }
+            
+            draw(ctx, camera) {
+                const startTx = Math.floor(camera.x / TILE_SIZE) - 1;
+                const startTy = Math.floor(camera.y / TILE_SIZE) - 1;
+                const endTx = startTx + Math.ceil(canvas.width / TILE_SIZE) + 2;
+                const endTy = startTy + Math.ceil(canvas.height / TILE_SIZE) + 2;
+                
+                for (let x = startTx; x <= endTx; x++) {
+                    for (let y = startTy; y <= endTy; y++) {
+                        const tile = this.getTile(x, y);
+                        const sx = x * TILE_SIZE - camera.x;
+                        const sy = y * TILE_SIZE - camera.y;
+                        
+                        const colors = {
+                            water: '#1e40af', sand: '#fcd34d', grass: '#166534',
+                            forest: '#14532d', stone: '#57534e'
+                        };
+                        
+                        ctx.fillStyle = colors[tile.type] || '#333';
+                        ctx.fillRect(sx, sy, TILE_SIZE, TILE_SIZE);
+                        
+                        // Grid sutil
+                        ctx.strokeStyle = 'rgba(0,0,0,0.1)';
+                        ctx.strokeRect(sx, sy, TILE_SIZE, TILE_SIZE);
+                    }
+                }
+            }
+        }
+
         class Particle {
             constructor(x, y, color, count = 1) {
-                this.particles = [];
-                for(let i=0; i<count; i++) {
-                    this.particles.push({
-                        x: x, y: y,
-                        vx: (Math.random()-0.5)*4,
-                        vy: (Math.random()-0.5)*4,
-                        life: 30,
-                        color: color
-                    });
-                }
+                this.x = x; this.y = y;
+                this.vx = (Math.random() - 0.5) * 4;
+                this.vy = (Math.random() - 0.5) * 4;
+                this.life = 30;
+                this.color = color;
             }
-            
-            update() {
-                this.particles.forEach(p => {
-                    p.x += p.vx;
-                    p.y += p.vy;
-                    p.life--;
-                });
-                this.particles = this.particles.filter(p => p.life > 0);
-            }
-            
-            draw(camera) {
-                this.particles.forEach(p => {
-                    ctx.globalAlpha = p.life/30;
-                    ctx.fillStyle = p.color;
-                    ctx.fillRect(p.x - camera.x, p.y - camera.y, 3, 3);
-                });
+            update() { this.x += this.vx; this.y += this.vy; this.life--; }
+            draw(ctx, cam) {
+                ctx.globalAlpha = this.life / 30;
+                ctx.fillStyle = this.color;
+                ctx.fillRect(this.x - cam.x, this.y - cam.y, 4, 4);
                 ctx.globalAlpha = 1;
             }
-            
-            get isDead() { return this.particles.length === 0; }
         }
-        
-        // Estado global
+
+        // ==================== GAME STATE ====================
         const game = {
-            keys: {},
             player: new Player(),
             world: new World(),
-            enemies: [],
-            projectiles: [],
-            particles: [],
+            claims: new ClaimSystem(),
+            keys: {},
             camera: { x: 0, y: 0 },
-            lastSpawn: 0
-        };
-        
-        const world = game.world;
-        const player = game.player;
-        const inventory = new Inventory();
-        
-        // Input
-        window.addEventListener('keydown', e => {
-            game.keys[e.key] = true;
-            if (e.key.toLowerCase() === 'i') inventory.toggle();
-            if (e.key >= '1' && e.key <= '5') {
-                const idx = parseInt(e.key) - 1;
-                if (inventory.items[idx]) inventory.useItem(idx);
-            }
-        });
-        
-        window.addEventListener('keyup', e => {
-            game.keys[e.key] = false;
-        });
-        
-        // UI Updates
-        function updateUI() {
-            document.getElementById('health').textContent = Math.floor(player.health);
-            document.getElementById('maxHealth').textContent = player.maxHealth;
-            document.getElementById('level').textContent = player.level;
-            document.getElementById('exp').textContent = player.exp;
-            document.getElementById('pos').textContent = 
-                `${Math.floor(player.x/TILE_SIZE)},${Math.floor(player.y/TILE_SIZE)}`;
-        }
-        
-        // Loop
-        function update() {
-            player.update();
+            frame: 0,
+            particles: [],
+            connected: false,
             
-            // Cámara suave
-            game.camera.x += (player.x - canvas.width/2 - game.camera.x) * 0.1;
-            game.camera.y += (player.y - canvas.height/2 - game.camera.y) * 0.1;
-            
-            // Spawn enemigos
-            game.lastSpawn++;
-            if (game.lastSpawn > 180) {
-                const angle = Math.random() * Math.PI * 2;
-                const dist = 300 + Math.random() * 200;
-                const x = player.x + Math.cos(angle) * dist;
-                const y = player.y + Math.sin(angle) * dist;
+            init() {
+                this.setupInput();
+                this.loop();
                 
-                if (!world.isSolid(x, y)) {
-                    game.enemies.push(new Enemy(x, y));
-                }
-                game.lastSpawn = 0;
-            }
-            
-            // Updates
-            game.enemies.forEach(e => e.update());
-            game.projectiles.forEach(p => p.update());
-            game.projectiles = game.projectiles.filter(p => p.life > 0);
-            
-            game.particles.forEach(p => p.update());
-            game.particles = game.particles.filter(p => !p.isDead);
-            
-            // Level up
-            if (player.exp >= player.level * 100) {
-                player.exp -= player.level * 100;
-                player.level++;
-                player.maxHealth += 20;
-                player.health = player.maxHealth;
-            }
-            
-            updateUI();
-        }
-        
-        function draw() {
-            // Fondo
-            ctx.fillStyle = '#16213e';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            
-            // Mundo
-            world.draw(game.camera);
-            
-            // Entidades
-            game.enemies.forEach(e => e.draw(game.camera));
-            game.projectiles.forEach(p => p.draw(game.camera));
-            player.draw(game.camera);
-            game.particles.forEach(p => p.draw(game.camera));
-            
-            // Minimapa
-            drawMinimap();
-        }
-        
-        function drawMinimap() {
-            const mapSize = 120;
-            const scale = 0.15;
-            const mx = canvas.width - mapSize - 10;
-            const my = 10;
-            
-            // Fondo
-            ctx.fillStyle = 'rgba(0,0,0,0.7)';
-            ctx.fillRect(mx, my, mapSize, mapSize);
-            ctx.strokeStyle = '#666';
-            ctx.strokeRect(mx, my, mapSize, mapSize);
-            
-            // Tiles
-            const centerX = Math.floor(player.x / TILE_SIZE);
-            const centerY = Math.floor(player.y / TILE_SIZE);
-            const range = 20;
-            
-            for(let x = centerX - range; x <= centerX + range; x++) {
-                for(let y = centerY - range; y <= centerY + range; y++) {
-                    const tile = world.getTile(x, y);
-                    const px = mx + mapSize/2 + (x - centerX) * 3;
-                    const py = my + mapSize/2 + (y - centerY) * 3;
-                    
-                    if (px >= mx && px <= mx + mapSize && py >= my && py <= my + mapSize) {
-                        ctx.fillStyle = tile.type.color;
-                        ctx.fillRect(px, py, 3, 3);
+                // Cargar progreso si existe
+                saveManager.loadPlayer(network.myId).then(data => {
+                    if (data) {
+                        game.player.hp = data.hp;
+                        game.player.x = data.x || 0;
+                        game.player.y = data.y || 0;
+                        game.player.level = data.level || 1;
                     }
+                });
+            },
+            
+            setupInput() {
+                window.addEventListener('keydown', (e) => {
+                    this.keys[e.key] = true;
+                    
+                    // Hotbar keys
+                    if (e.key >= '1' && e.key <= '9') {
+                        this.player.selectedSlot = parseInt(e.key) - 1;
+                        this.player.updateHotbarUI();
+                    }
+                    
+                    if (e.key === 'e' || e.key === 'E') {
+                        this.player.useItem();
+                    }
+                    
+                    if (e.key === 'c' || e.key === 'C') {
+                        // Claim chunk actual
+                        if (this.claims.claim(this.player.x, this.player.y, this.player.id)) {
+                            alert('Chunk reclamado!');
+                        } else {
+                            alert('No puedes reclamar aquí (ocupado o sin claims disponibles)');
+                        }
+                    }
+                    
+                    if (e.key === 'k' || e.key === 'K') {
+                        const panel = document.getElementById('skillsPanel');
+                        panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+                    }
+                });
+                
+                window.addEventListener('keyup', (e) => {
+                    this.keys[e.key] = false;
+                });
+            },
+            
+            update() {
+                this.frame++;
+                this.player.update();
+                
+                // Camera follow
+                this.camera.x = this.player.x - canvas.width / 2;
+                this.camera.y = this.player.y - canvas.height / 2;
+                
+                // Update particles
+                this.particles.forEach(p => p.update());
+                this.particles = this.particles.filter(p => p.life > 0);
+                
+                // Update claim UI
+                const owner = this.claims.getOwner(this.player.x, this.player.y);
+                const claimInfo = document.getElementById('claimInfo');
+                const claimText = document.getElementById('claimText2');
+                
+                if (owner) {
+                    claimInfo.style.display = 'block';
+                    claimText.textContent = owner === this.player.id ? 'Tu territorio' : `De: ${owner}`;
+                    claimText.style.color = owner === this.player.id ? '#4ade80' : '#ef4444';
+                } else {
+                    claimInfo.style.display = 'none';
                 }
+            },
+            
+            draw() {
+                ctx.fillStyle = '#0f172a';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                this.world.draw(ctx, this.camera);
+                this.claims.draw(ctx, this.camera);
+                
+                // Dibujar otros jugadores
+                network.peers.forEach((data, id) => {
+                    if (data.x !== undefined) {
+                        const sx = data.x - this.camera.x;
+                        const sy = data.y - this.camera.y;
+                        ctx.fillStyle = '#60a5fa';
+                        ctx.fillRect(sx - 10, sy - 15, 20, 30);
+                        ctx.fillStyle = '#fff';
+                        ctx.fillText(`Jugador ${id.substr(0,4)}`, sx, sy - 20);
+                    }
+                });
+                
+                this.player.draw(ctx, this.camera);
+                this.particles.forEach(p => p.draw(ctx, this.camera));
+            },
+            
+            loop() {
+                this.update();
+                this.draw();
+                requestAnimationFrame(() => this.loop());
             }
-            
-            // Jugador en minimapa
-            ctx.fillStyle = '#fff';
-            ctx.beginPath();
-            ctx.arc(mx + mapSize/2, my + mapSize/2, 3, 0, Math.PI*2);
-            ctx.fill();
-            
-            // Enemigos en minimapa (rojos)
-            ctx.fillStyle = '#f00';
-            game.enemies.forEach(e => {
-                const ex = mx + mapSize/2 + (e.x - player.x) * 0.1;
-                const ey = my + mapSize/2 + (e.y - player.y) * 0.1;
-                if (ex > mx && ex < mx+mapSize && ey > my && ey < my+mapSize) {
-                    ctx.fillRect(ex-1, ey-1, 2, 2);
-                }
-            });
+        };
+
+        // ==================== FUNCIONES UI ====================
+        function selectRace(race) {
+            game.player.setRace(race);
+            document.getElementById('raceModal').style.display = 'none';
+            game.player.updateSkillsUI();
         }
-        
-        function loop() {
-            update();
-            draw();
-            requestAnimationFrame(loop);
+
+        function hostGame() {
+            network.host();
         }
-        
+
+        function joinGame() {
+            network.join();
+        }
+
+        function copySDP() {
+            document.getElementById('sdpText').select();
+            document.execCommand('copy');
+            alert('Copiado al portapapeles! Envíalo al otro jugador.');
+        }
+
+        function pasteSDP() {
+            if (network.isHost) {
+                network.acceptAnswer();
+            } else {
+                alert('Esperando que el host acepte...');
+            }
+        }
+
+        function updatePlayerList() {
+            const list = document.getElementById('playersList');
+            const players = [network.myId, ...Array.from(network.peers.keys())];
+            list.innerHTML = 'Jugadores: ' + players.map(p => p.substr(0,6)).join(', ');
+        }
+
         // Iniciar
-        loop();
+        game.init();
     </script>
 </body>
 </html>
