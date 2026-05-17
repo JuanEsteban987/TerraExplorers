@@ -3,1110 +3,336 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PC Builder Simulator 3D - Fixed</title>
+    <title>Slime Rancher 2D - User Edition</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
-        body { overflow: hidden; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #000; }
-        
-        #gameCanvas { display: block; width: 100vw; height: 100vh; }
-        
-        #ui {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            pointer-events: none; z-index: 100;
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #7BA05B;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
         }
-        
-        #crosshair {
-            position: absolute; top: 50%; left: 50%;
-            transform: translate(-50%, -50%);
-            width: 20px; height: 20px;
-            border: 2px solid #0f0; border-radius: 50%;
-            background: rgba(0,255,0,0.1);
-            box-shadow: 0 0 10px rgba(0,255,0,0.5);
-        }
-        
-        #crosshair::before, #crosshair::after {
-            content: ''; position: absolute; background: #0f0;
-        }
-        #crosshair::before { top: 9px; left: 2px; width: 16px; height: 2px; }
-        #crosshair::after { top: 2px; left: 9px; width: 2px; height: 16px; }
-        
-        #controls {
-            position: absolute; bottom: 20px; left: 20px;
-            color: white; background: rgba(0,0,0,0.8);
-            padding: 15px; border-radius: 8px; font-size: 14px;
-            line-height: 1.6; border: 1px solid #333;
-        }
-        
-        #interactionPrompt {
-            position: absolute; bottom: 150px; left: 50%;
-            transform: translateX(-50%);
-            color: #0f0; font-size: 18px; font-weight: bold;
-            text-shadow: 0 0 10px rgba(0,255,0,0.8);
-            background: rgba(0,0,0,0.7); padding: 10px 20px;
-            border-radius: 20px; display: none;
-        }
-        
-        #phone {
-            position: absolute; bottom: -600px; left: 50%;
-            transform: translateX(-50%);
-            width: 320px; height: 580px;
-            background: #1a1a1a; border-radius: 40px;
-            border: 12px solid #333; pointer-events: auto;
-            transition: bottom 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,0.8);
-        }
-        
-        #phone.open { bottom: 20px; }
-        
-        #phoneScreen {
-            width: 100%; height: 100%;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            padding: 20px; color: white; position: relative;
-        }
-        
-        .phone-header {
-            text-align: center; font-size: 20px; margin-bottom: 30px;
-            border-bottom: 2px solid rgba(255,255,255,0.3);
-            padding-bottom: 15px; font-weight: bold;
-        }
-        
-        .app-grid {
-            display: grid; grid-template-columns: repeat(2, 1fr);
-            gap: 20px; padding: 20px;
-        }
-        
-        .app-icon {
-            aspect-ratio: 1; background: rgba(255,255,255,0.2);
-            border-radius: 20px; display: flex; flex-direction: column;
-            align-items: center; justify-content: center; cursor: pointer;
-            transition: all 0.2s; border: 2px solid transparent;
-        }
-        
-        .app-icon:hover { transform: scale(1.05); background: rgba(255,255,255,0.3); border-color: white; }
-        .app-icon span { font-size: 32px; margin-bottom: 5px; }
-        .app-icon label { font-size: 12px; font-weight: bold; }
-        
-        #shopScreen { display: none; height: 100%; overflow-y: auto; padding: 10px; }
-        .shop-header { display: flex; align-items: center; margin-bottom: 20px; gap: 10px; }
-        .back-btn { background: rgba(255,255,255,0.2); border: none; color: white; padding: 8px 15px; border-radius: 8px; cursor: pointer; }
-        
-        .shop-item {
-            background: rgba(255,255,255,0.1); margin: 10px 0;
-            padding: 15px; border-radius: 12px; cursor: pointer;
-            border: 2px solid transparent; transition: all 0.2s;
-        }
-        
-        .shop-item:hover { border-color: #fff; background: rgba(255,255,255,0.2); }
-        .shop-item.selected { border-color: #0f0; background: rgba(0,255,0,0.2); }
-        .shop-item .price { color: #0f0; font-weight: bold; font-size: 18px; }
-        .shop-item .desc { font-size: 12px; opacity: 0.8; margin-top: 5px; }
-        
-        #buyBtn { width: 100%; margin-top: 20px; padding: 15px; font-size: 16px; background: #4CAF50; color: white; border: none; border-radius: 8px; cursor: pointer; }
-        #buyBtn:disabled { background: #666; cursor: not-allowed; }
-        
-        #moneyDisplay { position: absolute; top: 20px; right: 20px; background: rgba(0,0,0,0.8); color: #0f0; padding: 10px 20px; border-radius: 20px; font-weight: bold; }
-        
-        #computerInterface {
-            position: fixed; top: 50%; left: 50%;
-            transform: translate(-50%, -50%) scale(0.8);
-            width: 900px; height: 700px; background: #000;
-            border: 30px solid #333; border-radius: 10px;
-            display: none; opacity: 0; transition: all 0.3s;
-            box-shadow: 0 0 50px rgba(0,0,0,0.9);
-        }
-        
-        #computerInterface.active { display: block; opacity: 1; transform: translate(-50%, -50%) scale(1); }
-        
-        #monitorScreen {
-            width: 100%; height: 100%; position: relative;
-            overflow: hidden; font-family: 'Courier New', monospace;
-        }
-        
-        .screen-off { background: #111 !important; }
-        
-        #biosScreen {
-            width: 100%; height: 100%; background: #000080;
-            color: white; padding: 30px; font-size: 16px;
-            line-height: 1.5; display: none;
-        }
-        
-        #installScreen {
-            width: 100%; height: 100%; background: #c0c0c0;
-            display: none; color: #000; padding: 40px;
-            text-align: center;
-        }
-        
-        .progress-bar {
-            width: 80%; height: 30px; background: #fff;
-            border: 2px solid #000; margin: 20px auto;
+        #game-container {
             position: relative;
+            width: 800px;
+            height: 600px;
+            background-color: #8FBC8F;
+            border: 4px solid #556B2F;
+            border-radius: 10px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
         }
-        
-        .progress-fill {
-            height: 100%; background: #000080; width: 0%;
-            transition: width 0.3s;
+        canvas {
+            display: block;
         }
-        
-        #windowsScreen {
-            width: 100%; height: 100%; background: #008080;
-            display: none; position: relative;
+        #ui-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            pointer-events: none;
+            padding: 10px;
+            box-sizing: border-box;
+            display: flex;
+            justify-content: space-between;
         }
-        
-        .win95-taskbar {
-            position: absolute; bottom: 0; left: 0; right: 0;
-            height: 40px; background: #c0c0c0;
-            border-top: 2px solid #fff; display: flex; align-items: center;
-            padding: 0 5px;
-        }
-        
-        .start-btn {
-            background: #c0c0c0; border: 2px outset #fff;
-            padding: 5px 15px; font-weight: bold; cursor: pointer;
-            display: flex; align-items: center; gap: 5px;
-        }
-        
-        .desktop-icons {
-            padding: 20px; display: flex; flex-direction: column;
-            gap: 20px; flex-wrap: wrap; height: calc(100% - 40px);
-        }
-        
-        .desktop-icon {
-            width: 80px; text-align: center; color: white;
-            cursor: pointer; padding: 5px; border: 1px solid transparent;
-        }
-        
-        .desktop-icon:hover { background: rgba(0,0,128,0.3); border: 1px dotted white; }
-        .desktop-icon .icon { font-size: 32px; margin-bottom: 5px; }
-        .desktop-icon .label { font-size: 12px; text-shadow: 1px 1px 2px black; }
-        
-        #pcEditModal {
-            position: fixed; top: 50%; left: 50%;
-            transform: translate(-50%, -50%);
-            width: 600px; background: rgba(30,30,30,0.95);
-            border: 3px solid #0f0; border-radius: 10px;
-            padding: 30px; display: none; color: white;
-            box-shadow: 0 0 30px rgba(0,255,0,0.3);
-        }
-        
-        #pcEditModal h2 { color: #0f0; margin-bottom: 20px; text-align: center; }
-        
-        .slots-grid {
-            display: grid; grid-template-columns: repeat(3, 1fr);
-            gap: 15px; margin: 20px 0;
-        }
-        
-        .slot {
-            aspect-ratio: 1; background: rgba(0,0,0,0.5);
-            border: 2px dashed #666; border-radius: 10px;
-            display: flex; flex-direction: column;
-            align-items: center; justify-content: center;
-            cursor: pointer; transition: all 0.2s; position: relative;
-        }
-        
-        .slot:hover { border-color: #0f0; background: rgba(0,255,0,0.1); }
-        .slot.filled { border-color: #0f0; border-style: solid; background: rgba(0,50,0,0.3); }
-        .slot .slot-icon { font-size: 24px; }
-        .slot .slot-name { font-size: 10px; margin-top: 5px; text-align: center; }
-        
-        #doorbell {
-            position: absolute; top: 30px; left: 50%;
-            transform: translateX(-50%);
-            background: linear-gradient(135deg, #ff6b6b, #ee5a5a);
-            color: white; padding: 20px 40px;
-            border-radius: 15px; font-size: 20px; font-weight: bold;
-            display: none; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            animation: pulse 1s infinite;
-        }
-        
-        @keyframes pulse { 0%, 100% { transform: translateX(-50%) scale(1); } 50% { transform: translateX(-50%) scale(1.05); } }
-        
-        .close-btn { position: absolute; top: 10px; right: 15px; background: none; border: none; color: #f00; font-size: 24px; cursor: pointer; }
-        
-        #notification {
-            position: absolute; top: 100px; right: -400px;
-            width: 350px; background: rgba(0,0,0,0.9);
-            color: #0f0; padding: 20px; border-radius: 10px;
-            border-left: 4px solid #0f0; transition: right 0.3s;
+        .panel {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 10px 20px;
+            border-radius: 8px;
+            border: 2px solid #333;
             pointer-events: auto;
         }
-        
-        #notification.show { right: 20px; }
-        
-        .component-list {
-            max-height: 200px; overflow-y: auto;
-            background: rgba(0,0,0,0.3); padding: 10px;
-            border-radius: 5px; margin: 10px 0;
+        #money-display {
+            font-size: 24px;
+            font-weight: bold;
+            color: #FFD700;
+            text-shadow: 1px 1px 2px #000;
         }
+        .controls button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            margin: 0 5px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .controls button:hover { background: #45a049; }
+        .controls button.active { background: #FF9800; border: 2px solid #333;}
         
-        .component-item { padding: 8px; border-bottom: 1px solid #333; cursor: pointer; }
-        .component-item:hover { background: rgba(0,255,0,0.1); }
-        .component-item.selected { color: #0f0; }
-        
-        .hidden { display: none !important; }
+        #almanac-modal {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            border: 3px solid #333;
+            width: 300px;
+            z-index: 10;
+            pointer-events: auto;
+        }
+        #almanac-modal h2 { margin-top: 0; }
+        .slime-entry { display: flex; align-items: center; margin-bottom: 10px; }
+        .slime-color { width: 20px; height: 20px; border-radius: 50%; margin-right: 10px; }
     </style>
 </head>
 <body>
-    <canvas id="gameCanvas"></canvas>
+
+<div id="game-container">
+    <canvas id="gameCanvas" width="800" height="600"></canvas>
     
-    <div id="ui">
-        <div id="crosshair"></div>
-        <div id="moneyDisplay">💰 $<span id="moneyVal">500</span></div>
-        
-        <div id="controls">
-            <strong>🎮 CONTROLES</strong><br>
-            <span style="color:#0f0">WASD</span> - Moverse | <span style="color:#0f0">MOUSE</span> - Mirar<br>
-            <span style="color:#0f0">E</span> - Interactuar | <span style="color:#0f0">P</span> - Celular<br>
-            <span style="color:#0f0">ESC</span> - Cerrar/Cancelar<br><br>
-            <span id="currentTask" style="color:#ffd700">Objetivo: Examina la PC (torre)</span>
-        </div>
-        
-        <div id="interactionPrompt"></div>
-        
-        <div id="doorbell">🔔 ¡Entrega en la puerta!</div>
-        
-        <div id="notification"></div>
-        
-        <!-- Celular -->
-        <div id="phone">
-            <div id="phoneScreen">
-                <div class="phone-header">📱 Smartphone</div>
-                
-                <div id="homeScreen" class="app-grid">
-                    <div class="app-icon" onclick="openShop()">
-                        <span>🛒</span><label>Tienda</label>
-                    </div>
-                    <div class="app-icon" onclick="showNotification('💵 Saldo: $' + gameState.money)">
-                        <span>💳</span><label>Banco</label>
-                    </div>
-                    <div class="app-icon" onclick="showNotification('📡 Sin señal')">
-                        <span>📶</span><label>Red</label>
-                    </div>
-                    <div class="app-icon" onclick="showNotification('🔋 Batería: 87%')">
-                        <span>🔋</span><label>Estado</label>
-                    </div>
-                </div>
-                
-                <div id="shopScreen">
-                    <div class="shop-header">
-                        <button class="back-btn" onclick="closeShop()">←</button>
-                        <span style="font-size:18px;font-weight:bold;">PC Shop</span>
-                    </div>
-                    
-                    <div class="shop-item" onclick="selectProduct('usb', 50, this)">
-                        <div style="display:flex;justify-content:space-between;align-items:center;">
-                            <span>💾 USB Windows 1.0</span>
-                            <span class="price">$50</span>
-                        </div>
-                        <div class="desc">Sistema operativo retro funcional. Necesario para instalar.</div>
-                    </div>
-                    
-                    <div class="shop-item" onclick="selectProduct('mouse', 25, this)">
-                        <div style="display:flex;justify-content:space-between;align-items:center;">
-                            <span>🖱️ Mouse USB</span>
-                            <span class="price">$25</span>
-                        </div>
-                        <div class="desc">Mouse óptico para controlar el cursor.</div>
-                    </div>
-                    
-                    <div class="shop-item" onclick="selectProduct('keyboard', 40, this)">
-                        <div style="display:flex;justify-content:space-between;align-items:center;">
-                            <span>⌨️ Teclado USB</span>
-                            <span class="price">$40</span>
-                        </div>
-                        <div class="desc">Teclado mecánico para escribir.</div>
-                    </div>
-                    
-                    <div class="shop-item" onclick="selectProduct('ram', 80, this)">
-                        <div style="display:flex;justify-content:space-between;align-items:center;">
-                            <span>🧠 RAM DDR4 8GB</span>
-                            <span class="price">$80</span>
-                        </div>
-                        <div class="desc">Memoria RAM para la placa madre.</div>
-                    </div>
-                    
-                    <button id="buyBtn" onclick="buyProduct()" disabled>Selecciona un producto</button>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Interfaz PC -->
-        <div id="computerInterface">
-            <div id="monitorScreen" class="screen-off">
-                <div id="biosScreen"></div>
-                <div id="installScreen">
-                    <h2>💿 Instalando Windows 1.0</h2>
-                    <p>Copiando archivos del sistema...</p>
-                    <div class="progress-bar">
-                        <div class="progress-fill" id="installProgress"></div>
-                    </div>
-                    <p id="installStatus">Preparando...</p>
-                </div>
-                <div id="windowsScreen">
-                    <div class="desktop-icons">
-                        <div class="desktop-icon" onclick="alert('MS-DOS Executive\nVersión 1.01')">
-                            <div class="icon">🖥️</div>
-                            <div class="label">MS-DOS</div>
-                        </div>
-                        <div class="desktop-icon" onclick="alert('Write\nProcesador de textos')">
-                            <div class="icon">📝</div>
-                            <div class="label">Write</div>
-                        </div>
-                        <div class="desktop-icon" onclick="alert('Calculadora\n2+2=4')">
-                            <div class="icon">🧮</div>
-                            <div class="label">Calc</div>
-                        </div>
-                        <div class="desktop-icon" onclick="alert('Reversi\nJuego iniciado')">
-                            <div class="icon">⚫</div>
-                            <div class="label">Reversi</div>
-                        </div>
-                        <div class="desktop-icon" onclick="alert('Reloj\n12:00 PM')">
-                            <div class="icon">🕐</div>
-                            <div class="label">Clock</div>
-                        </div>
-                        <div class="desktop-icon" onclick="alert('Paint\nModo dibujo')">
-                            <div class="icon">🎨</div>
-                            <div class="label">Paint</div>
-                        </div>
-                    </div>
-                    <div class="win95-taskbar">
-                        <div class="start-btn" onclick="alert('Menú Inicio')">🪟 Start</div>
-                        <div style="margin-left:auto; border: 2px inset #fff; padding: 5px 10px;">12:00 PM</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Modal Edición PC -->
-        <div id="pcEditModal">
-            <button class="close-btn" onclick="closePcEdit()">×</button>
-            <h2>🔧 Panel de Conexiones</h2>
-            <p style="text-align:center; margin-bottom:20px; opacity:0.8;">Arrastra los componentes a los slots o haz clic para conectar</p>
-            
-            <div class="slots-grid">
-                <div class="slot" id="slot-usb" onclick="connectDevice('usb')">
-                    <span class="slot-icon">🔌</span>
-                    <span class="slot-name">USB Puerto 1</span>
-                </div>
-                <div class="slot" id="slot-mouse" onclick="connectDevice('mouse')">
-                    <span class="slot-icon">🖱️</span>
-                    <span class="slot-name">USB Mouse</span>
-                </div>
-                <div class="slot" id="slot-keyboard" onclick="connectDevice('keyboard')">
-                    <span class="slot-icon">⌨️</span>
-                    <span class="slot-name">USB Keyboard</span>
-                </div>
-            </div>
-            
-            <div style="margin-top:20px; padding:15px; background:rgba(0,0,0,0.5); border-radius:8px;">
-                <strong style="color:#0f0">Inventario:</strong>
-                <div id="inventoryList" style="margin-top:10px;">
-                    <em style="opacity:0.5">Vacío</em>
-                </div>
-            </div>
-            
-            <div id="installSection" style="margin-top:20px; display:none;">
-                <button onclick="startWindowsInstall()" style="width:100%; padding:15px; background:#000080; color:white; border:none; border-radius:8px; cursor:pointer; font-size:16px;">
-                    💿 Instalar Windows desde USB
-                </button>
-            </div>
+    <div id="ui-layer">
+        <div class="panel" id="money-display">💰 $150</div>
+        <div class="panel controls">
+            <button id="btn-vac" class="active">Aspiradora (Recolectar)</button>
+            <button id="btn-feed">Lanzar Comida ($5)</button>
+            <button id="btn-build">Construir Corral ($100)</button>
+            <button id="btn-almanac">Almanaque</button>
         </div>
     </div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script>
-        // Estado del juego
-        const gameState = {
-            money: 500,
-            inventory: [],
-            pcBuilt: false,
-            pcPowered: false,
-            windowsInstalled: false,
-            currentScreen: 'off', // off, bios, installing, windows
-            connectedDevices: {
-                usb: false,
-                mouse: false,
-                keyboard: false
-            },
-            orderedPackage: null,
-            packageArrived: false,
-            selectedProduct: null,
-            selectedPrice: 0
-        };
+    <div id="almanac-modal">
+        <h2>Almanaque de Slimes</h2>
+        <div class="slime-entry">
+            <div class="slime-color" style="background: #FF69B4;"></div>
+            <div><strong>Slime Rosa:</strong> Come de todo. Plort: $10</div>
+        </div>
+        <div class="slime-entry">
+            <div class="slime-color" style="background: #4169E1;"></div>
+            <div><strong>Slime Roca:</strong> (Próximamente). Plort: $25</div>
+        </div>
+        <button onclick="document.getElementById('almanac-modal').style.display='none'">Cerrar</button>
+    </div>
+</div>
 
-        // Three.js Setup
-        const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x101020);
-        scene.fog = new THREE.Fog(0x101020, 1, 30);
+<script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    
+    // Estado del juego
+    let money = 150;
+    let currentMode = 'vac'; // vac, feed, build
+    
+    // UI Elements
+    const moneyDisplay = document.getElementById('money-display');
+    const btnVac = document.getElementById('btn-vac');
+    const btnFeed = document.getElementById('btn-feed');
+    const btnBuild = document.getElementById('btn-build');
+    const btnAlmanac = document.getElementById('btn-almanac');
+    const almanacModal = document.getElementById('almanac-modal');
 
-        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-        const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('gameCanvas'), antialias: true });
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.shadowMap.enabled = true;
-        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    // Cambiar modos
+    function setMode(mode) {
+        currentMode = mode;
+        btnVac.classList.remove('active');
+        btnFeed.classList.remove('active');
+        btnBuild.classList.remove('active');
+        if(mode === 'vac') btnVac.classList.add('active');
+        if(mode === 'feed') btnFeed.classList.add('active');
+        if(mode === 'build') btnBuild.classList.add('active');
+    }
 
-        // Iluminación
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
-        scene.add(ambientLight);
+    btnVac.onclick = () => setMode('vac');
+    btnFeed.onclick = () => setMode('feed');
+    btnBuild.onclick = () => setMode('build');
+    btnAlmanac.onclick = () => almanacModal.style.display = 'block';
 
-        const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
-        dirLight.position.set(5, 10, 5);
-        dirLight.castShadow = true;
-        dirLight.shadow.camera.near = 0.1;
-        dirLight.shadow.camera.far = 50;
-        dirLight.shadow.camera.left = -10;
-        dirLight.shadow.camera.right = 10;
-        dirLight.shadow.camera.top = 10;
-        dirLight.shadow.camera.bottom = -10;
-        scene.add(dirLight);
+    function updateMoney(amount) {
+        money += amount;
+        moneyDisplay.innerText = `💰 $${money}`;
+    }
 
-        // Habitación
-        const roomGeo = new THREE.BoxGeometry(20, 10, 20);
-        const roomMat = new THREE.MeshStandardMaterial({ color: 0x505050, side: THREE.BackSide });
-        const room = new THREE.Mesh(roomGeo, roomMat);
-        room.receiveShadow = true;
-        scene.add(room);
+    // Estructuras de datos
+    const slimes = [];
+    const plorts = [];
+    const foods = [];
+    const plots = [
+        {x: 100, y: 100, w: 250, h: 250, type: 'empty'},
+        {x: 450, y: 100, w: 250, h: 250, type: 'empty'},
+    ];
 
-        // Suelo
-        const floorGeo = new THREE.PlaneGeometry(20, 20);
-        const floorMat = new THREE.MeshStandardMaterial({ color: 0x3d2817 });
-        const floor = new THREE.Mesh(floorGeo, floorMat);
-        floor.rotation.x = -Math.PI / 2;
-        floor.position.y = -5;
-        floor.receiveShadow = true;
-        scene.add(floor);
-
-        // Escritorio
-        const deskGeo = new THREE.BoxGeometry(8, 0.2, 4);
-        const deskMat = new THREE.MeshStandardMaterial({ color: 0x8B4513 });
-        const desk = new THREE.Mesh(deskGeo, deskMat);
-        desk.position.set(0, -1.5, -2);
-        desk.receiveShadow = true;
-        desk.castShadow = true;
-        scene.add(desk);
-
-        // Patas del escritorio
-        const legGeo = new THREE.BoxGeometry(0.3, 3, 0.3);
-        const legMat = new THREE.MeshStandardMaterial({ color: 0x222222 });
-        [[-3.5, -1.8], [3.5, -1.8], [-3.5, 1.8], [3.5, 1.8]].forEach(([x, z]) => {
-            const leg = new THREE.Mesh(legGeo, legMat);
-            leg.position.set(x, -3, -2 + z);
-            leg.castShadow = true;
-            scene.add(leg);
-        });
-
-        // Torre de PC (Case)
-        const caseGroup = new THREE.Group();
-        
-        // Caja principal
-        const caseBodyGeo = new THREE.BoxGeometry(2, 4.5, 4.5);
-        const caseBodyMat = new THREE.MeshStandardMaterial({ color: 0x1a1a1a });
-        const caseBody = new THREE.Mesh(caseBodyGeo, caseBodyMat);
-        caseBody.castShadow = true;
-        caseGroup.add(caseBody);
-
-        // Panel lateral transparente (para ver adentro)
-        const sidePanelGeo = new THREE.BoxGeometry(2.05, 4, 4);
-        const sidePanelMat = new THREE.MeshStandardMaterial({ 
-            color: 0x000000, 
-            transparent: true, 
-            opacity: 0.3 
-        });
-        const sidePanel = new THREE.Mesh(sidePanelGeo, sidePanelMat);
-        sidePanel.position.x = 0;
-        caseGroup.add(sidePanel);
-
-        // Botón de encendido
-        const powerBtnGeo = new THREE.CylinderGeometry(0.15, 0.15, 0.1, 16);
-        const powerBtnMat = new THREE.MeshStandardMaterial({ color: 0x333333 });
-        const powerBtn = new THREE.Mesh(powerBtnGeo, powerBtnMat);
-        powerBtn.rotation.x = Math.PI / 2;
-        powerBtn.position.set(0, 1.5, 2.3);
-        caseGroup.add(powerBtn);
-
-        // LEDs indicadores
-        const ledGeo = new THREE.SphereGeometry(0.1, 8, 8);
-        const ledMat = new THREE.MeshBasicMaterial({ color: 0x330000 });
-        const powerLed = new THREE.Mesh(ledGeo, ledMat);
-        powerLed.position.set(-0.5, 1.5, 2.25);
-        caseGroup.add(powerLed);
-
-        // Puertos USB frontales
-        const usbPortGeo = new THREE.BoxGeometry(0.4, 0.15, 0.1);
-        const usbPortMat = new THREE.MeshStandardMaterial({ color: 0x000000 });
-        const usbPort1 = new THREE.Mesh(usbPortGeo, usbPortMat);
-        usbPort1.position.set(0.5, 1.2, 2.26);
-        caseGroup.add(usbPort1);
-        
-        const usbPort2 = new THREE.Mesh(usbPortGeo, usbPortMat);
-        usbPort2.position.set(1.1, 1.2, 2.26);
-        caseGroup.add(usbPort2);
-
-        // Posición de la torre
-        caseGroup.position.set(-5, -2.25, -2);
-        caseGroup.userData = { type: 'pcCase', name: 'PC Tower' };
-        scene.add(caseGroup);
-
-        // Monitor
-        const monitorGroup = new THREE.Group();
-        
-        // Pantalla
-        const monitorFrameGeo = new THREE.BoxGeometry(5, 3.5, 0.3);
-        const monitorFrameMat = new THREE.MeshStandardMaterial({ color: 0x111111 });
-        const monitorFrame = new THREE.Mesh(monitorFrameGeo, monitorFrameMat);
-        monitorFrame.castShadow = true;
-        monitorGroup.add(monitorFrame);
-
-        // Pantalla (iluminada)
-        const screenGeo = new THREE.PlaneGeometry(4.6, 3.1);
-        const screenMat = new THREE.MeshBasicMaterial({ color: 0x000000 });
-        const screenMesh = new THREE.Mesh(screenGeo, screenMat);
-        screenMesh.position.z = 0.16;
-        monitorGroup.add(screenMesh);
-
-        // Base
-        const standGeo = new THREE.BoxGeometry(1, 1.5, 1);
-        const stand = new THREE.Mesh(standGeo, legMat);
-        stand.position.set(0, -2.25, 0);
-        monitorGroup.add(stand);
-
-        const baseGeo = new THREE.BoxGeometry(3, 0.2, 2);
-        const base = new THREE.Mesh(baseGeo, legMat);
-        base.position.set(0, -3, 0.5);
-        monitorGroup.add(base);
-
-        monitorGroup.position.set(0, 0.5, -4);
-        monitorGroup.userData = { type: 'monitor', name: 'Monitor' };
-        scene.add(monitorGroup);
-
-        // Teclado y Mouse (invisibles hasta conectarlos)
-        const keyboardGeo = new THREE.BoxGeometry(3, 0.1, 1);
-        const keyboardMat = new THREE.MeshStandardMaterial({ color: 0xdddddd });
-        const keyboard = new THREE.Mesh(keyboardGeo, keyboardMat);
-        keyboard.position.set(0, -1.35, -1);
-        keyboard.visible = false;
-        keyboard.userData = { type: 'keyboardObject', name: 'Teclado' };
-        scene.add(keyboard);
-
-        const mouseGeo = new THREE.BoxGeometry(0.5, 0.15, 0.8);
-        const mouseMat = new THREE.MeshStandardMaterial({ color: 0xffffff });
-        const mouse = new THREE.Mesh(mouseGeo, mouseMat);
-        mouse.position.set(2, -1.35, -1);
-        mouse.visible = false;
-        mouse.userData = { type: 'mouseObject', name: 'Mouse' };
-        scene.add(mouse);
-
-        // USB Drive (objeto físico)
-        const usbGeo = new THREE.BoxGeometry(0.3, 0.1, 0.6);
-        const usbMat = new THREE.MeshStandardMaterial({ color: 0x00ff00 });
-        const usbMesh = new THREE.Mesh(usbGeo, usbMat);
-        usbMesh.position.set(-5, -3.8, -2);
-        usbMesh.visible = false;
-        usbMesh.userData = { type: 'usbObject', name: 'USB Windows' };
-        scene.add(usbMesh);
-
-        // Puerta
-        const doorGroup = new THREE.Group();
-        const doorGeo = new THREE.BoxGeometry(3, 7, 0.3);
-        const doorMat = new THREE.MeshStandardMaterial({ color: 0x4a3000 });
-        const door = new THREE.Mesh(doorGeo, doorMat);
-        door.castShadow = true;
-        doorGroup.add(door);
-
-        const knobGeo = new THREE.SphereGeometry(0.15);
-        const knobMat = new THREE.MeshStandardMaterial({ color: 0xffd700 });
-        const knob = new THREE.Mesh(knobGeo, knobMat);
-        knob.position.set(1.2, 0, 0.2);
-        doorGroup.add(knob);
-
-        doorGroup.position.set(0, -1.5, -9.7);
-        doorGroup.userData = { type: 'door', name: 'Puerta' };
-        scene.add(doorGroup);
-
-        // Paquete
-        const packageGeo = new THREE.BoxGeometry(1.5, 1, 1.5);
-        const packageMat = new THREE.MeshStandardMaterial({ color: 0x8B4513 });
-        const package = new THREE.Mesh(packageGeo, packageMat);
-        package.position.set(0, -4.5, -8.5);
-        package.visible = false;
-        package.castShadow = true;
-        package.userData = { type: 'package', name: 'Paquete' };
-        scene.add(package);
-
-        // Cinta del paquete
-        const tapeGeo = new THREE.BoxGeometry(1.52, 0.1, 1.52);
-        const tapeMat = new THREE.MeshBasicMaterial({ color: 0xff0000 });
-        const tape = new THREE.Mesh(tapeGeo, tapeMat);
-        tape.position.y = 0.2;
-        package.add(tape);
-
-        // Posición inicial del jugador
-        camera.position.set(0, 0, 6);
-        camera.lookAt(0, 0, -2);
-
-        // Controles
-        let moveForward = false, moveBackward = false, moveLeft = false, moveRight = false;
-        let isLocked = false;
-        let raycaster = new THREE.Raycaster();
-        let mouseVector = new THREE.Vector2(0, 0);
-
-        document.addEventListener('keydown', (e) => {
-            if (document.getElementById('computerInterface').style.display === 'block') return;
-            
-            switch(e.code) {
-                case 'KeyW': moveForward = true; break;
-                case 'KeyS': moveBackward = true; break;
-                case 'KeyA': moveLeft = true; break;
-                case 'KeyD': moveRight = true; break;
-                case 'KeyE': handleInteraction(); break;
-                case 'KeyP': togglePhone(); break;
-                case 'Escape': closeAllInterfaces(); break;
-            }
-        });
-
-        document.addEventListener('keyup', (e) => {
-            switch(e.code) {
-                case 'KeyW': moveForward = false; break;
-                case 'KeyS': moveBackward = false; break;
-                case 'KeyA': moveLeft = false; break;
-                case 'KeyD': moveRight = false; break;
-            }
-        });
-
-        document.addEventListener('mousemove', (e) => {
-            if (!isLocked) return;
-            camera.rotation.y -= e.movementX * 0.002;
-            camera.rotation.x -= e.movementY * 0.002;
-            camera.rotation.x = Math.max(-Math.PI/2.5, Math.min(Math.PI/2.5, camera.rotation.x));
-        });
-
-        document.addEventListener('click', () => {
-            if (!isLocked && !isAnyInterfaceOpen()) {
-                document.body.requestPointerLock();
-            }
-        });
-
-        document.addEventListener('pointerlockchange', () => {
-            isLocked = document.pointerLockElement === document.body;
-        });
-
-        function isAnyInterfaceOpen() {
-            return document.getElementById('phone').classList.contains('open') ||
-                   document.getElementById('pcEditModal').style.display === 'block' ||
-                   document.getElementById('computerInterface').style.display === 'block';
+    class Slime {
+        constructor(x, y) {
+            this.x = x;
+            this.y = y;
+            this.radius = 15;
+            this.color = '#FF69B4'; // Rosa por defecto
+            this.vx = (Math.random() - 0.5) * 2;
+            this.vy = (Math.random() - 0.5) * 2;
+            this.hunger = 0;
+            this.plotId = this.getCurrentPlot(); // Para mantenerlos en su corral
         }
 
-        function handleInteraction() {
-            raycaster.setFromCamera(mouseVector, camera);
-            const intersects = raycaster.intersectObjects(scene.children, true);
-            
-            if (intersects.length > 0) {
-                const obj = intersects[0].object;
-                const parent = obj.parent;
-                
-                // Detectar tipo de objeto
-                if (parent?.userData?.type === 'pcCase' || obj.userData?.type === 'pcCase') {
-                    openPcEdit();
+        getCurrentPlot() {
+            for (let i = 0; i < plots.length; i++) {
+                let p = plots[i];
+                if (this.x > p.x && this.x < p.x + p.w && this.y > p.y && this.y < p.y + p.h) {
+                    return i;
                 }
-                else if (parent?.userData?.type === 'monitor' || obj.userData?.type === 'monitor') {
-                    toggleMonitor();
-                }
-                else if (obj.userData?.type === 'package' || parent?.userData?.type === 'package') {
-                    collectPackage();
-                }
-                else if (obj.userData?.type === 'door' || parent?.userData?.type === 'door') {
-                    checkDoor();
+            }
+            return -1;
+        }
+
+        update() {
+            this.x += this.vx;
+            this.y += this.vy;
+            this.hunger += 0.05;
+
+            // Físicas básicas (Rebote en paredes del canvas)
+            if (this.x - this.radius < 0 || this.x + this.radius > canvas.width) this.vx *= -1;
+            if (this.y - this.radius < 0 || this.y + this.radius > canvas.height) this.vy *= -1;
+
+            // Colisión con corrales
+            if (this.plotId !== -1 && plots[this.plotId].type === 'corral') {
+                let p = plots[this.plotId];
+                if (this.x - this.radius < p.x) { this.x = p.x + this.radius; this.vx *= -1; }
+                if (this.x + this.radius > p.x + p.w) { this.x = p.x + p.w - this.radius; this.vx *= -1; }
+                if (this.y - this.radius < p.y) { this.y = p.y + this.radius; this.vy *= -1; }
+                if (this.y + this.radius > p.y + p.h) { this.y = p.y + p.h - this.radius; this.vy *= -1; }
+            }
+
+            // Comer
+            if (this.hunger > 10) {
+                for (let i = 0; i < foods.length; i++) {
+                    let f = foods[i];
+                    let dist = Math.hypot(this.x - f.x, this.y - f.y);
+                    if (dist < this.radius + f.radius) {
+                        foods.splice(i, 1);
+                        this.hunger = 0;
+                        // Producir plort
+                        plorts.push({x: this.x, y: this.y + 10, value: 10, radius: 6, color: '#FFB6C1'});
+                        break;
+                    }
                 }
             }
         }
 
-        function getLookingAt() {
-            raycaster.setFromCamera(mouseVector, camera);
-            const intersects = raycaster.intersectObjects(scene.children, true);
+        draw(ctx) {
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+            ctx.fillStyle = this.color;
+            ctx.fill();
+            ctx.strokeStyle = '#C71585';
+            ctx.lineWidth = 2;
+            ctx.stroke();
             
-            if (intersects.length > 0) {
-                const obj = intersects[0].object;
-                const parent = obj.parent;
-                
-                if (parent?.userData?.type === 'pcCase' || obj.userData?.type === 'pcCase') return 'pcCase';
-                if (parent?.userData?.type === 'monitor' || obj.userData?.type === 'monitor') return 'monitor';
-                if (obj.userData?.type === 'package' || parent?.userData?.type === 'package') return 'package';
-                if (obj.userData?.type === 'door' || parent?.userData?.type === 'door') return 'door';
-            }
-            return null;
+            // Ojos
+            ctx.fillStyle = 'black';
+            ctx.beginPath(); ctx.arc(this.x - 5, this.y - 3, 2, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.arc(this.x + 5, this.y - 3, 2, 0, Math.PI * 2); ctx.fill();
         }
+    }
 
-        // Loop de actualización de prompt
-        setInterval(() => {
-            if (isAnyInterfaceOpen()) {
-                document.getElementById('interactionPrompt').style.display = 'none';
-                return;
-            }
-            
-            const looking = getLookingAt();
-            const prompt = document.getElementById('interactionPrompt');
-            
-            if (looking === 'pcCase') {
-                prompt.textContent = '[E] Abrir Panel de Conexiones';
-                prompt.style.display = 'block';
-            } else if (looking === 'monitor') {
-                if (gameState.pcPowered) {
-                    prompt.textContent = '[E] ' + (gameState.currentScreen === 'off' ? 'Encender Monitor' : 'Usar PC');
-                } else {
-                    prompt.textContent = '[E] Verificar Monitor (PC apagada)';
+    // Inicializar algunos slimes libres
+    for(let i=0; i<3; i++) {
+        slimes.push(new Slime(canvas.width/2 + Math.random()*50, canvas.height - 100 + Math.random()*50));
+    }
+
+    // Interacciones del mouse
+    canvas.addEventListener('mousedown', (e) => {
+        const rect = canvas.getBoundingClientRect();
+        const mouseX = e.clientX - rect.left;
+        const mouseY = e.clientY - rect.top;
+
+        if (currentMode === 'build') {
+            // Revisar si clickeamos una parcela vacía
+            for (let p of plots) {
+                if (mouseX > p.x && mouseX < p.x + p.w && mouseY > p.y && mouseY < p.y + p.h) {
+                    if (p.type === 'empty' && money >= 100) {
+                        p.type = 'corral';
+                        updateMoney(-100);
+                        
+                        // Añadir un par de slimes al nuevo corral para probar
+                        let s1 = new Slime(p.x + p.w/2, p.y + p.h/2);
+                        let s2 = new Slime(p.x + p.w/2 + 20, p.y + p.h/2);
+                        s1.plotId = slimes.length; // hack rápido
+                        s2.plotId = slimes.length + 1;
+                        slimes.push(s1, s2);
+                        // Reasignar IDs de parcela correctamente
+                        slimes.forEach(s => s.plotId = s.getCurrentPlot());
+                    }
                 }
-                prompt.style.display = 'block';
-            } else if (looking === 'package') {
-                prompt.textContent = '[E] Recoger Paquete';
-                prompt.style.display = 'block';
-            } else if (looking === 'door') {
-                prompt.textContent = '[E] Revisar Puerta';
-                prompt.style.display = 'block';
-            } else {
-                prompt.style.display = 'none';
             }
-        }, 100);
-
-        function openPcEdit() {
-            document.exitPointerLock();
-            document.getElementById('pcEditModal').style.display = 'block';
-            updateInventoryDisplay();
-            updateSlots();
-        }
-
-        function closePcEdit() {
-            document.getElementById('pcEditModal').style.display = 'none';
-            if (!isAnyInterfaceOpen()) document.body.requestPointerLock();
-        }
-
-        function toggleMonitor() {
-            if (!gameState.pcPowered) {
-                showNotification('⚠️ Primero debes encender la PC desde el panel de conexiones');
-                return;
+        } 
+        else if (currentMode === 'feed') {
+            if (money >= 5) {
+                updateMoney(-5);
+                foods.push({x: mouseX, y: mouseY, radius: 4, color: '#8B4513'});
             }
-            
-            const compInterface = document.getElementById('computerInterface');
-            if (compInterface.style.display === 'block') {
-                compInterface.classList.remove('active');
-                setTimeout(() => {
-                    compInterface.style.display = 'none';
-                    if (!isAnyInterfaceOpen()) document.body.requestPointerLock();
-                }, 300);
-            } else {
-                document.exitPointerLock();
-                compInterface.style.display = 'block';
-                setTimeout(() => compInterface.classList.add('active'), 10);
-                
-                if (gameState.currentScreen === 'off') {
-                    bootSequence();
+        }
+        else if (currentMode === 'vac') {
+            // Recolectar plorts
+            for (let i = plorts.length - 1; i >= 0; i--) {
+                let plort = plorts[i];
+                let dist = Math.hypot(mouseX - plort.x, mouseY - plort.y);
+                if (dist < 30) { // Radio de succión
+                    updateMoney(plort.value);
+                    plorts.splice(i, 1);
                 }
             }
         }
+    });
 
-        function bootSequence() {
-            const bios = document.getElementById('biosScreen');
-            const monitor = document.getElementById('monitorScreen');
-            const screenMesh = monitorGroup.children[1];
-            
-            monitor.classList.remove('screen-off');
-            bios.style.display = 'block';
-            
-            // Sonido de encendido (simulado)
-            screenMesh.material.color.setHex(0x000080);
-            
-            const lines = [
-                'AWARD MODULAR BIOS v4.51PG',
-                'Copyright (C) 1984-95 Award Software Inc.',
-                '',
-                'CPU: Intel 486DX2-66',
-                'Memory Test: 640K OK',
-                '',
-                'Detecting USB devices...',
-                gameState.connectedDevices.mouse ? 'USB Mouse detected' : 'No mouse detected',
-                gameState.connectedDevices.keyboard ? 'USB Keyboard detected' : 'No keyboard detected',
-                gameState.connectedDevices.usb ? 'USB Storage detected' : 'No boot device',
-                '',
-                'Checking for OS...'
-            ];
-            
-            if (!gameState.connectedDevices.usb && !gameState.windowsInstalled) {
-                lines.push('ERROR: No operating system found!');
-                lines.push('Insert USB drive with OS');
-            }
-            
-            let html = '';
-            lines.forEach(line => html += line + '<br>');
-            bios.innerHTML = html;
-            
-            gameState.currentScreen = 'bios';
-            
-            setTimeout(() => {
-                if (gameState.windowsInstalled) {
-                    bootToWindows();
-                } else if (gameState.connectedDevices.usb) {
-                    document.getElementById('installSection').style.display = 'block';
-                    showNotification('💾 USB detectado. Abre el panel de la PC para instalar Windows.');
-                }
-            }, 2000);
-        }
+    // Bucle principal del juego
+    function gameLoop() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        function startWindowsInstall() {
-            closePcEdit();
-            const bios = document.getElementById('biosScreen');
-            const install = document.getElementById('installScreen');
+        // Dibujar parcelas
+        for (let p of plots) {
+            ctx.fillStyle = p.type === 'empty' ? 'rgba(0,0,0,0.1)' : 'rgba(139, 69, 19, 0.3)';
+            ctx.fillRect(p.x, p.y, p.w, p.h);
+            ctx.strokeStyle = p.type === 'empty' ? 'rgba(255,255,255,0.3)' : '#8B4513';
+            ctx.lineWidth = 4;
+            ctx.strokeRect(p.x, p.y, p.w, p.h);
             
-            bios.style.display = 'none';
-            install.style.display = 'block';
-            gameState.currentScreen = 'installing';
-            
-            let progress = 0;
-            const bar = document.getElementById('installProgress');
-            const status = document.getElementById('installStatus');
-            
-            const interval = setInterval(() => {
-                progress += 5;
-                bar.style.width = progress + '%';
-                
-                if (progress < 30) status.textContent = 'Copiando archivos del sistema...';
-                else if (progress < 60) status.textContent = 'Instalando componentes...';
-                else if (progress < 90) status.textContent = 'Configurando hardware...';
-                else status.textContent = 'Finalizando instalación...';
-                
-                if (progress >= 100) {
-                    clearInterval(interval);
-                    gameState.windowsInstalled = true;
-                    gameState.currentScreen = 'windows';
-                    setTimeout(() => {
-                        install.style.display = 'none';
-                        bootToWindows();
-                        showNotification('✅ Windows 1.0 instalado correctamente');
-                    }, 1000);
-                }
-            }, 200);
-        }
-
-        function bootToWindows() {
-            document.getElementById('biosScreen').style.display = 'none';
-            document.getElementById('installScreen').style.display = 'none';
-            document.getElementById('windowsScreen').style.display = 'block';
-            gameState.currentScreen = 'windows';
-            
-            // Cambiar color de pantalla 3D
-            monitorGroup.children[1].material.color.setHex(0x008080);
-        }
-
-        function updateInventoryDisplay() {
-            const invList = document.getElementById('inventoryList');
-            if (gameState.inventory.length === 0) {
-                invList.innerHTML = '<em style="opacity:0.5">Vacío</em>';
-            } else {
-                invList.innerHTML = gameState.inventory.map(item => {
-                    const icons = { usb: '💾', mouse: '🖱️', keyboard: '⌨️', ram: '🧠' };
-                    return `<div class="component-item" onclick="selectFromInventory('${item}')">${icons[item]} ${item.toUpperCase()}</div>`;
-                }).join('');
+            if (p.type === 'empty') {
+                ctx.fillStyle = 'rgba(255,255,255,0.5)';
+                ctx.font = '16px Arial';
+                ctx.fillText('Parcela Vacía', p.x + p.w/2 - 45, p.y + p.h/2);
             }
         }
 
-        function updateSlots() {
-            document.getElementById('slot-usb').className = 'slot ' + (gameState.connectedDevices.usb ? 'filled' : '');
-            document.getElementById('slot-mouse').className = 'slot ' + (gameState.connectedDevices.mouse ? 'filled' : '');
-            document.getElementById('slot-keyboard').className = 'slot ' + (gameState.connectedDevices.keyboard ? 'filled' : '');
-            
-            // Mostrar botón de instalación si hay USB conectado y no hay Windows
-            if (gameState.connectedDevices.usb && !gameState.windowsInstalled) {
-                document.getElementById('installSection').style.display = 'block';
-            } else {
-                document.getElementById('installSection').style.display = 'none';
-            }
+        // Dibujar comida
+        for (let f of foods) {
+            ctx.beginPath();
+            ctx.arc(f.x, f.y, f.radius, 0, Math.PI * 2);
+            ctx.fillStyle = f.color;
+            ctx.fill();
         }
 
-        function connectDevice(type) {
-            if (gameState.inventory.includes(type) && !gameState.connectedDevices[type]) {
-                gameState.connectedDevices[type] = true;
-                
-                // Remover del inventario
-                const idx = gameState.inventory.indexOf(type);
-                if (idx > -1) gameState.inventory.splice(idx, 1);
-                
-                // Mostrar objeto físico
-                if (type === 'mouse') mouse.visible = true;
-                if (type === 'keyboard') keyboard.visible = true;
-                if (type === 'usb') {
-                    usbMesh.visible = true;
-                    usbMesh.position.set(-5, -1.2, -2); // Insertado en la PC
-                }
-                
-                // Encender LED de power si todos los esenciales están conectados
-                if (gameState.connectedDevices.mouse && gameState.connectedDevices.keyboard) {
-                    gameState.pcPowered = true;
-                    powerLed.material.color.setHex(0x00ff00);
-                    showNotification('⚡ PC encendida. Periféricos detectados.');
-                }
-                
-                updateInventoryDisplay();
-                updateSlots();
-                showNotification(`✅ ${type.charAt(0).toUpperCase() + type.slice(1)} conectado`);
-            } else if (gameState.connectedDevices[type]) {
-                showNotification('⚠️ Ya está conectado');
-            } else {
-                showNotification('❌ No tienes este dispositivo en el inventario');
-            }
+        // Dibujar plorts
+        for (let pl of plorts) {
+            ctx.beginPath();
+            ctx.moveTo(pl.x, pl.y - pl.radius);
+            ctx.lineTo(pl.x + pl.radius, pl.y + pl.radius);
+            ctx.lineTo(pl.x - pl.radius, pl.y + pl.radius);
+            ctx.closePath();
+            ctx.fillStyle = pl.color;
+            ctx.fill();
+            ctx.strokeStyle = '#FF69B4';
+            ctx.stroke();
         }
 
-        function selectFromInventory(item) {
-            // Seleccionar para conectar
-            if (item === 'usb') connectDevice('usb');
-            else if (item === 'mouse') connectDevice('mouse');
-            else if (item === 'keyboard') connectDevice('keyboard');
+        // Actualizar y dibujar slimes
+        for (let s of slimes) {
+            s.update();
+            s.draw(ctx);
         }
 
-        // Tienda
-        function openShop() {
-            document.getElementById('homeScreen').style.display = 'none';
-            document.getElementById('shopScreen').style.display = 'block';
-        }
+        requestAnimationFrame(gameLoop);
+    }
 
-        function closeShop() {
-            document.getElementById('shopScreen').style.display = 'none';
-            document.getElementById('homeScreen').style.display = 'grid';
-            document.querySelectorAll('.shop-item').forEach(i => i.classList.remove('selected'));
-            gameState.selectedProduct = null;
-            document.getElementById('buyBtn').disabled = true;
-            document.getElementById('buyBtn').textContent = 'Selecciona un producto';
-        }
+    // Iniciar
+    gameLoop();
+</script>
 
-        function selectProduct(product, price, element) {
-            gameState.selectedProduct = product;
-            gameState.selectedPrice = price;
-            
-            document.querySelectorAll('.shop-item').forEach(i => i.classList.remove('selected'));
-            element.classList.add('selected');
-            
-            document.getElementById('buyBtn').disabled = false;
-            document.getElementById('buyBtn').textContent = `Comprar por $${price}`;
-        }
-
-        function buyProduct() {
-            if (gameState.money >= gameState.selectedPrice) {
-                gameState.money -= gameState.selectedPrice;
-                document.getElementById('moneyVal').textContent = gameState.money;
-                
-                // Simular entrega
-                showNotification('📦 Pedido realizado. Llegará en 10 segundos...');
-                gameState.orderedPackage = gameState.selectedProduct;
-                
-                setTimeout(() => {
-                    gameState.packageArrived = true;
-                    package.visible = true;
-                    document.getElementById('doorbell').style.display = 'block';
-                    showNotification('🔔 ¡Tu pedido ha llegado a la puerta!');
-                }, 10000);
-                
-                closeShop();
-            }
-        }
-
-        function collectPackage() {
-            if (!gameState.packageArrived) return;
-            
-            package.visible = false;
-            gameState.packageArrived = false;
-            document.getElementById('doorbell').style.display = 'none';
-            
-            if (gameState.orderedPackage) {
-                gameState.inventory.push(gameState.orderedPackage);
-                showNotification(`📦 ${gameState.orderedPackage.toUpperCase()} añadido al inventario`);
-                gameState.orderedPackage = null;
-            }
-        }
-
-        function checkDoor() {
-            if (gameState.packageArrived) {
-                showNotification('Hay un paquete esperando fuera');
-            } else {
-                showNotification('La puerta está cerrada');
-            }
-        }
-
-        function togglePhone() {
-            const phone = document.getElementById('phone');
-            if (phone.classList.contains('open')) {
-                phone.classList.remove('open');
-                if (!isAnyInterfaceOpen()) document.body.requestPointerLock();
-            } else {
-                document.exitPointerLock();
-                phone.classList.add('open');
-            }
-        }
-
-        function showNotification(text) {
-            const notif = document.getElementById('notification');
-            notif.textContent = text;
-            notif.classList.add('show');
-            setTimeout(() => notif.classList.remove('show'), 3000);
-        }
-
-        function closeAllInterfaces() {
-            document.getElementById('phone').classList.remove('open');
-            document.getElementById('pcEditModal').style.display = 'none';
-            document.getElementById('computerInterface').classList.remove('active');
-            setTimeout(() => {
-                document.getElementById('computerInterface').style.display = 'none';
-            }, 300);
-            document.body.requestPointerLock();
-        }
-
-        // Animación
-        let prevTime = performance.now();
-        function animate() {
-            requestAnimationFrame(animate);
-            
-            const time = performance.now();
-            const delta = (time - prevTime) / 1000;
-            
-            if (isLocked) {
-                const speed = 5;
-                const direction = new THREE.Vector3();
-                
-                if (moveForward) direction.z -= 1;
-                if (moveBackward) direction.z += 1;
-                if (moveLeft) direction.x -= 1;
-                if (moveRight) direction.x += 1;
-                
-                direction.normalize();
-                direction.multiplyScalar(speed * delta);
-                
-                camera.translateX(direction.x);
-                camera.translateZ(direction.z);
-                
-                // Límites de la habitación
-                camera.position.x = Math.max(-9, Math.min(9, camera.position.x));
-                camera.position.z = Math.max(-9, Math.min(9, camera.position.z));
-                camera.position.y = Math.max(-3, Math.min(4, camera.position.y));
-            }
-            
-            // Animar paquete
-            if (package.visible) {
-                package.rotation.y += 0.01;
-                package.position.y = -4.5 + Math.sin(time * 0.002) * 0.1;
-            }
-            
-            prevTime = time;
-            renderer.render(scene, camera);
-        }
-
-        // Redimensionar
-        window.addEventListener('resize', () => {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-        });
-
-        animate();
-        
-        // Tutorial inicial
-        setTimeout(() => {
-            showNotification('👋 Acércate a la torre de PC y presiona E');
-        }, 2000);
-    </script>
 </body>
 </html>
