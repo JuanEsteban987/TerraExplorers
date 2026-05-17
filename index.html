@@ -1,575 +1,626 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>BlockIngenier · Scratch con Blockly</title>
-  <!-- Blockly core + blocks -->
-  <script src="https://unpkg.com/blockly@10.4.3/blockly.min.js"></script>
-  <script src="https://unpkg.com/blockly@10.4.3/blocks.min.js"></script>
-  <script src="https://unpkg.com/blockly@10.4.3/javascript.min.js"></script>
-  <script src="https://unpkg.com/blockly@10.4.3/msg/es.min.js"></script>
-  <style>
-    :root {
-      --bg: #1a1a2e;
-      --surface: #16213e;
-      --text: #e0e0e0;
-      --header-bg: #0d0d1a;
-      --border: #2a2a4a;
-      --accent: #4da6ff;
-      --stage-bg: #f0f0f5;
-      --workspace-bg: #1e1e35;
-    }
-    * { margin:0; padding:0; box-sizing:border-box; }
-    body {
-      font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      height: 100vh;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-    }
-    #header {
-      background: var(--header-bg);
-      padding: 6px 16px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      border-bottom: 1px solid var(--border);
-      flex-shrink: 0;
-    }
-    #header .logo {
-      font-size: 1.3em;
-      font-weight: 700;
-      color: var(--accent);
-      letter-spacing: 0.5px;
-    }
-    #header .logo span { color: #ff6b9d; }
-    #header button {
-      background: var(--surface);
-      color: var(--text);
-      border: 1px solid var(--border);
-      padding: 7px 14px;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 0.85em;
-      font-weight: 500;
-      transition: all 0.15s;
-      white-space: nowrap;
-    }
-    #header button:hover {
-      background: #1a4a80;
-      border-color: var(--accent);
-      box-shadow: 0 0 12px rgba(77,166,255,0.2);
-    }
-    .run-btn { background: #2d8a4e !important; border-color: #3cb868 !important; font-weight: 700; }
-    .stop-btn { background: #8a2d2d !important; border-color: #b83c3c !important; font-weight: 700; }
-    #main {
-      display: flex;
-      flex: 1;
-      overflow: hidden;
-    }
-    #blocklyDiv {
-      flex: 1;
-      height: 100%;
-      background: var(--workspace-bg);
-    }
-    #stage-panel {
-      width: 380px;
-      min-width: 380px;
-      background: var(--surface);
-      border-left: 1px solid var(--border);
-      display: flex;
-      flex-direction: column;
-      padding: 10px;
-      gap: 8px;
-      overflow-y: auto;
-    }
-    #stage-wrapper {
-      background: var(--stage-bg);
-      border-radius: 10px;
-      overflow: hidden;
-      border: 3px solid #333;
-      aspect-ratio: 4 / 3;
-      position: relative;
-    }
-    #stage-canvas {
-      width: 100%;
-      height: 100%;
-      display: block;
-      background: #fff;
-    }
-    #console {
-      background: #0a0a14;
-      border-radius: 8px;
-      padding: 8px 12px;
-      font-size: 0.7em;
-      height: 100px;
-      overflow-y: auto;
-      color: #8f8;
-      font-family: 'Consolas', 'Monaco', monospace;
-      border: 1px solid #333;
-    }
-    .var-display {
-      background: var(--surface);
-      border-radius: 8px;
-      padding: 8px 12px;
-      font-size: 0.75em;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-    }
-    .var-item {
-      background: #2a2a4a;
-      padding: 4px 10px;
-      border-radius: 12px;
-      border: 1px solid #444;
-    }
-    .toast {
-      position: fixed;
-      bottom: 30px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: #2d8a4e;
-      color: #fff;
-      padding: 10px 24px;
-      border-radius: 20px;
-      font-weight: 600;
-      z-index: 999;
-      opacity: 0;
-      transition: opacity 0.3s;
-      pointer-events: none;
-    }
-    .toast.show { opacity:1; }
-    @media (max-width: 900px) {
-      #main { flex-direction: column; }
-      #stage-panel { width: 100%; min-width: 100%; flex-direction: row; flex-wrap: wrap; }
-      #stage-wrapper { width: 150px; }
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BlockIngenier · Scratch con Blockly</title>
+    <!-- Blockly -->
+    <script src="https://unpkg.com/blockly@10.4.3/blockly.min.js"></script>
+    <script src="https://unpkg.com/blockly@10.4.3/blocks.min.js"></script>
+    <script src="https://unpkg.com/blockly@10.4.3/javascript.min.js"></script>
+    <script src="https://unpkg.com/blockly@10.4.3/msg/es.min.js"></script>
+    <style>
+        :root {
+            --bg: #1a1a2e;
+            --surface: #16213e;
+            --text: #e0e0e0;
+            --header-bg: #0d0d1a;
+            --border: #2a2a4a;
+            --accent: #4da6ff;
+            --stage-bg: #f0f0f5;
+            --workspace-bg: #1e1e35;
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body {
+            font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        #header {
+            background: var(--header-bg);
+            padding: 6px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-bottom: 1px solid var(--border);
+            flex-shrink: 0;
+        }
+        #header .logo { font-size: 1.3em; font-weight: 700; color: var(--accent); letter-spacing: 0.5px; }
+        #header .logo span { color: #ff6b9d; }
+        #header button {
+            background: var(--surface);
+            color: var(--text);
+            border: 1px solid var(--border);
+            padding: 7px 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85em;
+            font-weight: 500;
+            transition: all 0.15s;
+            white-space: nowrap;
+        }
+        #header button:hover { background: #1a4a80; border-color: var(--accent); box-shadow: 0 0 12px rgba(77,166,255,0.2); }
+        .run-btn { background: #2d8a4e !important; border-color: #3cb868 !important; font-weight: 700; }
+        .stop-btn { background: #8a2d2d !important; border-color: #b83c3c !important; font-weight: 700; }
+        #main { display: flex; flex: 1; overflow: hidden; }
+        #blocklyDiv { flex: 1; height: 100%; background: var(--workspace-bg); }
+        #stage-panel {
+            width: 380px; min-width: 380px; background: var(--surface);
+            border-left: 1px solid var(--border); display: flex; flex-direction: column;
+            padding: 10px; gap: 8px; overflow-y: auto;
+        }
+        #stage-wrapper {
+            background: var(--stage-bg); border-radius: 10px; overflow: hidden;
+            border: 3px solid #333; aspect-ratio: 4 / 3; position: relative;
+        }
+        #stage-canvas { width: 100%; height: 100%; display: block; background: #fff; }
+        #sprite-info {
+            background: var(--surface); border-radius: 8px; padding: 10px;
+            font-size: 0.8em; display: flex; flex-wrap: wrap; gap: 8px;
+        }
+        #sprite-info strong { color: var(--accent); }
+        #variable-display {
+            background: var(--surface); border-radius: 8px; padding: 8px 12px;
+            font-size: 0.78em; max-height: 150px; overflow-y: auto; display: flex; flex-wrap: wrap; gap: 6px;
+        }
+        .var-item { background: #2a2a4a; padding: 4px 10px; border-radius: 12px; font-size: 0.75em; border: 1px solid #444; }
+        #output-console {
+            background: #0a0a14; border-radius: 8px; padding: 8px 12px; font-size: 0.7em;
+            max-height: 100px; overflow-y: auto; color: #8f8; font-family: 'Consolas', monospace; border: 1px solid #333;
+        }
+        .toast {
+            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+            background: #2d8a4e; color: #fff; padding: 10px 24px; border-radius: 20px;
+            font-weight: 600; z-index: 999; opacity: 0; transition: opacity 0.3s; pointer-events: none;
+        }
+        .toast.show { opacity:1; }
+        @media (max-width: 900px) {
+            #main { flex-direction: column; }
+            #stage-panel { width: 100%; min-width: 100%; flex-direction: row; flex-wrap: wrap; }
+            #stage-wrapper { width: 150px; }
+        }
+    </style>
 </head>
 <body>
-  <div id="header">
+<div id="header">
     <div class="logo">🧩 Block<span>Ingenier</span></div>
     <button class="run-btn" onclick="runProject()">🚩 Ejecutar</button>
     <button class="stop-btn" onclick="stopProject()">⏹ Detener</button>
     <button onclick="saveProject()">💾 Guardar</button>
     <button onclick="loadProject()">📂 Cargar</button>
     <button onclick="clearWorkspace()">🗑 Limpiar</button>
-  </div>
-  <div id="main">
+</div>
+<div id="main">
     <div id="blocklyDiv"></div>
     <div id="stage-panel">
-      <div id="stage-wrapper">
-        <canvas id="stage-canvas" width="480" height="360"></canvas>
-      </div>
-      <div class="var-display" id="var-display"></div>
-      <div id="console">▶ Consola lista. Ejecuta el proyecto.</div>
+        <div id="stage-wrapper">
+            <canvas id="stage-canvas" width="480" height="360"></canvas>
+        </div>
+        <div id="sprite-info">
+            <span>Sprite:</span><strong id="sprite-name">Gato</strong>
+            <span>X:</span><strong id="sprite-x">0</strong>
+            <span>Y:</span><strong id="sprite-y">0</strong>
+            <span>Dir:</span><strong id="sprite-dir">90°</strong>
+            <span>Tam:</span><strong id="sprite-size">100%</strong>
+        </div>
+        <div id="variable-display"></div>
+        <div id="output-console">▶ Consola lista. Ejecuta el proyecto.</div>
     </div>
-  </div>
-  <div class="toast" id="toast"></div>
+</div>
+<div class="toast" id="toast"></div>
 
-  <script>
-    // ==================== BLOCKLY CONFIGURATION ====================
+<script>
+    // ==================== BLOCKLY CONFIGURACIÓN ====================
     Blockly.setLocale(Blockly.Msg.es);
 
-    // Custom block definitions (Scratch categories)
+    // Definición de bloques personalizados (9 categorías)
     const blockDefs = {
-      // ----- MOVIMIENTO (azul) -----
-      'motion_movesteps': {
-        init: function() {
-          this.appendDummyInput().appendField("mover").appendField(new Blockly.FieldNumber(10), "STEPS").appendField("pasos");
-          this.setPreviousStatement(true, null);
-          this.setNextStatement(true, null);
-          this.setColour('#4C97FF');
-          this.setTooltip("Mueve el objeto hacia adelante.");
-        }
-      },
-      'motion_turnright': {
-        init: function() {
-          this.appendDummyInput().appendField("girar derecha").appendField(new Blockly.FieldAngle(15), "DEGREES").appendField("grados");
-          this.setPreviousStatement(true, null);
-          this.setNextStatement(true, null);
-          this.setColour('#4C97FF');
-        }
-      },
-      'motion_gotoxy': {
-        init: function() {
-          this.appendDummyInput().appendField("ir a x:").appendField(new Blockly.FieldNumber(0), "X")
-                                 .appendField("y:").appendField(new Blockly.FieldNumber(0), "Y");
-          this.setPreviousStatement(true, null);
-          this.setNextStatement(true, null);
-          this.setColour('#4C97FF');
-        }
-      },
-      'motion_pointdir': {
-        init: function() {
-          this.appendDummyInput().appendField("apuntar en dirección").appendField(new Blockly.FieldAngle(90), "DIR");
-          this.setPreviousStatement(true, null);
-          this.setNextStatement(true, null);
-          this.setColour('#4C97FF');
-        }
-      },
-      'motion_changex': {
-        init: function() {
-          this.appendDummyInput().appendField("cambiar x por").appendField(new Blockly.FieldNumber(10), "DX");
-          this.setPreviousStatement(true, null);
-          this.setNextStatement(true, null);
-          this.setColour('#4C97FF');
-        }
-      },
-      'motion_setx': {
-        init: function() {
-          this.appendDummyInput().appendField("fijar x a").appendField(new Blockly.FieldNumber(0), "X");
-          this.setPreviousStatement(true, null);
-          this.setNextStatement(true, null);
-          this.setColour('#4C97FF');
-        }
-      },
-      'motion_changey': {
-        init: function() {
-          this.appendDummyInput().appendField("cambiar y por").appendField(new Blockly.FieldNumber(10), "DY");
-          this.setPreviousStatement(true, null);
-          this.setNextStatement(true, null);
-          this.setColour('#4C97FF');
-        }
-      },
-      'motion_sety': {
-        init: function() {
-          this.appendDummyInput().appendField("fijar y a").appendField(new Blockly.FieldNumber(0), "Y");
-          this.setPreviousStatement(true, null);
-          this.setNextStatement(true, null);
-          this.setColour('#4C97FF');
-        }
-      },
-      // ----- APARIENCIA (morado) -----
-      'looks_say': {
-        init: function() {
-          this.appendDummyInput().appendField("decir").appendField(new Blockly.FieldTextInput("Hola"), "TEXT")
-                                 .appendField("por").appendField(new Blockly.FieldNumber(2), "SECS").appendField("seg");
-          this.setPreviousStatement(true, null);
-          this.setNextStatement(true, null);
-          this.setColour('#9966FF');
-        }
-      },
-      'looks_setsize': {
-        init: function() {
-          this.appendDummyInput().appendField("fijar tamaño a").appendField(new Blockly.FieldNumber(100), "SIZE").appendField("%");
-          this.setPreviousStatement(true, null);
-          this.setNextStatement(true, null);
-          this.setColour('#9966FF');
-        }
-      },
-      'looks_changesize': {
-        init: function() {
-          this.appendDummyInput().appendField("cambiar tamaño por").appendField(new Blockly.FieldNumber(10), "DSIZE");
-          this.setPreviousStatement(true, null);
-          this.setNextStatement(true, null);
-          this.setColour('#9966FF');
-        }
-      },
-      'looks_show': {
-        init: function() {
-          this.appendDummyInput().appendField("mostrar");
-          this.setPreviousStatement(true, null);
-          this.setNextStatement(true, null);
-          this.setColour('#9966FF');
-        }
-      },
-      'looks_hide': {
-        init: function() {
-          this.appendDummyInput().appendField("esconder");
-          this.setPreviousStatement(true, null);
-          this.setNextStatement(true, null);
-          this.setColour('#9966FF');
-        }
-      },
-      // ----- SONIDO (rosa) -----
-      'sound_play': {
-        init: function() {
-          this.appendDummyInput().appendField("iniciar sonido").appendField(new Blockly.FieldDropdown([["pop","pop"],["meow","meow"],["click","click"]]), "SOUND");
-          this.setPreviousStatement(true, null);
-          this.setNextStatement(true, null);
-          this.setColour('#CF63CF');
-        }
-      },
-      // ----- EVENTOS (amarillo) -----
-      'events_whenflag': {
-        init: function() {
-          this.appendDummyInput().appendField("al hacer clic en bandera verde");
-          this.setNextStatement(true, null);
-          this.setColour('#FFBF00');
-          this.setTooltip("Arranca cuando se ejecuta el proyecto.");
-        }
-      },
-      'events_whenkey': {
-        init: function() {
-          this.appendDummyInput().appendField("al presionar tecla").appendField(new Blockly.FieldTextInput("espacio"), "KEY");
-          this.setNextStatement(true, null);
-          this.setColour('#FFBF00');
-        }
-      },
-      'events_broadcast': {
-        init: function() {
-          this.appendDummyInput().appendField("enviar").appendField(new Blockly.FieldTextInput("mensaje1"), "MESSAGE");
-          this.setPreviousStatement(true, null);
-          this.setNextStatement(true, null);
-          this.setColour('#FFBF00');
-        }
-      },
-      'events_whenreceive': {
-        init: function() {
-          this.appendDummyInput().appendField("al recibir").appendField(new Blockly.FieldTextInput("mensaje1"), "MESSAGE");
-          this.setNextStatement(true, null);
-          this.setColour('#FFBF00');
-        }
-      },
-      // ----- CONTROL (naranja) -----
-      'control_wait': {
-        init: function() {
-          this.appendDummyInput().appendField("esperar").appendField(new Blockly.FieldNumber(1), "SECS").appendField("segundos");
-          this.setPreviousStatement(true, null);
-          this.setNextStatement(true, null);
-          this.setColour('#FFAB19');
-        }
-      },
-      'control_repeat': {
-        init: function() {
-          this.appendDummyInput().appendField("repetir").appendField(new Blockly.FieldNumber(10), "TIMES").appendField("veces");
-          this.appendStatementInput("DO").appendField("hacer");
-          this.setPreviousStatement(true, null);
-          this.setNextStatement(true, null);
-          this.setColour('#FFAB19');
-        }
-      },
-      'control_forever': {
-        init: function() {
-          this.appendDummyInput().appendField("por siempre");
-          this.appendStatementInput("DO").appendField("hacer");
-          this.setPreviousStatement(true, null);
-          this.setColour('#FFAB19');
-        }
-      },
-      'control_if': {
-        init: function() {
-          this.appendDummyInput().appendField("si").appendField(new Blockly.FieldCheckbox("TRUE"), "COND");
-          this.appendStatementInput("DO").appendField("entonces");
-          this.setPreviousStatement(true, null);
-          this.setNextStatement(true, null);
-          this.setColour('#FFAB19');
-        }
-      },
-      'control_stop': {
-        init: function() {
-          this.appendDummyInput().appendField("detener").appendField(new Blockly.FieldDropdown([["todos","all"],["este programa","this"]]), "WHAT");
-          this.setPreviousStatement(true, null);
-          this.setColour('#FFAB19');
-        }
-      },
-      // ----- SENSORES (celeste) -----
-      'sensing_keypressed': {
-        init: function() {
-          this.appendDummyInput().appendField("¿tecla").appendField(new Blockly.FieldTextInput("espacio"), "KEY").appendField("presionada?");
-          this.setOutput(true, 'Boolean');
-          this.setColour('#5CB1D6');
-        }
-      },
-      'sensing_mousex': {
-        init: function() {
-          this.appendDummyInput().appendField("posición x del ratón");
-          this.setOutput(true, 'Number');
-          this.setColour('#5CB1D6');
-        }
-      },
-      'sensing_mousey': {
-        init: function() {
-          this.appendDummyInput().appendField("posición y del ratón");
-          this.setOutput(true, 'Number');
-          this.setColour('#5CB1D6');
-        }
-      },
-      'sensing_timer': {
-        init: function() {
-          this.appendDummyInput().appendField("cronómetro");
-          this.setOutput(true, 'Number');
-          this.setColour('#5CB1D6');
-        }
-      },
-      'sensing_resettimer': {
-        init: function() {
-          this.appendDummyInput().appendField("reiniciar cronómetro");
-          this.setPreviousStatement(true, null);
-          this.setNextStatement(true, null);
-          this.setColour('#5CB1D6');
-        }
-      },
-      // ----- OPERADORES (verde) -----
-      'operators_add': {
-        init: function() {
-          this.appendValueInput('A').setCheck('Number');
-          this.appendDummyInput().appendField('+');
-          this.appendValueInput('B').setCheck('Number');
-          this.setInputsInline(true);
-          this.setOutput(true, 'Number');
-          this.setColour('#59C059');
-        }
-      },
-      'operators_random': {
-        init: function() {
-          this.appendDummyInput().appendField("número al azar entre").appendField(new Blockly.FieldNumber(1), "MIN")
-                                 .appendField("y").appendField(new Blockly.FieldNumber(10), "MAX");
-          this.setOutput(true, 'Number');
-          this.setColour('#59C059');
-        }
-      },
-      'operators_join': {
-        init: function() {
-          this.appendValueInput('A').setCheck('String');
-          this.appendValueInput('B').setCheck('String');
-          this.appendDummyInput().appendField("unir");
-          this.setInputsInline(true);
-          this.setOutput(true, 'String');
-          this.setColour('#59C059');
-        }
-      },
-      // ----- VARIABLES (naranja oscuro) -----
-      'variables_set': {
-        init: function() {
-          this.appendDummyInput().appendField("fijar").appendField(new Blockly.FieldVariable("miVar"), "VAR")
-                                 .appendField("a").appendField(new Blockly.FieldNumber(0), "VAL");
-          this.setPreviousStatement(true, null);
-          this.setNextStatement(true, null);
-          this.setColour('#FF8C1A');
-        }
-      },
-      'variables_change': {
-        init: function() {
-          this.appendDummyInput().appendField("cambiar").appendField(new Blockly.FieldVariable("miVar"), "VAR")
-                                 .appendField("por").appendField(new Blockly.FieldNumber(1), "DVAL");
-          this.setPreviousStatement(true, null);
-          this.setNextStatement(true, null);
-          this.setColour('#FF8C1A');
-        }
-      },
-      'variables_get': {
-        init: function() {
-          this.appendDummyInput().appendField(new Blockly.FieldVariable("miVar"), "VAR");
-          this.setOutput(true, null);
-          this.setColour('#FF8C1A');
-        }
-      },
+        // Movimiento (azul)
+        'motion_movesteps': { init() {
+            this.appendDummyInput().appendField("mover").appendField(new Blockly.FieldNumber(10), "STEPS").appendField("pasos");
+            this.setPreviousStatement(true); this.setNextStatement(true); this.setColour('#4C97FF');
+        }},
+        'motion_turnright': { init() {
+            this.appendDummyInput().appendField("girar derecha").appendField(new Blockly.FieldAngle(15), "DEGREES").appendField("grados");
+            this.setPreviousStatement(true); this.setNextStatement(true); this.setColour('#4C97FF');
+        }},
+        'motion_turnleft': { init() {
+            this.appendDummyInput().appendField("girar izquierda").appendField(new Blockly.FieldAngle(15), "DEGREES").appendField("grados");
+            this.setPreviousStatement(true); this.setNextStatement(true); this.setColour('#4C97FF');
+        }},
+        'motion_goto': { init() {
+            this.appendDummyInput().appendField("ir a posición aleatoria");
+            this.setPreviousStatement(true); this.setNextStatement(true); this.setColour('#4C97FF');
+        }},
+        'motion_gotoxy': { init() {
+            this.appendDummyInput().appendField("ir a x:").appendField(new Blockly.FieldNumber(0), "X")
+                .appendField("y:").appendField(new Blockly.FieldNumber(0), "Y");
+            this.setPreviousStatement(true); this.setNextStatement(true); this.setColour('#4C97FF');
+        }},
+        'motion_glide': { init() {
+            this.appendDummyInput().appendField("deslizar").appendField(new Blockly.FieldNumber(1), "SECS").appendField("seg a x:")
+                .appendField(new Blockly.FieldNumber(0), "X").appendField("y:").appendField(new Blockly.FieldNumber(0), "Y");
+            this.setPreviousStatement(true); this.setNextStatement(true); this.setColour('#4C97FF');
+        }},
+        'motion_pointdir': { init() {
+            this.appendDummyInput().appendField("apuntar en dirección").appendField(new Blockly.FieldAngle(90), "DIR");
+            this.setPreviousStatement(true); this.setNextStatement(true); this.setColour('#4C97FF');
+        }},
+        'motion_pointtowards': { init() {
+            this.appendDummyInput().appendField("apuntar hacia").appendField(new Blockly.FieldDropdown([["puntero","mouse"],["objeto","objeto"]]), "TARGET");
+            this.setPreviousStatement(true); this.setNextStatement(true); this.setColour('#4C97FF');
+        }},
+        'motion_changex': { init() {
+            this.appendDummyInput().appendField("cambiar x por").appendField(new Blockly.FieldNumber(10), "DX");
+            this.setPreviousStatement(true); this.setNextStatement(true); this.setColour('#4C97FF');
+        }},
+        'motion_setx': { init() {
+            this.appendDummyInput().appendField("fijar x a").appendField(new Blockly.FieldNumber(0), "X");
+            this.setPreviousStatement(true); this.setNextStatement(true); this.setColour('#4C97FF');
+        }},
+        'motion_changey': { init() {
+            this.appendDummyInput().appendField("cambiar y por").appendField(new Blockly.FieldNumber(10), "DY");
+            this.setPreviousStatement(true); this.setNextStatement(true); this.setColour('#4C97FF');
+        }},
+        'motion_sety': { init() {
+            this.appendDummyInput().appendField("fijar y a").appendField(new Blockly.FieldNumber(0), "Y");
+            this.setPreviousStatement(true); this.setNextStatement(true); this.setColour('#4C97FF');
+        }},
+        'motion_ifonedgebounce': { init() {
+            this.appendDummyInput().appendField("si toca borde, rebotar");
+            this.setPreviousStatement(true); this.setNextStatement(true); this.setColour('#4C97FF');
+        }},
+        'motion_setrotationstyle': { init() {
+            this.appendDummyInput().appendField("fijar estilo rotación").appendField(new Blockly.FieldDropdown([["todo","all"],["izq-dcha","left-right"],["no rotar","none"]]), "STYLE");
+            this.setPreviousStatement(true); this.setNextStatement(true); this.setColour('#4C97FF');
+        }},
+        // Apariencia (morado)
+        'looks_say': { init() {
+            this.appendDummyInput().appendField("decir").appendField(new Blockly.FieldTextInput("Hola"), "TEXT")
+                .appendField("por").appendField(new Blockly.FieldNumber(2), "SECS").appendField("seg");
+            this.setPreviousStatement(true); this.setNextStatement(true); this.setColour('#9966FF');
+        }},
+        'looks_sayforever': { init() {
+            this.appendDummyInput().appendField("decir").appendField(new Blockly.FieldTextInput("Hola"), "TEXT");
+            this.setPreviousStatement(true); this.setNextStatement(true); this.setColour('#9966FF');
+        }},
+        'looks_think': { init() {
+            this.appendDummyInput().appendField("pensar").appendField(new Blockly.FieldTextInput("Mmm..."), "TEXT")
+                .appendField("por").appendField(new Blockly.FieldNumber(2), "SECS").appendField("seg");
+            this.setPreviousStatement(true); this.setNextStatement(true); this.setColour('#9966FF');
+        }},
+        'looks_thinkforever': { init() {
+            this.appendDummyInput().appendField("pensar").appendField(new Blockly.FieldTextInput("Mmm..."), "TEXT");
+            this.setPreviousStatement(true); this.setNextStatement(true); this.setColour('#9966FF');
+        }},
+        'looks_switchcostume': { init() {
+            this.appendDummyInput().appendField("cambiar disfraz a").appendField(new Blockly.FieldNumber(2), "COSTUME");
+            this.setPreviousStatement(true); this.setNextStatement(true); this.setColour('#9966FF');
+        }},
+        'looks_nextcostume': { init() {
+            this.appendDummyInput().appendField("siguiente disfraz");
+            this.setPreviousStatement(true); this.setNextStatement(true); this.setColour('#9966FF');
+        }},
+        'looks_switchbg': { init() {
+            this.appendDummyInput().appendField("cambiar fondo a").appendField(new Blockly.FieldNumber(2), "BG");
+            this.setPreviousStatement(true); this.setNextStatement(true); this.setColour('#9966FF');
+        }},
+        'looks_changesize': { init() {
+            this.appendDummyInput().appendField("cambiar tamaño por").appendField(new Blockly.FieldNumber(10), "DSIZE");
+            this.setPreviousStatement(true); this.setNextStatement(true); this.setColour('#9966FF');
+        }},
+        'looks_setsize': { init() {
+            this.appendDummyInput().appendField("fijar tamaño a").appendField(new Blockly.FieldNumber(100), "SIZE").appendField("%");
+            this.setPreviousStatement(true); this.setNextStatement(true); this.setColour('#9966FF');
+        }},
+        'looks_changeeffect': { init() {
+            this.appendDummyInput().appendField("cambiar efecto").appendField(new Blockly.FieldDropdown([["color","color"],["fantasma","ghost"],["pixelar","pixelate"]]), "EFFECT")
+                .appendField("por").appendField(new Blockly.FieldNumber(5), "VAL");
+            this.setPreviousStatement(true); this.setNextStatement(true); this.setColour('#9966FF');
+        }},
+        'looks_seteffect': { init() {
+            this.appendDummyInput().appendField("fijar efecto").appendField(new Blockly.FieldDropdown([["color","color"],["fantasma","ghost"]]), "EFFECT")
+                .appendField("a").appendField(new Blockly.FieldNumber(0), "VAL");
+            this.setPreviousStatement(true); this.setNextStatement(true); this.setColour('#9966FF');
+        }},
+        'looks_cleareffects': { init() {
+            this.appendDummyInput().appendField("quitar efectos gráficos");
+            this.setPreviousStatement(true); this.setNextStatement(true); this.setColour('#9966FF');
+        }},
+        'looks_show': { init() {
+            this.appendDummyInput().appendField("mostrar");
+            this.setPreviousStatement(true); this.setNextStatement(true); this.setColour('#9966FF');
+        }},
+        'looks_hide': { init() {
+            this.appendDummyInput().appendField("esconder");
+            this.setPreviousStatement(true); this.setNextStatement(true); this.setColour('#9966FF');
+        }},
+        // Sonido (rosa)
+        'sound_play': { init() {
+            this.appendDummyInput().appendField("iniciar sonido").appendField(new Blockly.FieldDropdown([["pop","pop"],["meow","meow"]]), "SOUND");
+            this.setPreviousStatement(true); this.setNextStatement(true); this.setColour('#CF63CF');
+        }},
+        'sound_playuntil': { init() {
+            this.appendDummyInput().appendField("tocar sonido").appendField(new Blockly.FieldDropdown([["pop","pop"]]), "SOUND").appendField("hasta terminar");
+            this.setPreviousStatement(true); this.setNextStatement(true); this.setColour('#CF63CF');
+        }},
+        'sound_stopall': { init() {
+            this.appendDummyInput().appendField("detener todos los sonidos");
+            this.setPreviousStatement(true); this.setNextStatement(true); this.setColour('#CF63CF');
+        }},
+        'sound_changevolume': { init() {
+            this.appendDummyInput().appendField("cambiar volumen por").appendField(new Blockly.FieldNumber(-10), "DVOL");
+            this.setPreviousStatement(true); this.setNextStatement(true); this.setColour('#CF63CF');
+        }},
+        'sound_setvolume': { init() {
+            this.appendDummyInput().appendField("fijar volumen a").appendField(new Blockly.FieldNumber(100), "VOL").appendField("%");
+            this.setPreviousStatement(true); this.setNextStatement(true); this.setColour('#CF63CF');
+        }},
+        // Eventos (amarillo)
+        'events_whenflag': { init() {
+            this.appendDummyInput().appendField("al hacer clic en bandera verde");
+            this.setNextStatement(true); this.setColour('#FFBF00');
+        }},
+        'events_whenkey': { init() {
+            this.appendDummyInput().appendField("al presionar tecla").appendField(new Blockly.FieldTextInput("espacio"), "KEY");
+            this.setNextStatement(true); this.setColour('#FFBF00');
+        }},
+        'events_whenclicked': { init() {
+            this.appendDummyInput().appendField("al hacer clic en este objeto");
+            this.setNextStatement(true); this.setColour('#FFBF00');
+        }},
+        'events_whenbgchange': { init() {
+            this.appendDummyInput().appendField("cuando el fondo cambie a").appendField(new Blockly.FieldNumber(1), "BG");
+            this.setNextStatement(true); this.setColour('#FFBF00');
+        }},
+        'events_broadcast': { init() {
+            this.appendDummyInput().appendField("enviar").appendField(new Blockly.FieldTextInput("mensaje1"), "MESSAGE");
+            this.setPreviousStatement(true); this.setNextStatement(true); this.setColour('#FFBF00');
+        }},
+        'events_broadcastwait': { init() {
+            this.appendDummyInput().appendField("enviar").appendField(new Blockly.FieldTextInput("mensaje1"), "MESSAGE").appendField("y esperar");
+            this.setPreviousStatement(true); this.setNextStatement(true); this.setColour('#FFBF00');
+        }},
+        'events_whenreceive': { init() {
+            this.appendDummyInput().appendField("al recibir").appendField(new Blockly.FieldTextInput("mensaje1"), "MESSAGE");
+            this.setNextStatement(true); this.setColour('#FFBF00');
+        }},
+        // Control (naranja)
+        'control_wait': { init() {
+            this.appendDummyInput().appendField("esperar").appendField(new Blockly.FieldNumber(1), "SECS").appendField("segundos");
+            this.setPreviousStatement(true); this.setNextStatement(true); this.setColour('#FFAB19');
+        }},
+        'control_repeat': { init() {
+            this.appendDummyInput().appendField("repetir").appendField(new Blockly.FieldNumber(10), "TIMES").appendField("veces");
+            this.appendStatementInput("DO").appendField("hacer");
+            this.setPreviousStatement(true); this.setNextStatement(true); this.setColour('#FFAB19');
+        }},
+        'control_forever': { init() {
+            this.appendDummyInput().appendField("por siempre");
+            this.appendStatementInput("DO").appendField("hacer");
+            this.setPreviousStatement(true); this.setColour('#FFAB19');
+        }},
+        'control_if': { init() {
+            this.appendDummyInput().appendField("si").appendField(new Blockly.FieldCheckbox("TRUE"), "COND");
+            this.appendStatementInput("DO").appendField("entonces");
+            this.setPreviousStatement(true); this.setNextStatement(true); this.setColour('#FFAB19');
+        }},
+        'control_ifelse': { init() {
+            this.appendDummyInput().appendField("si").appendField(new Blockly.FieldCheckbox("TRUE"), "COND");
+            this.appendStatementInput("DO").appendField("entonces");
+            this.appendStatementInput("ELSE").appendField("si no");
+            this.setPreviousStatement(true); this.setNextStatement(true); this.setColour('#FFAB19');
+        }},
+        'control_waituntil': { init() {
+            this.appendDummyInput().appendField("esperar hasta que").appendField(new Blockly.FieldCheckbox("TRUE"), "COND");
+            this.setPreviousStatement(true); this.setNextStatement(true); this.setColour('#FFAB19');
+        }},
+        'control_repeatuntil': { init() {
+            this.appendDummyInput().appendField("repetir hasta que").appendField(new Blockly.FieldCheckbox("FALSE"), "COND");
+            this.appendStatementInput("DO").appendField("hacer");
+            this.setPreviousStatement(true); this.setNextStatement(true); this.setColour('#FFAB19');
+        }},
+        'control_stop': { init() {
+            this.appendDummyInput().appendField("detener").appendField(new Blockly.FieldDropdown([["todos","all"],["este programa","this"]]), "WHAT");
+            this.setPreviousStatement(true); this.setColour('#FFAB19');
+        }},
+        'control_clone': { init() {
+            this.appendDummyInput().appendField("crear clon de mí mismo");
+            this.setPreviousStatement(true); this.setNextStatement(true); this.setColour('#FFAB19');
+        }},
+        'control_deleteclone': { init() {
+            this.appendDummyInput().appendField("eliminar este clon");
+            this.setPreviousStatement(true); this.setNextStatement(true); this.setColour('#FFAB19');
+        }},
+        // Sensores (celeste)
+        'sensing_touchingmouse': { init() {
+            this.appendDummyInput().appendField("¿tocando puntero?");
+            this.setOutput(true, 'Boolean'); this.setColour('#5CB1D6');
+        }},
+        'sensing_touchingedge': { init() {
+            this.appendDummyInput().appendField("¿tocando borde?");
+            this.setOutput(true, 'Boolean'); this.setColour('#5CB1D6');
+        }},
+        'sensing_keypressed': { init() {
+            this.appendDummyInput().appendField("¿tecla").appendField(new Blockly.FieldTextInput("espacio"), "KEY").appendField("presionada?");
+            this.setOutput(true, 'Boolean'); this.setColour('#5CB1D6');
+        }},
+        'sensing_mousedown': { init() {
+            this.appendDummyInput().appendField("¿ratón presionado?");
+            this.setOutput(true, 'Boolean'); this.setColour('#5CB1D6');
+        }},
+        'sensing_mousex': { init() {
+            this.appendDummyInput().appendField("posición x del ratón");
+            this.setOutput(true, 'Number'); this.setColour('#5CB1D6');
+        }},
+        'sensing_mousey': { init() {
+            this.appendDummyInput().appendField("posición y del ratón");
+            this.setOutput(true, 'Number'); this.setColour('#5CB1D6');
+        }},
+        'sensing_timer': { init() {
+            this.appendDummyInput().appendField("cronómetro");
+            this.setOutput(true, 'Number'); this.setColour('#5CB1D6');
+        }},
+        'sensing_resettimer': { init() {
+            this.appendDummyInput().appendField("reiniciar cronómetro");
+            this.setPreviousStatement(true); this.setNextStatement(true); this.setColour('#5CB1D6');
+        }},
+        'sensing_username': { init() {
+            this.appendDummyInput().appendField("nombre de usuario");
+            this.setOutput(true, 'String'); this.setColour('#5CB1D6');
+        }},
+        // Operadores (verde)
+        'operators_add': { init() {
+            this.appendValueInput('A').setCheck('Number');
+            this.appendDummyInput().appendField('+');
+            this.appendValueInput('B').setCheck('Number');
+            this.setInputsInline(true); this.setOutput(true, 'Number'); this.setColour('#59C059');
+        }},
+        'operators_sub': { init() {
+            this.appendValueInput('A').setCheck('Number');
+            this.appendDummyInput().appendField('-');
+            this.appendValueInput('B').setCheck('Number');
+            this.setInputsInline(true); this.setOutput(true, 'Number'); this.setColour('#59C059');
+        }},
+        'operators_mul': { init() {
+            this.appendValueInput('A').setCheck('Number');
+            this.appendDummyInput().appendField('*');
+            this.appendValueInput('B').setCheck('Number');
+            this.setInputsInline(true); this.setOutput(true, 'Number'); this.setColour('#59C059');
+        }},
+        'operators_div': { init() {
+            this.appendValueInput('A').setCheck('Number');
+            this.appendDummyInput().appendField('/');
+            this.appendValueInput('B').setCheck('Number');
+            this.setInputsInline(true); this.setOutput(true, 'Number'); this.setColour('#59C059');
+        }},
+        'operators_random': { init() {
+            this.appendDummyInput().appendField("número al azar entre").appendField(new Blockly.FieldNumber(1), "MIN")
+                .appendField("y").appendField(new Blockly.FieldNumber(10), "MAX");
+            this.setOutput(true, 'Number'); this.setColour('#59C059');
+        }},
+        'operators_gt': { init() {
+            this.appendValueInput('A').setCheck('Number');
+            this.appendDummyInput().appendField('>');
+            this.appendValueInput('B').setCheck('Number');
+            this.setInputsInline(true); this.setOutput(true, 'Boolean'); this.setColour('#59C059');
+        }},
+        'operators_lt': { init() {
+            this.appendValueInput('A').setCheck('Number');
+            this.appendDummyInput().appendField('<');
+            this.appendValueInput('B').setCheck('Number');
+            this.setInputsInline(true); this.setOutput(true, 'Boolean'); this.setColour('#59C059');
+        }},
+        'operators_eq': { init() {
+            this.appendValueInput('A').setCheck('Number');
+            this.appendDummyInput().appendField('=');
+            this.appendValueInput('B').setCheck('Number');
+            this.setInputsInline(true); this.setOutput(true, 'Boolean'); this.setColour('#59C059');
+        }},
+        'operators_and': { init() {
+            this.appendValueInput('A').setCheck('Boolean');
+            this.appendDummyInput().appendField('y');
+            this.appendValueInput('B').setCheck('Boolean');
+            this.setInputsInline(true); this.setOutput(true, 'Boolean'); this.setColour('#59C059');
+        }},
+        'operators_or': { init() {
+            this.appendValueInput('A').setCheck('Boolean');
+            this.appendDummyInput().appendField('o');
+            this.appendValueInput('B').setCheck('Boolean');
+            this.setInputsInline(true); this.setOutput(true, 'Boolean'); this.setColour('#59C059');
+        }},
+        'operators_not': { init() {
+            this.appendValueInput('A').setCheck('Boolean');
+            this.appendDummyInput().appendField('no');
+            this.setInputsInline(true); this.setOutput(true, 'Boolean'); this.setColour('#59C059');
+        }},
+        'operators_join': { init() {
+            this.appendValueInput('A').setCheck('String');
+            this.appendValueInput('B').setCheck('String');
+            this.appendDummyInput().appendField("unir");
+            this.setInputsInline(true); this.setOutput(true, 'String'); this.setColour('#59C059');
+        }},
+        'operators_letterof': { init() {
+            this.appendDummyInput().appendField("letra").appendField(new Blockly.FieldNumber(1), "IDX").appendField("de")
+                .appendField(new Blockly.FieldTextInput("Hola"), "TEXT");
+            this.setOutput(true, 'String'); this.setColour('#59C059');
+        }},
+        'operators_length': { init() {
+            this.appendValueInput('TEXT').setCheck('String');
+            this.appendDummyInput().appendField("longitud de");
+            this.setInputsInline(true); this.setOutput(true, 'Number'); this.setColour('#59C059');
+        }},
+        'operators_contains': { init() {
+            this.appendValueInput('TEXT').setCheck('String');
+            this.appendValueInput('SUB').setCheck('String');
+            this.appendDummyInput().appendField("contiene");
+            this.setInputsInline(true); this.setOutput(true, 'Boolean'); this.setColour('#59C059');
+        }},
+        'operators_mod': { init() {
+            this.appendValueInput('A').setCheck('Number');
+            this.appendDummyInput().appendField('módulo');
+            this.appendValueInput('B').setCheck('Number');
+            this.setInputsInline(true); this.setOutput(true, 'Number'); this.setColour('#59C059');
+        }},
+        'operators_round': { init() {
+            this.appendValueInput('VAL').setCheck('Number');
+            this.appendDummyInput().appendField("redondear");
+            this.setInputsInline(true); this.setOutput(true, 'Number'); this.setColour('#59C059');
+        }},
+        'operators_sqrt': { init() {
+            this.appendValueInput('VAL').setCheck('Number');
+            this.appendDummyInput().appendField("raíz cuadrada");
+            this.setInputsInline(true); this.setOutput(true, 'Number'); this.setColour('#59C059');
+        }},
+        // Variables (naranja oscuro)
+        'variables_set': { init() {
+            this.appendDummyInput().appendField("fijar").appendField(new Blockly.FieldVariable("miVar"), "VAR")
+                .appendField("a").appendField(new Blockly.FieldNumber(0), "VAL");
+            this.setPreviousStatement(true); this.setNextStatement(true); this.setColour('#FF8C1A');
+        }},
+        'variables_change': { init() {
+            this.appendDummyInput().appendField("cambiar").appendField(new Blockly.FieldVariable("miVar"), "VAR")
+                .appendField("por").appendField(new Blockly.FieldNumber(1), "DVAL");
+            this.setPreviousStatement(true); this.setNextStatement(true); this.setColour('#FF8C1A');
+        }},
+        'variables_get': { init() {
+            this.appendDummyInput().appendField(new Blockly.FieldVariable("miVar"), "VAR");
+            this.setOutput(true, null); this.setColour('#FF8C1A');
+        }},
+        // Mis Bloques (rosa oscuro)
+        'myblocks_define': { init() {
+            this.appendDummyInput().appendField("definir").appendField(new Blockly.FieldTextInput("miBloque"), "NAME");
+            this.setNextStatement(true); this.setColour('#FF6680');
+        }},
+        'myblocks_call': { init() {
+            this.appendDummyInput().appendField("llamar").appendField(new Blockly.FieldTextInput("miBloque"), "NAME");
+            this.setPreviousStatement(true); this.setNextStatement(true); this.setColour('#FF6680');
+        }},
     };
-
-    // Register blocks
     for (const [name, def] of Object.entries(blockDefs)) {
-      Blockly.Blocks[name] = def;
+        Blockly.Blocks[name] = def;
     }
 
-    // ---- TOOLBOX (categorías) ----
+    // Caja de herramientas
     const toolbox = {
-      kind: 'categoryToolbox',
-      contents: [
-        { kind: 'category', name: 'Movimiento', colour: '#4C97FF', blocks: [
-            { kind: 'block', type: 'motion_movesteps' },
-            { kind: 'block', type: 'motion_turnright' },
-            { kind: 'block', type: 'motion_gotoxy' },
-            { kind: 'block', type: 'motion_pointdir' },
-            { kind: 'block', type: 'motion_changex' },
-            { kind: 'block', type: 'motion_setx' },
-            { kind: 'block', type: 'motion_changey' },
-            { kind: 'block', type: 'motion_sety' },
-        ]},
-        { kind: 'category', name: 'Apariencia', colour: '#9966FF', blocks: [
-            { kind: 'block', type: 'looks_say' },
-            { kind: 'block', type: 'looks_setsize' },
-            { kind: 'block', type: 'looks_changesize' },
-            { kind: 'block', type: 'looks_show' },
-            { kind: 'block', type: 'looks_hide' },
-        ]},
-        { kind: 'category', name: 'Sonido', colour: '#CF63CF', blocks: [
-            { kind: 'block', type: 'sound_play' },
-        ]},
-        { kind: 'category', name: 'Eventos', colour: '#FFBF00', blocks: [
-            { kind: 'block', type: 'events_whenflag' },
-            { kind: 'block', type: 'events_whenkey' },
-            { kind: 'block', type: 'events_broadcast' },
-            { kind: 'block', type: 'events_whenreceive' },
-        ]},
-        { kind: 'category', name: 'Control', colour: '#FFAB19', blocks: [
-            { kind: 'block', type: 'control_wait' },
-            { kind: 'block', type: 'control_repeat' },
-            { kind: 'block', type: 'control_forever' },
-            { kind: 'block', type: 'control_if' },
-            { kind: 'block', type: 'control_stop' },
-        ]},
-        { kind: 'category', name: 'Sensores', colour: '#5CB1D6', blocks: [
-            { kind: 'block', type: 'sensing_keypressed' },
-            { kind: 'block', type: 'sensing_mousex' },
-            { kind: 'block', type: 'sensing_mousey' },
-            { kind: 'block', type: 'sensing_timer' },
-            { kind: 'block', type: 'sensing_resettimer' },
-        ]},
-        { kind: 'category', name: 'Operadores', colour: '#59C059', blocks: [
-            { kind: 'block', type: 'operators_add' },
-            { kind: 'block', type: 'operators_random' },
-            { kind: 'block', type: 'operators_join' },
-        ]},
-        { kind: 'category', name: 'Variables', colour: '#FF8C1A', blocks: [
-            { kind: 'block', type: 'variables_set' },
-            { kind: 'block', type: 'variables_change' },
-            { kind: 'block', type: 'variables_get' },
-        ]},
-      ]
+        kind: 'categoryToolbox',
+        contents: [
+            { kind: 'category', name: 'Movimiento', colour: '#4C97FF', blocks: [
+                { kind: 'block', type: 'motion_movesteps' }, { kind: 'block', type: 'motion_turnright' },
+                { kind: 'block', type: 'motion_turnleft' }, { kind: 'block', type: 'motion_goto' },
+                { kind: 'block', type: 'motion_gotoxy' }, { kind: 'block', type: 'motion_glide' },
+                { kind: 'block', type: 'motion_pointdir' }, { kind: 'block', type: 'motion_pointtowards' },
+                { kind: 'block', type: 'motion_changex' }, { kind: 'block', type: 'motion_setx' },
+                { kind: 'block', type: 'motion_changey' }, { kind: 'block', type: 'motion_sety' },
+                { kind: 'block', type: 'motion_ifonedgebounce' }, { kind: 'block', type: 'motion_setrotationstyle' },
+            ]},
+            { kind: 'category', name: 'Apariencia', colour: '#9966FF', blocks: [
+                { kind: 'block', type: 'looks_say' }, { kind: 'block', type: 'looks_sayforever' },
+                { kind: 'block', type: 'looks_think' }, { kind: 'block', type: 'looks_thinkforever' },
+                { kind: 'block', type: 'looks_switchcostume' }, { kind: 'block', type: 'looks_nextcostume' },
+                { kind: 'block', type: 'looks_switchbg' }, { kind: 'block', type: 'looks_changesize' },
+                { kind: 'block', type: 'looks_setsize' }, { kind: 'block', type: 'looks_changeeffect' },
+                { kind: 'block', type: 'looks_seteffect' }, { kind: 'block', type: 'looks_cleareffects' },
+                { kind: 'block', type: 'looks_show' }, { kind: 'block', type: 'looks_hide' },
+            ]},
+            { kind: 'category', name: 'Sonido', colour: '#CF63CF', blocks: [
+                { kind: 'block', type: 'sound_play' }, { kind: 'block', type: 'sound_playuntil' },
+                { kind: 'block', type: 'sound_stopall' }, { kind: 'block', type: 'sound_changevolume' },
+                { kind: 'block', type: 'sound_setvolume' },
+            ]},
+            { kind: 'category', name: 'Eventos', colour: '#FFBF00', blocks: [
+                { kind: 'block', type: 'events_whenflag' }, { kind: 'block', type: 'events_whenkey' },
+                { kind: 'block', type: 'events_whenclicked' }, { kind: 'block', type: 'events_whenbgchange' },
+                { kind: 'block', type: 'events_broadcast' }, { kind: 'block', type: 'events_broadcastwait' },
+                { kind: 'block', type: 'events_whenreceive' },
+            ]},
+            { kind: 'category', name: 'Control', colour: '#FFAB19', blocks: [
+                { kind: 'block', type: 'control_wait' }, { kind: 'block', type: 'control_repeat' },
+                { kind: 'block', type: 'control_forever' }, { kind: 'block', type: 'control_if' },
+                { kind: 'block', type: 'control_ifelse' }, { kind: 'block', type: 'control_waituntil' },
+                { kind: 'block', type: 'control_repeatuntil' }, { kind: 'block', type: 'control_stop' },
+                { kind: 'block', type: 'control_clone' }, { kind: 'block', type: 'control_deleteclone' },
+            ]},
+            { kind: 'category', name: 'Sensores', colour: '#5CB1D6', blocks: [
+                { kind: 'block', type: 'sensing_touchingmouse' }, { kind: 'block', type: 'sensing_touchingedge' },
+                { kind: 'block', type: 'sensing_keypressed' }, { kind: 'block', type: 'sensing_mousedown' },
+                { kind: 'block', type: 'sensing_mousex' }, { kind: 'block', type: 'sensing_mousey' },
+                { kind: 'block', type: 'sensing_timer' }, { kind: 'block', type: 'sensing_resettimer' },
+                { kind: 'block', type: 'sensing_username' },
+            ]},
+            { kind: 'category', name: 'Operadores', colour: '#59C059', blocks: [
+                { kind: 'block', type: 'operators_add' }, { kind: 'block', type: 'operators_sub' },
+                { kind: 'block', type: 'operators_mul' }, { kind: 'block', type: 'operators_div' },
+                { kind: 'block', type: 'operators_random' }, { kind: 'block', type: 'operators_gt' },
+                { kind: 'block', type: 'operators_lt' }, { kind: 'block', type: 'operators_eq' },
+                { kind: 'block', type: 'operators_and' }, { kind: 'block', type: 'operators_or' },
+                { kind: 'block', type: 'operators_not' }, { kind: 'block', type: 'operators_join' },
+                { kind: 'block', type: 'operators_letterof' }, { kind: 'block', type: 'operators_length' },
+                { kind: 'block', type: 'operators_contains' }, { kind: 'block', type: 'operators_mod' },
+                { kind: 'block', type: 'operators_round' }, { kind: 'block', type: 'operators_sqrt' },
+            ]},
+            { kind: 'category', name: 'Variables', colour: '#FF8C1A', blocks: [
+                { kind: 'block', type: 'variables_set' }, { kind: 'block', type: 'variables_change' },
+                { kind: 'block', type: 'variables_get' },
+            ]},
+            { kind: 'category', name: 'Mis Bloques', colour: '#FF6680', blocks: [
+                { kind: 'block', type: 'myblocks_define' }, { kind: 'block', type: 'myblocks_call' },
+            ]},
+        ]
     };
 
-    // ---- WORKSPACE ----
     const workspace = Blockly.inject('blocklyDiv', {
-      toolbox: toolbox,
-      scrollbars: true,
-      trashcan: true,
-      zoom: { controls: true, wheel: true },
-      grid: { spacing: 20, length: 3, colour: '#333', snap: true },
-      theme: Blockly.Theme.defineTheme('dark', {
-        base: Blockly.Themes.Classic,
-        componentStyles: {
-          workspaceBackgroundColour: '#1e1e35',
-          toolboxBackgroundColour: '#16213e',
-          toolboxForegroundColour: '#ddd',
-          flyoutBackgroundColour: '#1a1a2e',
-          flyoutForegroundColour: '#ccc',
-          scrollbarColour: '#444',
-          insertionMarkerColour: '#fff',
-        },
-      }),
+        toolbox: toolbox,
+        scrollbars: true,
+        trashcan: true,
+        zoom: { controls: true, wheel: true },
+        grid: { spacing: 20, length: 3, colour: '#333', snap: true },
+        theme: Blockly.Theme.defineTheme('dark', {
+            base: Blockly.Themes.Classic,
+            componentStyles: {
+                workspaceBackgroundColour: '#1e1e35',
+                toolboxBackgroundColour: '#16213e',
+                toolboxForegroundColour: '#ddd',
+                flyoutBackgroundColour: '#1a1a2e',
+                flyoutForegroundColour: '#ccc',
+                scrollbarColour: '#444',
+            },
+        }),
     });
 
     // ==================== SPRITE & STAGE ====================
     const canvas = document.getElementById('stage-canvas');
     const ctx = canvas.getContext('2d');
     const stageW = 480, stageH = 360;
-    let sprite = {
-      x: 0, y: 0, direction: 90, size: 100, visible: true,
-      sayText: '', sayTimer: 0, thinkText: '', thinkTimer: 0,
-      effects: {},
-      penDown: false, penColor: '#000', penSize: 2
-    };
+    let sprite = { x:0, y:0, direction:90, size:100, visible:true, sayText:'', sayTimer:0, thinkText:'', thinkTimer:0,
+        effects:{color:0, ghost:0}, penDown:false, penColor:'#000', penSize:2 };
     let stageBackground = 1;
     let mouseX = stageW/2, mouseY = stageH/2, mouseDown = false;
     let keysPressed = new Set();
     let broadcastQueue = [];
-    let runAbort = false;
-    let isRunning = false;
+    let runAbort = false, isRunning = false;
     let timerStart = Date.now();
-    let variables = { 'miVar': 0 };
+    let variables = { miVar:0 };
     let lists = {};
 
     canvas.addEventListener('mousemove', e => {
-      const rect = canvas.getBoundingClientRect();
-      const scaleX = stageW / rect.width;
-      const scaleY = stageH / rect.height;
-      mouseX = (e.clientX - rect.left) * scaleX;
-      mouseY = (e.clientY - rect.top) * scaleY;
+        const rect = canvas.getBoundingClientRect();
+        mouseX = (e.clientX - rect.left) * (stageW / rect.width);
+        mouseY = (e.clientY - rect.top) * (stageH / rect.height);
     });
     canvas.addEventListener('mousedown', () => mouseDown = true);
     canvas.addEventListener('mouseup', () => mouseDown = false);
@@ -578,326 +629,253 @@
     document.addEventListener('keyup', e => { keysPressed.delete(e.key); keysPressed.delete(e.key.toLowerCase()); });
 
     function drawStage() {
-      ctx.clearRect(0,0,stageW,stageH);
-      const bgColors = ['#ffffff','#e8f4f8','#fef9e7','#e8f8e8','#fce4ec'];
-      ctx.fillStyle = bgColors[(stageBackground-1)%bgColors.length] || '#fff';
-      ctx.fillRect(0,0,stageW,stageH);
-      if (!sprite.visible) return;
-      ctx.save();
-      const cx = stageW/2 + sprite.x;
-      const cy = stageH/2 - sprite.y;
-      ctx.translate(cx, cy);
-      ctx.rotate((sprite.direction-90)*Math.PI/180);
-      const s = 30 * (sprite.size/100);
-      ctx.fillStyle = '#ff8c42';
-      ctx.beginPath(); ctx.arc(0,0,s*0.7,0,2*Math.PI); ctx.fill();
-      ctx.strokeStyle='#333'; ctx.lineWidth=2; ctx.stroke();
-      ctx.fillStyle='#ffaa66';
-      ctx.beginPath(); ctx.arc(0,-s*0.7,s*0.5,0,2*Math.PI); ctx.fill(); ctx.stroke();
-      ctx.fillStyle='#fff';
-      ctx.beginPath(); ctx.arc(-s*0.15,-s*0.75,s*0.13,0,2*Math.PI); ctx.fill();
-      ctx.beginPath(); ctx.arc(s*0.15,-s*0.75,s*0.13,0,2*Math.PI); ctx.fill();
-      ctx.fillStyle='#111';
-      ctx.beginPath(); ctx.arc(-s*0.13,-s*0.73,s*0.06,0,2*Math.PI); ctx.fill();
-      ctx.beginPath(); ctx.arc(s*0.17,-s*0.73,s*0.06,0,2*Math.PI); ctx.fill();
-      ctx.restore();
-      if (sprite.sayText && sprite.sayTimer>0) {
-        drawBubble(cx, cy-45*(sprite.size/100), sprite.sayText);
-      }
-      if (sprite.penDown) {
-        ctx.fillStyle=sprite.penColor;
-        ctx.beginPath(); ctx.arc(cx,cy,sprite.penSize,0,2*Math.PI); ctx.fill();
-      }
+        ctx.clearRect(0,0,stageW,stageH);
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0,0,stageW,stageH);
+        if (!sprite.visible) return;
+        ctx.save();
+        const cx = stageW/2 + sprite.x;
+        const cy = stageH/2 - sprite.y;
+        ctx.translate(cx, cy);
+        ctx.rotate((sprite.direction-90)*Math.PI/180);
+        const s = 30 * (sprite.size/100);
+        ctx.fillStyle = '#ff8c42';
+        ctx.beginPath(); ctx.arc(0,0,s*0.7,0,2*Math.PI); ctx.fill();
+        ctx.fillStyle = '#ffaa66';
+        ctx.beginPath(); ctx.arc(0,-s*0.7,s*0.5,0,2*Math.PI); ctx.fill();
+        ctx.restore();
+        if (sprite.sayText && sprite.sayTimer>0) drawBubble(cx, cy-45, sprite.sayText);
     }
     function drawBubble(x,y,text) {
-      ctx.save(); ctx.fillStyle='#fff'; ctx.strokeStyle='#333'; ctx.lineWidth=1.5;
-      const w=Math.max(60,text.length*8+20), h=28;
-      ctx.beginPath(); ctx.roundRect(x-w/2,y-h,w,h,8); ctx.fill(); ctx.stroke();
-      ctx.fillStyle='#222'; ctx.font='11px sans-serif';
-      ctx.fillText(text, x-w/2+10, y-h+18);
-      ctx.restore();
+        ctx.save(); ctx.fillStyle='#fff'; ctx.strokeStyle='#333'; ctx.lineWidth=1.5;
+        const w=Math.max(60,text.length*8+20), h=28;
+        ctx.beginPath(); ctx.roundRect(x-w/2,y-h,w,h,8); ctx.fill(); ctx.stroke();
+        ctx.fillStyle='#222'; ctx.font='11px sans-serif';
+        ctx.fillText(text, x-w/2+10, y-h+18);
+        ctx.restore();
     }
-
     function updateVarDisplay() {
-      const div = document.getElementById('var-display');
-      let html = '';
-      for (const [k,v] of Object.entries(variables)) {
-        html += `<span class="var-item"><strong>${k}</strong>: ${typeof v==='number'?Math.round(v*100)/100:v}</span>`;
-      }
-      for (const [k,arr] of Object.entries(lists)) {
-        html += `<span class="var-item"><strong>📋${k}</strong>: [${arr.length}]</span>`;
-      }
-      div.innerHTML = html || '<span style="color:#888">Sin variables</span>';
+        const div = document.getElementById('variable-display');
+        let html = '';
+        for (const [k,v] of Object.entries(variables)) html += `<span class="var-item"><strong>${k}</strong>: ${v}</span>`;
+        div.innerHTML = html || '<span style="color:#888">Sin variables</span>';
     }
-
     function log(msg) {
-      const c = document.getElementById('console');
-      c.textContent += '\n' + msg;
-      c.scrollTop = c.scrollHeight;
-      if (c.textContent.length>800) c.textContent = '...'+c.textContent.slice(-600);
+        const c = document.getElementById('output-console');
+        c.textContent += '\n' + msg;
+        c.scrollTop = c.scrollHeight;
     }
     function toast(msg) {
-      const t = document.getElementById('toast');
-      t.textContent=msg; t.classList.add('show');
-      clearTimeout(t._t); t._t = setTimeout(()=>t.classList.remove('show'),1800);
+        const t = document.getElementById('toast');
+        t.textContent=msg; t.classList.add('show');
+        clearTimeout(t._t); t._t = setTimeout(()=>t.classList.remove('show'),1800);
     }
 
-    // ==================== INTERPRETER ====================
-    function getFieldValue(block, name, def) {
-      if (block.getFieldValue) return block.getFieldValue(name) ?? def;
-      return def;
-    }
-    function getInputTargetBlock(block, name) {
-      return block.getInputTargetBlock(name);
-    }
+    // ==================== INTÉRPRETE ====================
     async function evaluateBlock(block) {
-      if (runAbort) return;
-      const type = block.type;
-      if (type==='motion_movesteps') {
-        const steps = parseFloat(getFieldValue(block,'STEPS',10));
-        const rad = sprite.direction * Math.PI/180;
-        sprite.x += Math.cos(rad)*steps;
-        sprite.y += Math.sin(rad)*steps;
-      } else if (type==='motion_turnright') {
-        sprite.direction += parseFloat(getFieldValue(block,'DEGREES',15));
-      } else if (type==='motion_gotoxy') {
-        sprite.x = parseFloat(getFieldValue(block,'X',0));
-        sprite.y = parseFloat(getFieldValue(block,'Y',0));
-      } else if (type==='motion_pointdir') {
-        sprite.direction = parseFloat(getFieldValue(block,'DIR',90));
-      } else if (type==='motion_changex') { sprite.x += parseFloat(getFieldValue(block,'DX',10)); }
-      else if (type==='motion_setx') { sprite.x = parseFloat(getFieldValue(block,'X',0)); }
-      else if (type==='motion_changey') { sprite.y += parseFloat(getFieldValue(block,'DY',10)); }
-      else if (type==='motion_sety') { sprite.y = parseFloat(getFieldValue(block,'Y',0)); }
-      else if (type==='looks_say') {
-        sprite.sayText = getFieldValue(block,'TEXT','Hola');
-        const secs = parseFloat(getFieldValue(block,'SECS',2));
-        sprite.sayTimer = secs;
-        await sleep(secs*1000);
-        sprite.sayText=''; sprite.sayTimer=0;
-      } else if (type==='looks_setsize') {
-        sprite.size = Math.max(5,Math.min(500, parseFloat(getFieldValue(block,'SIZE',100))));
-      } else if (type==='looks_changesize') {
-        sprite.size += parseFloat(getFieldValue(block,'DSIZE',10));
-        sprite.size = Math.max(5,Math.min(500,sprite.size));
-      } else if (type==='looks_show') { sprite.visible=true; }
-      else if (type==='looks_hide') { sprite.visible=false; }
-      else if (type==='sound_play') {
-        playBeep(440,0.3);
-      }
-      else if (type==='events_broadcast') {
-        const msg = getFieldValue(block,'MESSAGE','mensaje1');
-        broadcastQueue.push(msg);
-        log('📡 Enviado: '+msg);
-      }
-      else if (type==='control_wait') {
-        await sleep(parseFloat(getFieldValue(block,'SECS',1))*1000);
-      } else if (type==='control_repeat') {
-        const times = parseInt(getFieldValue(block,'TIMES',10));
-        const doBlock = getInputTargetBlock(block,'DO');
-        for (let i=0; i<times && !runAbort; i++) {
-          if (doBlock) await executeStack(doBlock);
+        if (runAbort) return;
+        const type = block.type;
+        const getField = (name, def) => block.getFieldValue(name) ?? def;
+        // Movimiento
+        if (type==='motion_movesteps') {
+            const steps = parseFloat(getField('STEPS',10));
+            sprite.x += Math.cos(sprite.direction*Math.PI/180)*steps;
+            sprite.y += Math.sin(sprite.direction*Math.PI/180)*steps;
+        } else if (type==='motion_turnright') sprite.direction += parseFloat(getField('DEGREES',15));
+        else if (type==='motion_turnleft') sprite.direction -= parseFloat(getField('DEGREES',15));
+        else if (type==='motion_goto') {
+            sprite.x = (Math.random()-0.5)*stageW*0.8;
+            sprite.y = (Math.random()-0.5)*stageH*0.8;
+        } else if (type==='motion_gotoxy') {
+            sprite.x = parseFloat(getField('X',0));
+            sprite.y = parseFloat(getField('Y',0));
+        } else if (type==='motion_glide') {
+            const secs = parseFloat(getField('SECS',1));
+            const tx = parseFloat(getField('X',0));
+            const ty = parseFloat(getField('Y',0));
+            const sx = sprite.x, sy = sprite.y;
+            const steps = Math.max(1, Math.round(secs*30));
+            for (let i=1; i<=steps && !runAbort; i++) {
+                sprite.x = sx + (tx-sx)*(i/steps);
+                sprite.y = sy + (ty-sy)*(i/steps);
+                drawStage();
+                await sleep(secs*1000/steps);
+            }
+        } else if (type==='motion_pointdir') sprite.direction = parseFloat(getField('DIR',90));
+        else if (type==='motion_changex') sprite.x += parseFloat(getField('DX',10));
+        else if (type==='motion_setx') sprite.x = parseFloat(getField('X',0));
+        else if (type==='motion_changey') sprite.y += parseFloat(getField('DY',10));
+        else if (type==='motion_sety') sprite.y = parseFloat(getField('Y',0));
+        else if (type==='motion_ifonedgebounce') {
+            if (Math.abs(sprite.x)>stageW/2-5) { sprite.direction = 180-sprite.direction; sprite.x = Math.sign(sprite.x)*(stageW/2-5); }
+            if (Math.abs(sprite.y)>stageH/2-5) { sprite.direction = -sprite.direction; sprite.y = Math.sign(sprite.y)*(stageH/2-5); }
         }
-      } else if (type==='control_forever') {
-        const doBlock = getInputTargetBlock(block,'DO');
-        while (!runAbort) {
-          if (doBlock) await executeStack(doBlock);
-          await sleep(30);
+        // Apariencia
+        else if (type==='looks_say') {
+            sprite.sayText = getField('TEXT','Hola');
+            sprite.sayTimer = parseFloat(getField('SECS',2));
+            await sleep(parseFloat(getField('SECS',2))*1000);
+            sprite.sayText=''; sprite.sayTimer=0;
+        } else if (type==='looks_sayforever') { sprite.sayText = getField('TEXT','Hola'); sprite.sayTimer=9999; }
+        else if (type==='looks_setsize') sprite.size = Math.max(5,Math.min(500, parseFloat(getField('SIZE',100))));
+        else if (type==='looks_changesize') sprite.size = Math.max(5,Math.min(500, sprite.size+parseFloat(getField('DSIZE',10))));
+        else if (type==='looks_show') sprite.visible = true;
+        else if (type==='looks_hide') sprite.visible = false;
+        // Eventos
+        else if (type==='events_broadcast') broadcastQueue.push(getField('MESSAGE','mensaje1'));
+        // Control
+        else if (type==='control_wait') await sleep(parseFloat(getField('SECS',1))*1000);
+        else if (type==='control_repeat') {
+            const times = parseInt(getField('TIMES',10));
+            const doBlock = block.getInputTargetBlock('DO');
+            for (let i=0; i<times && !runAbort; i++) if (doBlock) await executeStack(doBlock);
+        } else if (type==='control_forever') {
+            const doBlock = block.getInputTargetBlock('DO');
+            while (!runAbort) { if (doBlock) await executeStack(doBlock); await sleep(30); }
+        } else if (type==='control_if') {
+            if (getField('COND','TRUE')==='TRUE') {
+                const doBlock = block.getInputTargetBlock('DO');
+                if (doBlock) await executeStack(doBlock);
+            }
+        } else if (type==='control_stop') runAbort = true;
+        // Sensores
+        else if (type==='sensing_resettimer') timerStart = Date.now();
+        // Variables
+        else if (type==='variables_set') variables[getField('VAR','miVar')] = parseFloat(getField('VAL',0));
+        else if (type==='variables_change') {
+            const v = getField('VAR','miVar');
+            if (!(v in variables)) variables[v]=0;
+            variables[v] += parseFloat(getField('DVAL',1));
         }
-      } else if (type==='control_if') {
-        const cond = getFieldValue(block,'COND','TRUE')==='TRUE';
-        if (cond) {
-          const doBlock = getInputTargetBlock(block,'DO');
-          if (doBlock) await executeStack(doBlock);
-        }
-      } else if (type==='control_stop') {
-        const what = getFieldValue(block,'WHAT','all');
-        if (what==='all') runAbort=true;
-      }
-      else if (type==='sensing_resettimer') {
-        timerStart = Date.now();
-      }
-      else if (type==='variables_set') {
-        const varName = getFieldValue(block,'VAR','miVar');
-        const val = parseFloat(getFieldValue(block,'VAL',0));
-        variables[varName] = val;
-      } else if (type==='variables_change') {
-        const varName = getFieldValue(block,'VAR','miVar');
-        if (!(varName in variables)) variables[varName]=0;
-        variables[varName] += parseFloat(getFieldValue(block,'DVAL',1));
-      }
-      drawStage();
-      updateVarDisplay();
+        drawStage(); updateVarDisplay();
     }
 
     async function executeStack(firstBlock) {
-      let block = firstBlock;
-      while (block && !runAbort) {
-        await evaluateBlock(block);
-        block = block.getNextBlock();
-      }
+        let block = firstBlock;
+        while (block && !runAbort) {
+            await evaluateBlock(block);
+            block = block.getNextBlock();
+        }
     }
 
     async function runAllHatBlocks() {
-      runAbort = false;
-      isRunning = true;
-      broadcastQueue = [];
-      timerStart = Date.now();
-      log('🚩 Proyecto iniciado');
-      const topBlocks = workspace.getTopBlocks(true);
-      const hatBlocks = topBlocks.filter(b => b.type.startsWith('events_whenflag'));
-      for (const hat of hatBlocks) {
-        if (runAbort) break;
-        const next = hat.getNextBlock();
-        if (next) await executeStack(next);
-      }
-      while (broadcastQueue.length && !runAbort) {
-        const msg = broadcastQueue.shift();
-        const receiveHats = topBlocks.filter(b => b.type==='events_whenreceive' && getFieldValue(b,'MESSAGE')===msg);
-        for (const hat of receiveHats) {
-          const next = hat.getNextBlock();
-          if (next) await executeStack(next);
+        runAbort = false; isRunning = true; broadcastQueue = []; timerStart = Date.now();
+        const tops = workspace.getTopBlocks(true);
+        for (const hat of tops) {
+            if (hat.type==='events_whenflag' && !runAbort) {
+                const next = hat.getNextBlock();
+                if (next) await executeStack(next);
+            }
         }
-      }
-      if (!runAbort) log('✅ Ejecución completada');
-      else log('⏹ Detenido');
-      isRunning = false;
+        while (broadcastQueue.length && !runAbort) {
+            const msg = broadcastQueue.shift();
+            for (const hat of tops) {
+                if (hat.type==='events_whenreceive' && hat.getFieldValue('MESSAGE')===msg && !runAbort) {
+                    const next = hat.getNextBlock();
+                    if (next) await executeStack(next);
+                }
+            }
+        }
+        isRunning = false;
+        log(runAbort ? '⏹ Detenido' : '✅ Ejecución completada');
     }
-
-    function sleep(ms) { return new Promise(resolve => setTimeout(resolve, ms)); }
 
     function runProject() {
-      if (isRunning) stopProject();
-      runAllHatBlocks();
+        if (isRunning) stopProject();
+        runAllHatBlocks();
     }
     function stopProject() {
-      runAbort = true;
-      isRunning = false;
-      sprite.sayText=''; sprite.sayTimer=0;
-      log('⏹ Detenido manualmente');
+        runAbort = true; isRunning = false;
+        sprite.sayText=''; sprite.sayTimer=0;
     }
+    function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
-    function playBeep(freq,dur) {
-      try {
-        const ctx = new (window.AudioContext||window.webkitAudioContext)();
-        const o = ctx.createOscillator();
-        const g = ctx.createGain();
-        o.type='square'; o.frequency.value=freq;
-        g.gain.setValueAtTime(0.1,ctx.currentTime);
-        g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+dur);
-        o.connect(g); g.connect(ctx.destination);
-        o.start(); o.stop(ctx.currentTime+dur);
-      } catch(e){}
-    }
-
-    // ==================== SAVE / LOAD ====================
+    // ==================== GUARDAR / CARGAR ====================
     function saveProject() {
-      const xml = Blockly.Xml.workspaceToDom(workspace);
-      const xmlText = Blockly.Xml.domToText(xml);
-      const state = {
-        xml: xmlText,
-        sprite: JSON.parse(JSON.stringify(sprite)),
-        variables: JSON.parse(JSON.stringify(variables)),
-        lists: JSON.parse(JSON.stringify(lists)),
-        stageBackground
-      };
-      const blob = new Blob([JSON.stringify(state)], {type:'application/json'});
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = 'BlockIngenier_proyecto.json';
-      a.click();
-      toast('💾 Proyecto guardado');
-    }
-
-    function loadProject() {
-      const input = document.createElement('input');
-      input.type='file'; input.accept='.json';
-      input.onchange = e => {
-        const file = e.target.files[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = ev => {
-          try {
-            const data = JSON.parse(ev.target.result);
-            if (data.xml) {
-              workspace.clear();
-              const xml = Blockly.Xml.textToDom(data.xml);
-              Blockly.Xml.domToWorkspace(xml, workspace);
-            }
-            if (data.sprite) Object.assign(sprite, data.sprite);
-            if (data.variables) variables = data.variables;
-            if (data.lists) lists = data.lists;
-            if (data.stageBackground) stageBackground = data.stageBackground;
-            updateVarDisplay();
-            drawStage();
-            toast('📂 Proyecto cargado');
-          } catch(err) {
-            toast('❌ Error al cargar');
-          }
+        const xml = Blockly.Xml.workspaceToDom(workspace);
+        const data = {
+            xml: Blockly.Xml.domToText(xml),
+            sprite, stageBackground, variables, lists
         };
-        reader.readAsText(file);
-      };
-      input.click();
+        const blob = new Blob([JSON.stringify(data)], {type:'application/json'});
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'BlockIngenier.json';
+        a.click();
+        toast('💾 Proyecto guardado');
     }
-
+    function loadProject() {
+        const input = document.createElement('input');
+        input.type='file'; input.accept='.json';
+        input.onchange = e => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = ev => {
+                const data = JSON.parse(ev.target.result);
+                workspace.clear();
+                if (data.xml) Blockly.Xml.domToWorkspace(Blockly.Xml.textToDom(data.xml), workspace);
+                if (data.sprite) Object.assign(sprite, data.sprite);
+                if (data.stageBackground) stageBackground = data.stageBackground;
+                if (data.variables) variables = data.variables;
+                if (data.lists) lists = data.lists;
+                drawStage(); updateVarDisplay();
+                toast('📂 Proyecto cargado');
+            };
+            reader.readAsText(file);
+        };
+        input.click();
+    }
     function clearWorkspace() {
-      if (isRunning) stopProject();
-      workspace.clear();
-      toast('🗑 Área limpiada');
+        if (isRunning) stopProject();
+        workspace.clear();
+        toast('🗑 Área limpiada');
     }
 
-    // Init
+    // Demo inicial
     function init() {
-      drawStage();
-      updateVarDisplay();
-      log('🧩 BlockIngenier listo. Arrastra bloques desde la caja de herramientas.');
-      const xmlText = `<xml xmlns="https://developers.google.com/blockly/xml">
-        <block type="events_whenflag" x="30" y="30">
-          <next>
-            <block type="motion_gotoxy">
-              <field name="X">0</field>
-              <field name="Y">0</field>
-              <next>
-                <block type="looks_say">
-                  <field name="TEXT">¡Hola BlockIngenier!</field>
-                  <field name="SECS">2</field>
-                  <next>
-                    <block type="control_repeat">
-                      <field name="TIMES">4</field>
-                      <statement name="DO">
-                        <block type="motion_movesteps">
-                          <field name="STEPS">30</field>
-                          <next>
-                            <block type="motion_turnright">
-                              <field name="DEGREES">90</field>
+        drawStage(); updateVarDisplay();
+        const demoXml = `<xml xmlns="https://developers.google.com/blockly/xml">
+            <block type="events_whenflag" x="30" y="30">
+                <next>
+                    <block type="motion_gotoxy">
+                        <field name="X">0</field><field name="Y">0</field>
+                        <next>
+                            <block type="looks_say">
+                                <field name="TEXT">¡Hola BlockIngenier!</field>
+                                <field name="SECS">2</field>
+                                <next>
+                                    <block type="control_repeat">
+                                        <field name="TIMES">4</field>
+                                        <statement name="DO">
+                                            <block type="motion_movesteps">
+                                                <field name="STEPS">30</field>
+                                                <next>
+                                                    <block type="motion_turnright">
+                                                        <field name="DEGREES">90</field>
+                                                    </block>
+                                                </next>
+                                            </block>
+                                        </statement>
+                                    </block>
+                                </next>
                             </block>
-                          </next>
-                        </block>
-                      </statement>
+                        </next>
                     </block>
-                  </next>
-                </block>
-              </next>
+                </next>
             </block>
-          </next>
-        </block>
-      </xml>`;
-      const xml = Blockly.Xml.textToDom(xmlText);
-      Blockly.Xml.domToWorkspace(xml, workspace);
-      drawStage();
+        </xml>`;
+        Blockly.Xml.domToWorkspace(Blockly.Xml.textToDom(demoXml), workspace);
+        log('🧩 BlockIngenier listo. Usa los bloques de la izquierda.');
     }
     init();
 
     function animationLoop() {
-      if (sprite.sayTimer>0 && sprite.sayTimer<9999) {
-        sprite.sayTimer -= 0.03;
-        if (sprite.sayTimer<=0) sprite.sayText='';
-      }
-      drawStage();
-      updateVarDisplay();
-      requestAnimationFrame(animationLoop);
+        if (sprite.sayTimer>0 && sprite.sayTimer<9999) sprite.sayTimer -= 0.03;
+        drawStage(); updateVarDisplay();
+        requestAnimationFrame(animationLoop);
     }
     animationLoop();
-  </script>
+</script>
 </body>
 </html>
