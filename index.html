@@ -3,336 +3,2199 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Slime Rancher 2D - User Edition</title>
+    <title>BlockIngenier - Entorno de Programación por Bloques</title>
     <style>
-        body {
+        :root {
+            --bg: #1a1a2e;
+            --surface: #16213e;
+            --surface2: #0f3460;
+            --text: #e0e0e0;
+            --text2: #b0b0b0;
+            --motion: #4C97FF;
+            --looks: #9966FF;
+            --sound: #CF63CF;
+            --events: #FFBF00;
+            --control: #FFAB19;
+            --sensing: #5CB1D6;
+            --operators: #59C059;
+            --variables: #FF8C1A;
+            --myblocks: #FF6680;
+            --border: #2a2a4a;
+            --accent: #4da6ff;
+            --stage-bg: #f0f0f5;
+            --workspace-bg: #1e1e35;
+            --block-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+            --header-bg: #0d0d1a;
+        }
+
+        * {
             margin: 0;
             padding: 0;
-            background-color: #7BA05B;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            overflow: hidden;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
             height: 100vh;
+            overflow: hidden;
+            user-select: none;
+            -webkit-user-select: none;
         }
-        #game-container {
+
+        /* HEADER */
+        #header {
+            background: var(--header-bg);
+            padding: 6px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-bottom: 1px solid var(--border);
+            z-index: 100;
             position: relative;
-            width: 800px;
-            height: 600px;
-            background-color: #8FBC8F;
-            border: 4px solid #556B2F;
-            border-radius: 10px;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+            flex-shrink: 0;
         }
-        canvas {
+        #header .logo {
+            font-size: 1.3em;
+            font-weight: 700;
+            color: var(--accent);
+            letter-spacing: 0.5px;
+            white-space: nowrap;
+        }
+        #header .logo span {
+            color: #ff6b9d;
+        }
+        #header button {
+            background: var(--surface2);
+            color: var(--text);
+            border: 1px solid var(--border);
+            padding: 7px 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85em;
+            font-weight: 500;
+            transition: all 0.15s;
+            white-space: nowrap;
+        }
+        #header button:hover {
+            background: #1a4a80;
+            border-color: var(--accent);
+            box-shadow: 0 0 12px rgba(77, 166, 255, 0.2);
+        }
+        #header button.run-btn {
+            background: #2d8a4e;
+            border-color: #3cb868;
+            font-weight: 700;
+            animation: pulse-green 2s infinite;
+        }
+        @keyframes pulse-green {
+            0%,
+            100% {
+                box-shadow: 0 0 8px rgba(60, 184, 104, 0.4);
+            }
+            50% {
+                box-shadow: 0 0 20px rgba(60, 184, 104, 0.8);
+            }
+        }
+        #header button.stop-btn {
+            background: #8a2d2d;
+            border-color: #b83c3c;
+            font-weight: 700;
+        }
+        #header button.stop-btn:hover {
+            background: #a03030;
+            box-shadow: 0 0 12px rgba(255, 80, 80, 0.4);
+        }
+        #header .separator {
+            width: 1px;
+            height: 24px;
+            background: var(--border);
+            margin: 0 4px;
+        }
+
+        /* MAIN LAYOUT */
+        #main {
+            display: flex;
+            height: calc(100vh - 50px);
+            position: relative;
+        }
+
+        /* LEFT SIDEBAR - Block Palette */
+        #sidebar {
+            width: 220px;
+            min-width: 220px;
+            background: var(--surface);
+            border-right: 1px solid var(--border);
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding: 4px 0;
+            z-index: 50;
+            scrollbar-width: thin;
+            scrollbar-color: #333 transparent;
+        }
+        #sidebar::-webkit-scrollbar {
+            width: 5px;
+        }
+        #sidebar::-webkit-scrollbar-thumb {
+            background: #333;
+            border-radius: 3px;
+        }
+        .category-header {
+            padding: 8px 14px;
+            font-weight: 700;
+            font-size: 0.8em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: background 0.15s;
+            border-radius: 0;
+            margin: 1px 6px;
+            color: #ccc;
+        }
+        .category-header:hover {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 6px;
+        }
+        .category-header .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+        .category-blocks {
+            padding: 2px 8px;
             display: block;
         }
-        #ui-layer {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            pointer-events: none;
-            padding: 10px;
-            box-sizing: border-box;
-            display: flex;
-            justify-content: space-between;
-        }
-        .panel {
-            background: rgba(255, 255, 255, 0.9);
-            padding: 10px 20px;
-            border-radius: 8px;
-            border: 2px solid #333;
-            pointer-events: auto;
-        }
-        #money-display {
-            font-size: 24px;
-            font-weight: bold;
-            color: #FFD700;
-            text-shadow: 1px 1px 2px #000;
-        }
-        .controls button {
-            background: #4CAF50;
-            color: white;
-            border: none;
-            padding: 8px 15px;
-            margin: 0 5px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-weight: bold;
-        }
-        .controls button:hover { background: #45a049; }
-        .controls button.active { background: #FF9800; border: 2px solid #333;}
-        
-        #almanac-modal {
+        .category-blocks.collapsed {
             display: none;
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            border: 3px solid #333;
-            width: 300px;
-            z-index: 10;
-            pointer-events: auto;
         }
-        #almanac-modal h2 { margin-top: 0; }
-        .slime-entry { display: flex; align-items: center; margin-bottom: 10px; }
-        .slime-color { width: 20px; height: 20px; border-radius: 50%; margin-right: 10px; }
+        .palette-block {
+            padding: 7px 10px;
+            margin: 3px 0;
+            border-radius: 6px;
+            cursor: grab;
+            font-size: 0.78em;
+            font-weight: 500;
+            color: #fff;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            transition: all 0.12s;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            letter-spacing: 0.2px;
+            position: relative;
+        }
+        .palette-block:hover {
+            transform: translateX(3px);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+            border-color: rgba(255, 255, 255, 0.35);
+            z-index: 10;
+        }
+        .palette-block:active {
+            cursor: grabbing;
+            opacity: 0.8;
+            transform: scale(0.96);
+        }
+
+        /* WORKSPACE */
+        #workspace-container {
+            flex: 1;
+            position: relative;
+            background: var(--workspace-bg);
+            overflow: auto;
+            background-image: radial-gradient(circle, #252545 1px, transparent 1px);
+            background-size: 24px 24px;
+        }
+        #workspace {
+            width: 4000px;
+            height: 4000px;
+            position: relative;
+            min-width: 100%;
+            min-height: 100%;
+        }
+        .ws-block {
+            position: absolute;
+            padding: 8px 12px;
+            border-radius: 7px;
+            cursor: grab;
+            font-size: 0.8em;
+            font-weight: 500;
+            color: #fff;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            min-width: 80px;
+            text-align: center;
+            z-index: 10;
+            box-shadow: var(--block-shadow);
+            transition: box-shadow 0.15s, border-color 0.15s;
+            letter-spacing: 0.3px;
+        }
+        .ws-block:hover {
+            z-index: 50;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
+            border-color: rgba(255, 255, 255, 0.5);
+        }
+        .ws-block.selected {
+            border-color: #fff !important;
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.5) !important;
+            z-index: 60 !important;
+        }
+        .ws-block.running {
+            animation: block-glow 0.5s ease-in-out;
+            border-color: #fff !important;
+            box-shadow: 0 0 25px rgba(255, 255, 100, 0.7) !important;
+        }
+        @keyframes block-glow {
+            0%,
+            100% {
+                box-shadow: 0 0 25px rgba(255, 255, 100, 0.7);
+            }
+            50% {
+                box-shadow: 0 0 40px rgba(255, 255, 200, 1);
+            }
+        }
+        .ws-block .block-notch {
+            position: absolute;
+            bottom: -6px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 14px;
+            height: 12px;
+            background: inherit;
+            border-radius: 0 0 4px 4px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-top: none;
+            z-index: 5;
+        }
+        .ws-block .block-top-notch {
+            position: absolute;
+            top: -6px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 14px;
+            height: 12px;
+            background: inherit;
+            border-radius: 4px 4px 0 0;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-bottom: none;
+            z-index: 5;
+        }
+        .ws-block.c-block {
+            border-radius: 12px 7px 7px 12px;
+            padding-left: 16px;
+            min-height: 50px;
+        }
+        .ws-block.c-block .inner-area {
+            border: 2px dashed rgba(255, 255, 255, 0.25);
+            border-radius: 4px;
+            min-height: 28px;
+            margin: 6px 4px 6px 8px;
+            padding: 4px;
+            background: rgba(0, 0, 0, 0.2);
+            position: relative;
+        }
+        .ws-block.hat-block {
+            border-radius: 14px 14px 7px 7px;
+            border-top-width: 3px;
+        }
+        .ws-block.reporter-block {
+            border-radius: 14px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            font-weight: 600;
+        }
+        .ws-block.boolean-block {
+            border-radius: 20px;
+            min-width: 60px;
+            padding: 6px 14px;
+        }
+
+        /* STAGE PANEL */
+        #stage-panel {
+            width: 380px;
+            min-width: 380px;
+            background: var(--surface);
+            border-left: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            padding: 10px;
+            gap: 8px;
+            z-index: 50;
+        }
+        #stage-wrapper {
+            background: var(--stage-bg);
+            border-radius: 10px;
+            overflow: hidden;
+            border: 3px solid #333;
+            position: relative;
+            aspect-ratio: 4/3;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+        }
+        #stage-canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+            background: #fff;
+        }
+        #sprite-info {
+            background: var(--surface2);
+            border-radius: 8px;
+            padding: 10px;
+            font-size: 0.8em;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
+        }
+        #sprite-info span {
+            color: var(--text2);
+        }
+        #sprite-info strong {
+            color: var(--accent);
+        }
+        #variable-display {
+            background: var(--surface2);
+            border-radius: 8px;
+            padding: 8px 12px;
+            font-size: 0.78em;
+            max-height: 150px;
+            overflow-y: auto;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+        #variable-display .var-item {
+            background: #2a2a4a;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.75em;
+            border: 1px solid #444;
+        }
+        #variable-display .var-item strong {
+            color: #ffab19;
+        }
+        #output-console {
+            background: #0a0a14;
+            border-radius: 8px;
+            padding: 8px 12px;
+            font-size: 0.7em;
+            max-height: 80px;
+            overflow-y: auto;
+            color: #8f8;
+            font-family: 'Consolas', 'Monaco', monospace;
+            border: 1px solid #333;
+        }
+
+        /* TOAST */
+        #toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #2d8a4e;
+            color: #fff;
+            padding: 10px 24px;
+            border-radius: 20px;
+            font-weight: 600;
+            z-index: 999;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+            box-shadow: 0 6px 24px rgba(0, 0, 0, 0.5);
+        }
+        #toast.show {
+            opacity: 1;
+        }
+
+        /* Context menu */
+        #context-menu {
+            position: fixed;
+            background: #1e1e3a;
+            border: 1px solid #444;
+            border-radius: 8px;
+            padding: 4px 0;
+            z-index: 200;
+            display: none;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7);
+            min-width: 140px;
+        }
+        #context-menu div {
+            padding: 8px 16px;
+            cursor: pointer;
+            font-size: 0.8em;
+            transition: background 0.1s;
+        }
+        #context-menu div:hover {
+            background: #2a2a5a;
+        }
+
+        @media (max-width: 1000px) {
+            #stage-panel {
+                width: 280px;
+                min-width: 280px;
+            }
+            #sidebar {
+                width: 170px;
+                min-width: 170px;
+            }
+            .palette-block {
+                font-size: 0.7em;
+                padding: 5px 7px;
+            }
+        }
+        @media (max-width: 750px) {
+            #main {
+                flex-direction: column;
+            }
+            #sidebar {
+                width: 100%;
+                min-width: 100%;
+                max-height: 140px;
+                display: flex;
+                flex-wrap: wrap;
+                overflow-y: auto;
+                gap: 2px;
+                padding: 4px;
+            }
+            #sidebar .category-header {
+                font-size: 0.65em;
+                padding: 4px 6px;
+                margin: 1px;
+            }
+            #sidebar .category-blocks {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 2px;
+            }
+            .palette-block {
+                font-size: 0.65em;
+                padding: 4px 6px;
+                margin: 1px;
+            }
+            #stage-panel {
+                width: 100%;
+                min-width: 100%;
+                flex-direction: row;
+                flex-wrap: wrap;
+            }
+            #stage-wrapper {
+                width: 150px;
+                aspect-ratio: 4/3;
+            }
+        }
     </style>
 </head>
 <body>
 
-<div id="game-container">
-    <canvas id="gameCanvas" width="800" height="600"></canvas>
-    
-    <div id="ui-layer">
-        <div class="panel" id="money-display">💰 $150</div>
-        <div class="panel controls">
-            <button id="btn-vac" class="active">Aspiradora (Recolectar)</button>
-            <button id="btn-feed">Lanzar Comida ($5)</button>
-            <button id="btn-build">Construir Corral ($100)</button>
-            <button id="btn-almanac">Almanaque</button>
+    <!-- HEADER -->
+    <div id="header">
+        <div class="logo">🧩 Block<span>Ingenier</span></div>
+        <div class="separator"></div>
+        <button onclick="runProject()" class="run-btn" title="Ejecutar proyecto (Bandera verde)">🚩 Ejecutar</button>
+        <button onclick="stopProject()" class="stop-btn" title="Detener todo">⏹ Detener</button>
+        <div class="separator"></div>
+        <button onclick="saveProject()" title="Guardar proyecto como archivo">💾 Guardar</button>
+        <button onclick="loadProject()" title="Cargar proyecto desde archivo">📂 Cargar</button>
+        <button onclick="clearWorkspace()" title="Limpiar área de trabajo">🗑 Limpiar</button>
+        <span style="font-size:0.7em;color:#888;margin-left:auto;">v1.0 · Turbowarp Style</span>
+    </div>
+
+    <!-- MAIN -->
+    <div id="main">
+        <!-- SIDEBAR -->
+        <div id="sidebar"></div>
+
+        <!-- WORKSPACE -->
+        <div id="workspace-container">
+            <div id="workspace"></div>
+        </div>
+
+        <!-- STAGE PANEL -->
+        <div id="stage-panel">
+            <div id="stage-wrapper">
+                <canvas id="stage-canvas" width="480" height="360"></canvas>
+            </div>
+            <div id="sprite-info">
+                <span>Sprite:</span><strong id="sprite-name">Gato</strong>
+                <span>X:</span><strong id="sprite-x">0</strong>
+                <span>Y:</span><strong id="sprite-y">0</strong>
+                <span>Dir:</span><strong id="sprite-dir">90°</strong>
+                <span>Tam:</span><strong id="sprite-size">100%</strong>
+            </div>
+            <div id="variable-display"></div>
+            <div id="output-console">▶ Consola lista. Ejecuta el proyecto para ver resultados.</div>
         </div>
     </div>
 
-    <div id="almanac-modal">
-        <h2>Almanaque de Slimes</h2>
-        <div class="slime-entry">
-            <div class="slime-color" style="background: #FF69B4;"></div>
-            <div><strong>Slime Rosa:</strong> Come de todo. Plort: $10</div>
-        </div>
-        <div class="slime-entry">
-            <div class="slime-color" style="background: #4169E1;"></div>
-            <div><strong>Slime Roca:</strong> (Próximamente). Plort: $25</div>
-        </div>
-        <button onclick="document.getElementById('almanac-modal').style.display='none'">Cerrar</button>
+    <!-- TOAST -->
+    <div id="toast"></div>
+
+    <!-- CONTEXT MENU -->
+    <div id="context-menu">
+        <div onclick="duplicateBlock()">📋 Duplicar</div>
+        <div onclick="deleteSelectedBlock()">🗑 Eliminar</div>
+        <div onclick="disconnectBlock()">🔗 Desconectar</div>
     </div>
-</div>
 
-<script>
-    const canvas = document.getElementById('gameCanvas');
-    const ctx = canvas.getContext('2d');
-    
-    // Estado del juego
-    let money = 150;
-    let currentMode = 'vac'; // vac, feed, build
-    
-    // UI Elements
-    const moneyDisplay = document.getElementById('money-display');
-    const btnVac = document.getElementById('btn-vac');
-    const btnFeed = document.getElementById('btn-feed');
-    const btnBuild = document.getElementById('btn-build');
-    const btnAlmanac = document.getElementById('btn-almanac');
-    const almanacModal = document.getElementById('almanac-modal');
+    <script>
+        // ==================== BLOCKINGENIER ENGINE ====================
 
-    // Cambiar modos
-    function setMode(mode) {
-        currentMode = mode;
-        btnVac.classList.remove('active');
-        btnFeed.classList.remove('active');
-        btnBuild.classList.remove('active');
-        if(mode === 'vac') btnVac.classList.add('active');
-        if(mode === 'feed') btnFeed.classList.add('active');
-        if(mode === 'build') btnBuild.classList.add('active');
-    }
+        // --- Global State ---
+        let blockIdCounter = 0;
+        let selectedBlockId = null;
+        let isDragging = false;
+        let dragTarget = null;
+        let dragOffsetX = 0;
+        let dragOffsetY = 0;
+        let workspaceBlocks = {}; // id -> block data
+        let connectedStacks = {}; // stackId -> [blockIds in order]
+        let stackCounter = 0;
+        let isRunning = false;
+        let runAbort = false;
+        let variables = {};
+        let lists = {};
+        let broadcastQueue = [];
+        let clones = [];
+        let currentStackId = null;
 
-    btnVac.onclick = () => setMode('vac');
-    btnFeed.onclick = () => setMode('feed');
-    btnBuild.onclick = () => setMode('build');
-    btnAlmanac.onclick = () => almanacModal.style.display = 'block';
+        // Sprite state
+        let sprite = {
+            x: 0,
+            y: 0,
+            direction: 90,
+            size: 100,
+            visible: true,
+            costume: 1,
+            rotationStyle: 'all', // 'all', 'left-right', 'none'
+            effects: { color: 0, fisheye: 0, whirl: 0, pixelate: 0, mosaic: 0, brightness: 0, ghost: 0 },
+            sayText: '',
+            sayTimer: 0,
+            thinkText: '',
+            thinkTimer: 0,
+            dragging: false,
+            penDown: false,
+            penColor: '#000000',
+            penSize: 2,
+        };
 
-    function updateMoney(amount) {
-        money += amount;
-        moneyDisplay.innerText = `💰 $${money}`;
-    }
+        // Stage
+        let stageBackground = 1;
+        let stageWidth = 480;
+        let stageHeight = 360;
 
-    // Estructuras de datos
-    const slimes = [];
-    const plorts = [];
-    const foods = [];
-    const plots = [
-        {x: 100, y: 100, w: 250, h: 250, type: 'empty'},
-        {x: 450, y: 100, w: 250, h: 250, type: 'empty'},
-    ];
+        // --- Block Categories Definition ---
+        const categories = [{
+            id: 'motion',
+            name: 'Movimiento',
+            color: '#4C97FF',
+            dot: '#4C97FF',
+            blocks: [
+                { type: 'motion_movesteps', label: 'Mover 10 pasos', shape: 'stack', defaultParams: { steps: 10 } },
+                { type: 'motion_turnright', label: 'Girar derecha 15°', shape: 'stack',
+                defaultParams: { degrees: 15 } },
+                { type: 'motion_turnleft', label: 'Girar izquierda 15°', shape: 'stack',
+                    defaultParams: { degrees: 15 } },
+                { type: 'motion_goto', label: 'Ir a posición aleatoria', shape: 'stack', defaultParams: {} },
+                { type: 'motion_gotoxy', label: 'Ir a X:0 Y:0', shape: 'stack', defaultParams: { x: 0, y: 0 } },
+                { type: 'motion_glide', label: 'Deslizar 1 seg a X:0 Y:0', shape: 'stack',
+                defaultParams: { secs: 1, x: 0, y: 0 } },
+                { type: 'motion_pointdir', label: 'Apuntar en dirección 90', shape: 'stack',
+                    defaultParams: { dir: 90 } },
+                { type: 'motion_pointtowards', label: 'Apuntar hacia puntero', shape: 'stack',
+                    defaultParams: { target: 'mouse' } },
+                { type: 'motion_changex', label: 'Cambiar X por 10', shape: 'stack', defaultParams: { dx: 10 } },
+                { type: 'motion_setx', label: 'Fijar X a 0', shape: 'stack', defaultParams: { x: 0 } },
+                { type: 'motion_changey', label: 'Cambiar Y por 10', shape: 'stack', defaultParams: { dy: 10 } },
+                { type: 'motion_sety', label: 'Fijar Y a 0', shape: 'stack', defaultParams: { y: 0 } },
+                { type: 'motion_ifonedgebounce', label: 'Si toca borde, rebotar', shape: 'stack',
+                defaultParams: {} },
+                { type: 'motion_setrotationstyle', label: 'Fijar estilo rotación: todo', shape: 'stack',
+                    defaultParams: { style: 'all' } },
+                { type: 'motion_xposition', label: 'Posición X', shape: 'reporter', defaultParams: {} },
+                { type: 'motion_yposition', label: 'Posición Y', shape: 'reporter', defaultParams: {} },
+                { type: 'motion_direction', label: 'Dirección', shape: 'reporter', defaultParams: {} },
+            ]
+        }, {
+            id: 'looks',
+            name: 'Apariencia',
+            color: '#9966FF',
+            dot: '#9966FF',
+            blocks: [
+                { type: 'looks_say', label: 'Decir "Hola" por 2 seg', shape: 'stack',
+                defaultParams: { text: 'Hola', secs: 2 } },
+                { type: 'looks_sayforever', label: 'Decir "Hola"', shape: 'stack', defaultParams: { text: 'Hola' } },
+                { type: 'looks_think', label: 'Pensar "Mmm..." por 2 seg', shape: 'stack',
+                    defaultParams: { text: 'Mmm...', secs: 2 } },
+                { type: 'looks_thinkforever', label: 'Pensar "Mmm..."', shape: 'stack',
+                defaultParams: { text: 'Mmm...' } },
+                { type: 'looks_switchcostume', label: 'Cambiar disfraz a 2', shape: 'stack',
+                    defaultParams: { costume: 2 } },
+                { type: 'looks_nextcostume', label: 'Siguiente disfraz', shape: 'stack', defaultParams: {} },
+                { type: 'looks_switchbg', label: 'Cambiar fondo a 2', shape: 'stack', defaultParams: { bg: 2 } },
+                { type: 'looks_changesize', label: 'Cambiar tamaño por 10', shape: 'stack', defaultParams: { dsize: 10 } },
+                { type: 'looks_setsize', label: 'Fijar tamaño a 100%', shape: 'stack', defaultParams: { size: 100 } },
+                { type: 'looks_changeeffect', label: 'Cambiar efecto color por 5', shape: 'stack',
+                    defaultParams: { effect: 'color', val: 5 } },
+                { type: 'looks_seteffect', label: 'Fijar efecto fantasma a 0', shape: 'stack',
+                    defaultParams: { effect: 'ghost', val: 0 } },
+                { type: 'looks_cleareffects', label: 'Quitar efectos gráficos', shape: 'stack', defaultParams: {} },
+                { type: 'looks_show', label: 'Mostrar', shape: 'stack', defaultParams: {} },
+                { type: 'looks_hide', label: 'Esconder', shape: 'stack', defaultParams: {} },
+                { type: 'looks_gotofront', label: 'Ir a capa delante', shape: 'stack', defaultParams: {} },
+                { type: 'looks_goback', label: 'Ir a capa atrás', shape: 'stack', defaultParams: {} },
+                { type: 'looks_size', label: 'Tamaño', shape: 'reporter', defaultParams: {} },
+            ]
+        }, {
+            id: 'sound',
+            name: 'Sonido',
+            color: '#CF63CF',
+            dot: '#CF63CF',
+            blocks: [
+                { type: 'sound_play', label: 'Iniciar sonido "pop"', shape: 'stack', defaultParams: { sound: 'pop' } },
+                { type: 'sound_playuntil', label: 'Tocar sonido "pop" hasta terminar', shape: 'stack',
+                    defaultParams: { sound: 'pop' } },
+                { type: 'sound_stopall', label: 'Detener todos los sonidos', shape: 'stack', defaultParams: {} },
+                { type: 'sound_changevolume', label: 'Cambiar volumen por -10', shape: 'stack',
+                    defaultParams: { dvol: -10 } },
+                { type: 'sound_setvolume', label: 'Fijar volumen a 100%', shape: 'stack', defaultParams: { vol: 100 } },
+                { type: 'sound_volume', label: 'Volumen', shape: 'reporter', defaultParams: {} },
+            ]
+        }, {
+            id: 'events',
+            name: 'Eventos',
+            color: '#FFBF00',
+            dot: '#FFBF00',
+            blocks: [
+                { type: 'events_whenflag', label: 'Al hacer clic en bandera verde', shape: 'hat',
+                defaultParams: {} },
+                { type: 'events_whenkey', label: 'Al presionar tecla [espacio]', shape: 'hat',
+                    defaultParams: { key: ' ' } },
+                { type: 'events_whenclicked', label: 'Al hacer clic en este objeto', shape: 'hat',
+                defaultParams: {} },
+                { type: 'events_whenbgchange', label: 'Cuando el fondo cambie a [1]', shape: 'hat',
+                    defaultParams: { bg: 1 } },
+                { type: 'events_broadcast', label: 'Enviar "mensaje1"', shape: 'stack',
+                defaultParams: { msg: 'mensaje1' } },
+                { type: 'events_broadcastwait', label: 'Enviar "mensaje1" y esperar', shape: 'stack',
+                    defaultParams: { msg: 'mensaje1' } },
+                { type: 'events_whenreceive', label: 'Al recibir "mensaje1"', shape: 'hat',
+                    defaultParams: { msg: 'mensaje1' } },
+            ]
+        }, {
+            id: 'control',
+            name: 'Control',
+            color: '#FFAB19',
+            dot: '#FFAB19',
+            blocks: [
+                { type: 'control_wait', label: 'Esperar 1 segundos', shape: 'stack', defaultParams: { secs: 1 } },
+                { type: 'control_repeat', label: 'Repetir 10 veces', shape: 'cblock', defaultParams: { times: 10 } },
+                { type: 'control_forever', label: 'Por siempre', shape: 'cblock', defaultParams: {} },
+                { type: 'control_if', label: 'Si [condición] entonces', shape: 'cblock', defaultParams: {
+                    condition: 'true' } },
+                { type: 'control_ifelse', label: 'Si [cond] entonces... si no', shape: 'cblock',
+                    defaultParams: { condition: 'true' } },
+                { type: 'control_waituntil', label: 'Esperar hasta que [cond]', shape: 'stack',
+                    defaultParams: { condition: 'true' } },
+                { type: 'control_repeatuntil', label: 'Repetir hasta que [cond]', shape: 'cblock',
+                    defaultParams: { condition: 'false' } },
+                { type: 'control_stop', label: 'Detener todos', shape: 'stack', defaultParams: { what: 'all' } },
+                { type: 'control_clone', label: 'Crear clon de mí mismo', shape: 'stack', defaultParams: {} },
+                { type: 'control_deleteclone', label: 'Eliminar este clon', shape: 'stack', defaultParams: {} },
+            ]
+        }, {
+            id: 'sensing',
+            name: 'Sensores',
+            color: '#5CB1D6',
+            dot: '#5CB1D6',
+            blocks: [
+                { type: 'sensing_touchingmouse', label: '¿Tocando puntero?', shape: 'boolean', defaultParams: {} },
+                { type: 'sensing_touchingedge', label: '¿Tocando borde?', shape: 'boolean', defaultParams: {} },
+                { type: 'sensing_keypressed', label: '¿Tecla [espacio] presionada?', shape: 'boolean',
+                    defaultParams: { key: ' ' } },
+                { type: 'sensing_mousedown', label: '¿Ratón presionado?', shape: 'boolean', defaultParams: {} },
+                { type: 'sensing_mousex', label: 'Posición X del ratón', shape: 'reporter', defaultParams: {} },
+                { type: 'sensing_mousey', label: 'Posición Y del ratón', shape: 'reporter', defaultParams: {} },
+                { type: 'sensing_timer', label: 'Cronómetro', shape: 'reporter', defaultParams: {} },
+                { type: 'sensing_resettimer', label: 'Reiniciar cronómetro', shape: 'stack', defaultParams: {} },
+                { type: 'sensing_username', label: 'Nombre de usuario', shape: 'reporter', defaultParams: {} },
+            ]
+        }, {
+            id: 'operators',
+            name: 'Operadores',
+            color: '#59C059',
+            dot: '#59C059',
+            blocks: [
+                { type: 'operators_add', label: '[ ] + [ ]', shape: 'reporter', defaultParams: { a: 0, b: 0 } },
+                { type: 'operators_sub', label: '[ ] - [ ]', shape: 'reporter', defaultParams: { a: 0, b: 0 } },
+                { type: 'operators_mul', label: '[ ] * [ ]', shape: 'reporter', defaultParams: { a: 0, b: 0 } },
+                { type: 'operators_div', label: '[ ] / [ ]', shape: 'reporter', defaultParams: { a: 0, b: 1 } },
+                { type: 'operators_random', label: 'Nº al azar entre 1 y 10', shape: 'reporter',
+                    defaultParams: { min: 1, max: 10 } },
+                { type: 'operators_gt', label: '[ ] > [ ]', shape: 'boolean', defaultParams: { a: 0, b: 0 } },
+                { type: 'operators_lt', label: '[ ] < [ ]', shape: 'boolean', defaultParams: { a: 0, b: 0 } },
+                { type: 'operators_eq', label: '[ ] = [ ]', shape: 'boolean', defaultParams: { a: 0, b: 0 } },
+                { type: 'operators_and', label: '[ ] y [ ]', shape: 'boolean', defaultParams: { a: true, b: true } },
+                { type: 'operators_or', label: '[ ] o [ ]', shape: 'boolean', defaultParams: { a: true, b: false } },
+                { type: 'operators_not', label: 'no [ ]', shape: 'boolean', defaultParams: { a: true } },
+                { type: 'operators_join', label: 'Unir "Hola" y "Mundo"', shape: 'reporter',
+                    defaultParams: { a: 'Hola', b: 'Mundo' } },
+                { type: 'operators_letterof', label: 'Letra 1 de "Hola"', shape: 'reporter',
+                    defaultParams: { idx: 1, text: 'Hola' } },
+                { type: 'operators_length', label: 'Longitud de "Hola"', shape: 'reporter',
+                defaultParams: { text: 'Hola' } },
+                { type: 'operators_contains', label: '¿"Hola" contiene "a"?', shape: 'boolean',
+                    defaultParams: { text: 'Hola', sub: 'a' } },
+                { type: 'operators_mod', label: '[ ] módulo [ ]', shape: 'reporter', defaultParams: { a: 0, b: 1 } },
+                { type: 'operators_round', label: 'Redondear [ ]', shape: 'reporter', defaultParams: { val: 3.14 } },
+                { type: 'operators_sqrt', label: 'Raíz cuadrada de [ ]', shape: 'reporter', defaultParams: { val: 9 } },
+            ]
+        }, {
+            id: 'variables',
+            name: 'Variables',
+            color: '#FF8C1A',
+            dot: '#FF8C1A',
+            blocks: [
+                { type: 'variables_set', label: 'Fijar [var] a 0', shape: 'stack', defaultParams: { varname: 'miVar',
+                        val: 0 } },
+                { type: 'variables_change', label: 'Cambiar [var] por 1', shape: 'stack',
+                    defaultParams: { varname: 'miVar', dval: 1 } },
+                { type: 'variables_get', label: '[var]', shape: 'reporter', defaultParams: { varname: 'miVar' } },
+                { type: 'variables_show', label: 'Mostrar variable [var]', shape: 'stack',
+                    defaultParams: { varname: 'miVar' } },
+                { type: 'variables_hide', label: 'Esconder variable [var]', shape: 'stack',
+                    defaultParams: { varname: 'miVar' } },
+                { type: 'variables_addtolist', label: 'Añadir [cosa] a [lista]', shape: 'stack',
+                    defaultParams: { item: 'cosa', listname: 'miLista' } },
+                { type: 'variables_deleteoflist', label: 'Eliminar elemento 1 de [lista]', shape: 'stack',
+                    defaultParams: { idx: 1, listname: 'miLista' } },
+                { type: 'variables_getlist', label: 'Elemento 1 de [lista]', shape: 'reporter',
+                    defaultParams: { idx: 1, listname: 'miLista' } },
+                { type: 'variables_lengthlist', label: 'Longitud de [lista]', shape: 'reporter',
+                    defaultParams: { listname: 'miLista' } },
+                { type: 'variables_containslist', label: '¿[lista] contiene [cosa]?', shape: 'boolean',
+                    defaultParams: { listname: 'miLista', item: 'cosa' } },
+            ]
+        }, {
+            id: 'myblocks',
+            name: 'Mis Bloques',
+            color: '#FF6680',
+            dot: '#FF6680',
+            blocks: [
+                { type: 'myblocks_define', label: 'Definir [miBloque]', shape: 'hat', defaultParams: { name: 'miBloque',
+                        params: [] } },
+                { type: 'myblocks_call', label: '[miBloque]', shape: 'stack', defaultParams: { name: 'miBloque',
+                    args: {} } },
+            ]
+        }];
 
-    class Slime {
-        constructor(x, y) {
-            this.x = x;
-            this.y = y;
-            this.radius = 15;
-            this.color = '#FF69B4'; // Rosa por defecto
-            this.vx = (Math.random() - 0.5) * 2;
-            this.vy = (Math.random() - 0.5) * 2;
-            this.hunger = 0;
-            this.plotId = this.getCurrentPlot(); // Para mantenerlos en su corral
+        // --- Build Sidebar ---
+        function buildSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.innerHTML = '';
+            categories.forEach(cat => {
+                const header = document.createElement('div');
+                header.className = 'category-header';
+                header.innerHTML = `<span class="dot" style="background:${cat.dot}"></span>${cat.name}`;
+                header.onclick = () => {
+                    const blocksDiv = header.nextElementSibling;
+                    blocksDiv.classList.toggle('collapsed');
+                };
+                sidebar.appendChild(header);
+
+                const blocksDiv = document.createElement('div');
+                blocksDiv.className = 'category-blocks';
+                cat.blocks.forEach(blockDef => {
+                    const div = document.createElement('div');
+                    div.className = 'palette-block';
+                    div.style.background = cat.color;
+                    div.textContent = blockDef.label;
+                    div.title = blockDef.type;
+                    div.draggable = true;
+                    div.addEventListener('dragstart', (e) => {
+                        e.dataTransfer.setData('text/plain', JSON.stringify({
+                            categoryId: cat.id,
+                            blockType: blockDef.type,
+                            label: blockDef.label,
+                            shape: blockDef.shape,
+                            defaultParams: blockDef.defaultParams || {},
+                            color: cat.color,
+                        }));
+                        e.dataTransfer.effectAllowed = 'copy';
+                    });
+                    blocksDiv.appendChild(div);
+                });
+                sidebar.appendChild(blocksDiv);
+            });
         }
 
-        getCurrentPlot() {
-            for (let i = 0; i < plots.length; i++) {
-                let p = plots[i];
-                if (this.x > p.x && this.x < p.x + p.w && this.y > p.y && this.y < p.y + p.h) {
-                    return i;
+        // --- Workspace Block Creation ---
+        function createWorkspaceBlock(blockType, label, shape, color, params, x, y) {
+            const id = 'b' + (++blockIdCounter);
+            const div = document.createElement('div');
+            div.className = 'ws-block';
+            div.style.background = color;
+            div.style.left = x + 'px';
+            div.style.top = y + 'px';
+            div.dataset.blockId = id;
+            div.dataset.blockType = blockType;
+            div.dataset.shape = shape;
+            div.dataset.color = color;
+            div.textContent = label;
+            div.title = blockType + ' | ID: ' + id;
+
+            if (shape === 'hat') {
+                div.classList.add('hat-block');
+            } else if (shape === 'cblock') {
+                div.classList.add('c-block');
+                const inner = document.createElement('div');
+                inner.className = 'inner-area';
+                inner.dataset.innerFor = id;
+                div.appendChild(inner);
+                div.textContent = label;
+                div.appendChild(inner);
+            } else if (shape === 'reporter') {
+                div.classList.add('reporter-block');
+            } else if (shape === 'boolean') {
+                div.classList.add('boolean-block');
+            }
+
+            if (shape !== 'hat') {
+                const topNotch = document.createElement('div');
+                topNotch.className = 'block-top-notch';
+                topNotch.style.background = color;
+                div.appendChild(topNotch);
+            }
+            if (shape !== 'reporter' && shape !== 'boolean') {
+                const notch = document.createElement('div');
+                notch.className = 'block-notch';
+                notch.style.background = color;
+                div.appendChild(notch);
+            }
+
+            // Store params
+            div._params = JSON.parse(JSON.stringify(params || {}));
+            div._nextBlockId = null;
+            div._prevBlockId = null;
+            div._parentCBlockId = null;
+            div._innerBlockIds = [];
+
+            // Mouse events for dragging in workspace
+            div.addEventListener('mousedown', (e) => {
+                if (e.button === 0) {
+                    e.stopPropagation();
+                    selectBlock(id);
+                    if (!isRunning) {
+                        isDragging = true;
+                        dragTarget = div;
+                        const rect = div.getBoundingClientRect();
+                        const wsRect = document.getElementById('workspace').getBoundingClientRect();
+                        dragOffsetX = e.clientX - rect.left;
+                        dragOffsetY = e.clientY - rect.top;
+                        div.style.zIndex = 70;
+                        div.style.cursor = 'grabbing';
+                    }
+                }
+                if (e.button === 2) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    selectBlock(id);
+                    showContextMenu(e.clientX, e.clientY);
+                }
+            });
+            div.addEventListener('contextmenu', (e) => {
+                e.preventDefault();
+                selectBlock(id);
+                showContextMenu(e.clientX, e.clientY);
+            });
+
+            document.getElementById('workspace').appendChild(div);
+            workspaceBlocks[id] = { div, blockType, shape, color, params: div._params, nextBlockId: null,
+                prevBlockId: null, parentCBlockId: null, innerBlockIds: [] };
+            return id;
+        }
+
+        function selectBlock(id) {
+            // Deselect all
+            Object.values(workspaceBlocks).forEach(b => b.div.classList.remove('selected'));
+            selectedBlockId = id;
+            if (id && workspaceBlocks[id]) {
+                workspaceBlocks[id].div.classList.add('selected');
+            }
+        }
+
+        function showContextMenu(x, y) {
+            const menu = document.getElementById('context-menu');
+            menu.style.display = 'block';
+            menu.style.left = x + 'px';
+            menu.style.top = y + 'px';
+            setTimeout(() => {
+                const hide = () => { menu.style.display = 'none';
+                    document.removeEventListener('click', hide); };
+                document.addEventListener('click', hide);
+            }, 50);
+        }
+
+        function duplicateBlock() {
+            if (!selectedBlockId || !workspaceBlocks[selectedBlockId]) return;
+            const b = workspaceBlocks[selectedBlockId];
+            const div = b.div;
+            const x = parseInt(div.style.left) + 30;
+            const y = parseInt(div.style.top) + 30;
+            const newId = createWorkspaceBlock(b.blockType, div.textContent.replace(/[\d.]+/g, (m) => m), b.shape, b
+                .color, b.params, x, y);
+            toast('Bloque duplicado');
+        }
+
+        function deleteSelectedBlock() {
+            if (!selectedBlockId || !workspaceBlocks[selectedBlockId]) return;
+            removeBlock(selectedBlockId);
+            selectedBlockId = null;
+            document.getElementById('context-menu').style.display = 'none';
+            toast('Bloque eliminado');
+        }
+
+        function disconnectBlock() {
+            if (!selectedBlockId || !workspaceBlocks[selectedBlockId]) return;
+            const b = workspaceBlocks[selectedBlockId];
+            if (b.prevBlockId && workspaceBlocks[b.prevBlockId]) {
+                workspaceBlocks[b.prevBlockId].nextBlockId = null;
+                workspaceBlocks[b.prevBlockId].div._nextBlockId = null;
+            }
+            if (b.parentCBlockId && workspaceBlocks[b.parentCBlockId]) {
+                const parent = workspaceBlocks[b.parentCBlockId];
+                parent.innerBlockIds = parent.innerBlockIds.filter(i => i !== selectedBlockId);
+                parent.div._innerBlockIds = parent.innerBlockIds;
+            }
+            b.prevBlockId = null;
+            b.parentCBlockId = null;
+            b.div._prevBlockId = null;
+            b.div._parentCBlockId = null;
+            workspaceBlocks[selectedBlockId] = b;
+            toast('Bloque desconectado');
+        }
+
+        function removeBlock(id) {
+            const b = workspaceBlocks[id];
+            if (!b) return;
+            // Disconnect from chain
+            if (b.prevBlockId && workspaceBlocks[b.prevBlockId]) {
+                workspaceBlocks[b.prevBlockId].nextBlockId = b.nextBlockId;
+                workspaceBlocks[b.prevBlockId].div._nextBlockId = b.nextBlockId;
+            }
+            if (b.nextBlockId && workspaceBlocks[b.nextBlockId]) {
+                workspaceBlocks[b.nextBlockId].prevBlockId = b.prevBlockId;
+                workspaceBlocks[b.nextBlockId].div._prevBlockId = b.prevBlockId;
+            }
+            if (b.parentCBlockId && workspaceBlocks[b.parentCBlockId]) {
+                const parent = workspaceBlocks[b.parentCBlockId];
+                parent.innerBlockIds = parent.innerBlockIds.filter(i => i !== id);
+                parent.div._innerBlockIds = parent.innerBlockIds;
+            }
+            // Remove inner blocks
+            if (b.innerBlockIds) {
+                [...b.innerBlockIds].forEach(innerId => removeBlock(innerId));
+            }
+            // Remove from DOM
+            if (b.div && b.div.parentNode) b.div.parentNode.removeChild(b.div);
+            delete workspaceBlocks[id];
+            if (selectedBlockId === id) selectedBlockId = null;
+        }
+
+        // --- Snap detection ---
+        function snapBlocks(draggedId, targetId) {
+            const dragged = workspaceBlocks[draggedId];
+            const target = workspaceBlocks[targetId];
+            if (!dragged || !target) return false;
+            if (draggedId === targetId) return false;
+            if (dragged.shape === 'hat' && target.shape !== 'stack' && target.shape !== 'cblock' && target.shape !==
+                'hat') return false;
+
+            const dDiv = dragged.div;
+            const tDiv = target.div;
+            const dRect = dDiv.getBoundingClientRect();
+            const tRect = tDiv.getBoundingClientRect();
+
+            const dCenterX = dRect.left + dRect.width / 2;
+            const dBottom = dRect.bottom;
+            const tTop = tRect.top;
+            const tCenterX = tRect.left + tRect.width / 2;
+
+            const vertDist = Math.abs(dBottom - tTop);
+            const horizDist = Math.abs(dCenterX - tCenterX);
+
+            if (vertDist < 18 && horizDist < 50 && dragged.shape !== 'reporter' && dragged.shape !== 'boolean') {
+                // Snap: dragged goes above target
+                if (target.prevBlockId && workspaceBlocks[target.prevBlockId]) {
+                    const oldPrev = workspaceBlocks[target.prevBlockId];
+                    oldPrev.nextBlockId = null;
+                    oldPrev.div._nextBlockId = null;
+                }
+                dragged.nextBlockId = targetId;
+                dragged.div._nextBlockId = targetId;
+                target.prevBlockId = draggedId;
+                target.div._prevBlockId = draggedId;
+                workspaceBlocks[draggedId] = dragged;
+                workspaceBlocks[targetId] = target;
+                // Reposition
+                const newY = parseInt(tDiv.style.top) - dDiv.offsetHeight + 2;
+                dDiv.style.top = newY + 'px';
+                dDiv.style.left = tDiv.style.left;
+                return true;
+            }
+
+            // Check if dropping inside a c-block
+            if (target.shape === 'cblock') {
+                const innerArea = tDiv.querySelector('.inner-area');
+                if (innerArea) {
+                    const iRect = innerArea.getBoundingClientRect();
+                    if (dCenterX > iRect.left && dCenterX < iRect.right && dBottom > iRect.top && dRect.top < iRect
+                        .bottom) {
+                        if (dragged.prevBlockId && workspaceBlocks[dragged.prevBlockId]) {
+                            workspaceBlocks[dragged.prevBlockId].nextBlockId = null;
+                            workspaceBlocks[dragged.prevBlockId].div._nextBlockId = null;
+                        }
+                        dragged.prevBlockId = null;
+                        dragged.parentCBlockId = targetId;
+                        dragged.div._prevBlockId = null;
+                        dragged.div._parentCBlockId = targetId;
+                        if (!target.innerBlockIds.includes(draggedId)) {
+                            target.innerBlockIds.push(draggedId);
+                            target.div._innerBlockIds = target.innerBlockIds;
+                        }
+                        workspaceBlocks[draggedId] = dragged;
+                        workspaceBlocks[targetId] = target;
+                        dDiv.style.left = (parseInt(tDiv.style.left) + 20) + 'px';
+                        dDiv.style.top = (parseInt(tDiv.style.top) + 30) + 'px';
+                        return true;
+                    }
                 }
             }
-            return -1;
+            return false;
         }
 
-        update() {
-            this.x += this.vx;
-            this.y += this.vy;
-            this.hunger += 0.05;
+        // --- Global mouse/touch events for workspace dragging ---
+        document.addEventListener('mousemove', (e) => {
+            if (isDragging && dragTarget && !isRunning) {
+                const ws = document.getElementById('workspace');
+                const wsRect = ws.getBoundingClientRect();
+                const wsScrollLeft = document.getElementById('workspace-container').scrollLeft;
+                const wsScrollTop = document.getElementById('workspace-container').scrollTop;
+                const newX = e.clientX - wsRect.left + wsScrollLeft - dragOffsetX;
+                const newY = e.clientY - wsRect.top + wsScrollTop - dragOffsetY;
+                dragTarget.style.left = Math.max(0, newX) + 'px';
+                dragTarget.style.top = Math.max(0, newY) + 'px';
+            }
+        });
+        document.addEventListener('mouseup', (e) => {
+            if (isDragging && dragTarget && !isRunning) {
+                const draggedId = dragTarget.dataset.blockId;
+                // Check snap with nearby blocks
+                let snapped = false;
+                const allIds = Object.keys(workspaceBlocks);
+                for (const tid of allIds) {
+                    if (tid === draggedId) continue;
+                    if (snapBlocks(draggedId, tid)) {
+                        snapped = true;
+                        break;
+                    }
+                }
+                dragTarget.style.cursor = 'grab';
+                dragTarget.style.zIndex = 10;
+                isDragging = false;
+                dragTarget = null;
+                updateStageInfo();
+            }
+        });
 
-            // Físicas básicas (Rebote en paredes del canvas)
-            if (this.x - this.radius < 0 || this.x + this.radius > canvas.width) this.vx *= -1;
-            if (this.y - this.radius < 0 || this.y + this.radius > canvas.height) this.vy *= -1;
+        // --- Workspace drop from palette ---
+        document.getElementById('workspace-container').addEventListener('dragover', (e) => {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'copy';
+        });
+        document.getElementById('workspace-container').addEventListener('drop', (e) => {
+            e.preventDefault();
+            const wsContainer = document.getElementById('workspace-container');
+            const ws = document.getElementById('workspace');
+            const wsRect = ws.getBoundingClientRect();
+            const scrollLeft = wsContainer.scrollLeft;
+            const scrollTop = wsContainer.scrollTop;
+            const x = e.clientX - wsRect.left + scrollLeft;
+            const y = e.clientY - wsRect.top + scrollTop;
+            try {
+                const data = JSON.parse(e.dataTransfer.getData('text/plain'));
+                const id = createWorkspaceBlock(data.blockType, data.label, data.shape, data.color, data
+                    .defaultParams, Math.max(0, x), Math.max(0, y));
+                selectBlock(id);
+                toast('Bloque añadido: ' + data.label);
+            } catch (err) {
+                // Ignore
+            }
+        });
 
-            // Colisión con corrales
-            if (this.plotId !== -1 && plots[this.plotId].type === 'corral') {
-                let p = plots[this.plotId];
-                if (this.x - this.radius < p.x) { this.x = p.x + this.radius; this.vx *= -1; }
-                if (this.x + this.radius > p.x + p.w) { this.x = p.x + p.w - this.radius; this.vx *= -1; }
-                if (this.y - this.radius < p.y) { this.y = p.y + this.radius; this.vy *= -1; }
-                if (this.y + this.radius > p.y + p.h) { this.y = p.y + p.h - this.radius; this.vy *= -1; }
+        // --- Workspace click to deselect ---
+        document.getElementById('workspace').addEventListener('mousedown', function(e) {
+            if (e.target === this) {
+                selectBlock(null);
+                document.getElementById('context-menu').style.display = 'none';
+            }
+        });
+
+        // --- Stage Canvas ---
+        const stageCanvas = document.getElementById('stage-canvas');
+        const stageCtx = stageCanvas.getContext('2d');
+
+        function drawStage() {
+            stageCtx.clearRect(0, 0, stageWidth, stageHeight);
+            // Background
+            const bgColors = ['#ffffff', '#e8f4f8', '#fef9e7', '#e8f8e8', '#fce4ec'];
+            stageCtx.fillStyle = bgColors[(stageBackground - 1) % bgColors.length] || '#ffffff';
+            stageCtx.fillRect(0, 0, stageWidth, stageHeight);
+
+            // Grid
+            stageCtx.strokeStyle = '#ddd';
+            stageCtx.lineWidth = 0.5;
+            for (let gx = 0; gx < stageWidth; gx += 40) {
+                stageCtx.beginPath();
+                stageCtx.moveTo(gx, 0);
+                stageCtx.lineTo(gx, stageHeight);
+                stageCtx.stroke();
+            }
+            for (let gy = 0; gy < stageHeight; gy += 40) {
+                stageCtx.beginPath();
+                stageCtx.moveTo(0, gy);
+                stageCtx.lineTo(stageWidth, gy);
+                stageCtx.stroke();
             }
 
-            // Comer
-            if (this.hunger > 10) {
-                for (let i = 0; i < foods.length; i++) {
-                    let f = foods[i];
-                    let dist = Math.hypot(this.x - f.x, this.y - f.y);
-                    if (dist < this.radius + f.radius) {
-                        foods.splice(i, 1);
-                        this.hunger = 0;
-                        // Producir plort
-                        plorts.push({x: this.x, y: this.y + 10, value: 10, radius: 6, color: '#FFB6C1'});
+            if (!sprite.visible) return;
+
+            // Apply effects (simplified)
+            stageCtx.save();
+            const cx = stageWidth / 2 + sprite.x;
+            const cy = stageHeight / 2 - sprite.y;
+            const sizeFactor = sprite.size / 100;
+
+            stageCtx.translate(cx, cy);
+            if (sprite.rotationStyle === 'all') {
+                stageCtx.rotate((sprite.direction - 90) * Math.PI / 180);
+            } else if (sprite.rotationStyle === 'left-right') {
+                if (sprite.direction < 0) stageCtx.scale(-1, 1);
+            }
+            stageCtx.scale(sizeFactor, sizeFactor);
+
+            // Ghost effect
+            const ghostAlpha = 1 - (sprite.effects.ghost || 0) / 100;
+            stageCtx.globalAlpha = Math.max(0, Math.min(1, ghostAlpha));
+
+            // Draw sprite (cat-like shape)
+            const s = 30;
+            // Body
+            stageCtx.fillStyle = '#ff8c42';
+            stageCtx.beginPath();
+            stageCtx.arc(0, 0, s * 0.7, 0, Math.PI * 2);
+            stageCtx.fill();
+            stageCtx.strokeStyle = '#333';
+            stageCtx.lineWidth = 2;
+            stageCtx.stroke();
+            // Head
+            stageCtx.fillStyle = '#ffaa66';
+            stageCtx.beginPath();
+            stageCtx.arc(0, -s * 0.7, s * 0.5, 0, Math.PI * 2);
+            stageCtx.fill();
+            stageCtx.stroke();
+            // Ears
+            stageCtx.fillStyle = '#ff8c42';
+            stageCtx.beginPath();
+            stageCtx.moveTo(-s * 0.3, -s * 1.1);
+            stageCtx.lineTo(-s * 0.15, -s * 1.6);
+            stageCtx.lineTo(0, -s * 1.0);
+            stageCtx.fill();
+            stageCtx.beginPath();
+            stageCtx.moveTo(s * 0.3, -s * 1.1);
+            stageCtx.lineTo(s * 0.15, -s * 1.6);
+            stageCtx.lineTo(0, -s * 1.0);
+            stageCtx.fill();
+            // Eyes
+            stageCtx.fillStyle = '#fff';
+            stageCtx.beginPath();
+            stageCtx.arc(-s * 0.15, -s * 0.75, s * 0.13, 0, Math.PI * 2);
+            stageCtx.fill();
+            stageCtx.beginPath();
+            stageCtx.arc(s * 0.15, -s * 0.75, s * 0.13, 0, Math.PI * 2);
+            stageCtx.fill();
+            stageCtx.fillStyle = '#111';
+            stageCtx.beginPath();
+            stageCtx.arc(-s * 0.13, -s * 0.73, s * 0.06, 0, Math.PI * 2);
+            stageCtx.fill();
+            stageCtx.beginPath();
+            stageCtx.arc(s * 0.17, -s * 0.73, s * 0.06, 0, Math.PI * 2);
+            stageCtx.fill();
+            // Nose
+            stageCtx.fillStyle = '#ff6b8a';
+            stageCtx.beginPath();
+            stageCtx.arc(0, -s * 0.58, s * 0.07, 0, Math.PI * 2);
+            stageCtx.fill();
+            // Tail
+            stageCtx.strokeStyle = '#ff8c42';
+            stageCtx.lineWidth = 3;
+            stageCtx.beginPath();
+            stageCtx.moveTo(s * 0.5, s * 0.2);
+            stageCtx.quadraticCurveTo(s * 1.2, -s * 0.3, s * 0.9, -s * 0.9);
+            stageCtx.stroke();
+
+            stageCtx.restore();
+
+            // Say/Think bubbles
+            if (sprite.sayText && sprite.sayTimer > 0) {
+                drawBubble(cx, cy - 45 * sizeFactor, sprite.sayText, false);
+            }
+            if (sprite.thinkText && sprite.thinkTimer > 0) {
+                drawBubble(cx, cy - 45 * sizeFactor, sprite.thinkText, true);
+            }
+
+            // Pen trail (if pen is down, draw a dot at current position)
+            if (sprite.penDown) {
+                stageCtx.fillStyle = sprite.penColor;
+                stageCtx.beginPath();
+                stageCtx.arc(cx, cy, sprite.penSize, 0, Math.PI * 2);
+                stageCtx.fill();
+            }
+        }
+
+        function drawBubble(x, y, text, isThink) {
+            stageCtx.save();
+            stageCtx.fillStyle = '#fff';
+            stageCtx.strokeStyle = '#333';
+            stageCtx.lineWidth = 1.5;
+            const w = Math.max(60, text.length * 8 + 20);
+            const h = 28;
+            const bx = x - w / 2;
+            const by = y - h;
+            stageCtx.beginPath();
+            stageCtx.roundRect(bx, by, w, h, 8);
+            stageCtx.fill();
+            stageCtx.stroke();
+            if (isThink) {
+                stageCtx.fillStyle = '#fff';
+                stageCtx.beginPath();
+                stageCtx.arc(bx + 10, y + 4, 5, 0, Math.PI * 2);
+                stageCtx.fill();
+                stageCtx.stroke();
+                stageCtx.beginPath();
+                stageCtx.arc(bx + 4, y + 12, 3, 0, Math.PI * 2);
+                stageCtx.fill();
+                stageCtx.stroke();
+            } else {
+                stageCtx.fillStyle = '#fff';
+                stageCtx.beginPath();
+                stageCtx.moveTo(bx + 12, y);
+                stageCtx.lineTo(bx + 8, y + 10);
+                stageCtx.lineTo(bx + 20, y);
+                stageCtx.fill();
+                stageCtx.stroke();
+            }
+            stageCtx.fillStyle = '#222';
+            stageCtx.font = '11px "Segoe UI", sans-serif';
+            stageCtx.fillText(text, bx + 10, by + 18);
+            stageCtx.restore();
+        }
+
+        function updateStageInfo() {
+            document.getElementById('sprite-x').textContent = Math.round(sprite.x);
+            document.getElementById('sprite-y').textContent = Math.round(sprite.y);
+            document.getElementById('sprite-dir').textContent = Math.round(sprite.direction) + '°';
+            document.getElementById('sprite-size').textContent = Math.round(sprite.size) + '%';
+            updateVariableDisplay();
+            drawStage();
+        }
+
+        function updateVariableDisplay() {
+            const div = document.getElementById('variable-display');
+            let html = '';
+            for (const [name, val] of Object.entries(variables)) {
+                html +=
+                    `<span class="var-item"><strong>${name}</strong>: ${typeof val === 'number' ? Math.round(val*100)/100 : val}</span>`;
+            }
+            for (const [name, arr] of Object.entries(lists)) {
+                html +=
+                    `<span class="var-item"><strong>📋 ${name}</strong>: [${arr.length} items] ${arr.slice(0,3).join(', ')}${arr.length>3?'...':''}</span>`;
+            }
+            div.innerHTML = html || '<span style="color:#888;">Sin variables definidas</span>';
+        }
+
+        function log(msg) {
+            const consoleDiv = document.getElementById('output-console');
+            consoleDiv.textContent += '\n' + msg;
+            consoleDiv.scrollTop = consoleDiv.scrollHeight;
+            // Keep last 200 chars
+            if (consoleDiv.textContent.length > 600) {
+                consoleDiv.textContent = '...' + consoleDiv.textContent.slice(-500);
+            }
+        }
+
+        // --- Sound Engine (Web Audio API) ---
+        let audioCtx = null;
+        let masterVolume = 0.5;
+
+        function getAudioContext() {
+            if (!audioCtx) {
+                audioCtx = new(window.AudioContext || window.webkitAudioContext)();
+            }
+            return audioCtx;
+        }
+
+        function playBeep(freq = 440, duration = 0.2, type = 'square') {
+            try {
+                const ctx = getAudioContext();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = type;
+                osc.frequency.setValueAtTime(freq, ctx.currentTime);
+                gain.gain.setValueAtTime(masterVolume * 0.3, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start(ctx.currentTime);
+                osc.stop(ctx.currentTime + duration);
+            } catch (e) {
+                // Audio not available
+            }
+        }
+
+        function playSoundEffect(name) {
+            const sounds = {
+                'pop': () => playBeep(600, 0.15, 'square'),
+                'meow': () => { playBeep(400, 0.3, 'triangle');
+                    setTimeout(() => playBeep(500, 0.2, 'triangle'), 150); },
+                'chirp': () => playBeep(800, 0.1, 'sine'),
+                'boing': () => { playBeep(200, 0.2, 'sawtooth');
+                    playBeep(300, 0.15, 'sawtooth'); },
+                'click': () => playBeep(1000, 0.05, 'square'),
+            };
+            if (sounds[name]) sounds[name]();
+            else playBeep(440, 0.2, 'square');
+        }
+
+        // --- Timer ---
+        let timerStart = Date.now();
+
+        function resetTimer() { timerStart = Date.now(); }
+
+        function getTimer() { return (Date.now() - timerStart) / 1000; }
+
+        // --- Block Execution Engine ---
+        function getStack(startBlockId) {
+            // Build ordered list from startBlockId following nextBlockId chain
+            const order = [];
+            const visited = new Set();
+            let current = startBlockId;
+            while (current && workspaceBlocks[current] && !visited.has(current)) {
+                visited.add(current);
+                order.push(current);
+                current = workspaceBlocks[current].nextBlockId;
+            }
+            return order;
+        }
+
+        function getInnerStack(cBlockId) {
+            const b = workspaceBlocks[cBlockId];
+            if (!b || !b.innerBlockIds || b.innerBlockIds.length === 0) return [];
+            // Return the first inner block and its chain
+            const firstInner = b.innerBlockIds[0];
+            return getStack(firstInner);
+        }
+
+        async function executeBlock(blockId, context = {}) {
+            if (runAbort) return { abort: true };
+            const b = workspaceBlocks[blockId];
+            if (!b) return { next: true };
+
+            // Highlight running block
+            const div = b.div;
+            div.classList.add('running');
+            setTimeout(() => div.classList.remove('running'), 400);
+
+            const params = b.params || {};
+            const bt = b.blockType;
+
+            // --- MOTION ---
+            if (bt === 'motion_movesteps') {
+                const steps = parseFloat(params.steps) || 10;
+                const rad = sprite.direction * Math.PI / 180;
+                sprite.x += Math.cos(rad) * steps;
+                sprite.y += Math.sin(rad) * steps;
+                if (sprite.penDown) drawStage();
+                updateStageInfo();
+            } else if (bt === 'motion_turnright') {
+                sprite.direction += parseFloat(params.degrees) || 15;
+                updateStageInfo();
+            } else if (bt === 'motion_turnleft') {
+                sprite.direction -= parseFloat(params.degrees) || 15;
+                updateStageInfo();
+            } else if (bt === 'motion_goto') {
+                sprite.x = (Math.random() - 0.5) * stageWidth * 0.8;
+                sprite.y = (Math.random() - 0.5) * stageHeight * 0.8;
+                updateStageInfo();
+            } else if (bt === 'motion_gotoxy') {
+                sprite.x = parseFloat(params.x) || 0;
+                sprite.y = parseFloat(params.y) || 0;
+                updateStageInfo();
+            } else if (bt === 'motion_glide') {
+                const secs = parseFloat(params.secs) || 1;
+                const tx = parseFloat(params.x) || 0;
+                const ty = parseFloat(params.y) || 0;
+                const sx = sprite.x,
+                    sy = sprite.y;
+                const steps = Math.max(1, Math.round(secs * 30));
+                for (let i = 1; i <= steps; i++) {
+                    if (runAbort) return { abort: true };
+                    sprite.x = sx + (tx - sx) * (i / steps);
+                    sprite.y = sy + (ty - sy) * (i / steps);
+                    updateStageInfo();
+                    drawStage();
+                    await sleep(secs * 1000 / steps);
+                }
+            } else if (bt === 'motion_pointdir') {
+                sprite.direction = parseFloat(params.dir) || 90;
+                updateStageInfo();
+            } else if (bt === 'motion_pointtowards') {
+                if (params.target === 'mouse') {
+                    const mx = (mouseStageX || 0) - stageWidth / 2;
+                    const my = (stageHeight / 2) - (mouseStageY || 0);
+                    sprite.direction = Math.atan2(my - sprite.y, mx - sprite.x) * 180 / Math.PI;
+                }
+                updateStageInfo();
+            } else if (bt === 'motion_changex') {
+                sprite.x += parseFloat(params.dx) || 10;
+                updateStageInfo();
+            } else if (bt === 'motion_setx') {
+                sprite.x = parseFloat(params.x) || 0;
+                updateStageInfo();
+            } else if (bt === 'motion_changey') {
+                sprite.y += parseFloat(params.dy) || 10;
+                updateStageInfo();
+            } else if (bt === 'motion_sety') {
+                sprite.y = parseFloat(params.y) || 0;
+                updateStageInfo();
+            } else if (bt === 'motion_ifonedgebounce') {
+                const halfW = stageWidth / 2;
+                const halfH = stageHeight / 2;
+                if (Math.abs(sprite.x) > halfW - 5) {
+                    sprite.direction = 180 - sprite.direction;
+                    sprite.x = Math.sign(sprite.x) * (halfW - 5);
+                }
+                if (Math.abs(sprite.y) > halfH - 5) {
+                    sprite.direction = -sprite.direction;
+                    sprite.y = Math.sign(sprite.y) * (halfH - 5);
+                }
+                updateStageInfo();
+            } else if (bt === 'motion_setrotationstyle') {
+                sprite.rotationStyle = params.style || 'all';
+            } else if (bt === 'motion_xposition') {
+                return { value: sprite.x, next: true };
+            } else if (bt === 'motion_yposition') {
+                return { value: sprite.y, next: true };
+            } else if (bt === 'motion_direction') {
+                return { value: sprite.direction, next: true };
+            }
+
+            // --- LOOKS ---
+            else if (bt === 'looks_say') {
+                sprite.sayText = params.text || 'Hola';
+                sprite.sayTimer = parseFloat(params.secs) || 2;
+                sprite.thinkText = '';
+                sprite.thinkTimer = 0;
+                updateStageInfo();
+                drawStage();
+                await sleep((parseFloat(params.secs) || 2) * 1000);
+                sprite.sayText = '';
+                sprite.sayTimer = 0;
+                updateStageInfo();
+                drawStage();
+            } else if (bt === 'looks_sayforever') {
+                sprite.sayText = params.text || 'Hola';
+                sprite.sayTimer = 9999;
+                sprite.thinkText = '';
+                updateStageInfo();
+                drawStage();
+            } else if (bt === 'looks_think') {
+                sprite.thinkText = params.text || 'Mmm...';
+                sprite.thinkTimer = parseFloat(params.secs) || 2;
+                sprite.sayText = '';
+                sprite.sayTimer = 0;
+                updateStageInfo();
+                drawStage();
+                await sleep((parseFloat(params.secs) || 2) * 1000);
+                sprite.thinkText = '';
+                sprite.thinkTimer = 0;
+                updateStageInfo();
+                drawStage();
+            } else if (bt === 'looks_thinkforever') {
+                sprite.thinkText = params.text || 'Mmm...';
+                sprite.thinkTimer = 9999;
+                sprite.sayText = '';
+                updateStageInfo();
+                drawStage();
+            } else if (bt === 'looks_switchcostume') {
+                sprite.costume = parseInt(params.costume) || 2;
+                updateStageInfo();
+            } else if (bt === 'looks_nextcostume') {
+                sprite.costume = (sprite.costume % 4) + 1;
+                updateStageInfo();
+            } else if (bt === 'looks_switchbg') {
+                stageBackground = parseInt(params.bg) || 2;
+                drawStage();
+            } else if (bt === 'looks_changesize') {
+                sprite.size += parseFloat(params.dsize) || 10;
+                sprite.size = Math.max(5, Math.min(500, sprite.size));
+                updateStageInfo();
+            } else if (bt === 'looks_setsize') {
+                sprite.size = parseFloat(params.size) || 100;
+                sprite.size = Math.max(5, Math.min(500, sprite.size));
+                updateStageInfo();
+            } else if (bt === 'looks_changeeffect') {
+                const eff = params.effect || 'color';
+                if (sprite.effects[eff] !== undefined) sprite.effects[eff] += parseFloat(params.val) || 5;
+                updateStageInfo();
+            } else if (bt === 'looks_seteffect') {
+                const eff = params.effect || 'ghost';
+                if (sprite.effects[eff] !== undefined) sprite.effects[eff] = parseFloat(params.val) || 0;
+                updateStageInfo();
+            } else if (bt === 'looks_cleareffects') {
+                for (const k in sprite.effects) sprite.effects[k] = 0;
+                updateStageInfo();
+            } else if (bt === 'looks_show') {
+                sprite.visible = true;
+                updateStageInfo();
+            } else if (bt === 'looks_hide') {
+                sprite.visible = false;
+                updateStageInfo();
+            } else if (bt === 'looks_gotofront' || bt === 'looks_goback') {
+                // Layer management simplified
+                updateStageInfo();
+            } else if (bt === 'looks_size') {
+                return { value: sprite.size, next: true };
+            }
+
+            // --- SOUND ---
+            else if (bt === 'sound_play') {
+                playSoundEffect(params.sound || 'pop');
+            } else if (bt === 'sound_playuntil') {
+                playSoundEffect(params.sound || 'pop');
+                await sleep(400);
+            } else if (bt === 'sound_stopall') {
+                // Stop all audio (simplified)
+            } else if (bt === 'sound_changevolume') {
+                masterVolume = Math.max(0, Math.min(1, masterVolume + (parseFloat(params.dvol) || -10) / 100));
+            } else if (bt === 'sound_setvolume') {
+                masterVolume = Math.max(0, Math.min(1, (parseFloat(params.vol) || 100) / 100));
+            } else if (bt === 'sound_volume') {
+                return { value: Math.round(masterVolume * 100), next: true };
+            }
+
+            // --- EVENTS (hat blocks start execution) ---
+            else if (bt === 'events_broadcast') {
+                broadcastQueue.push(params.msg || 'mensaje1');
+                log('📡 Enviado: ' + (params.msg || 'mensaje1'));
+            } else if (bt === 'events_broadcastwait') {
+                broadcastQueue.push(params.msg || 'mensaje1');
+                log('📡 Enviado (y esperando): ' + (params.msg || 'mensaje1'));
+                await processBroadcasts();
+            }
+
+            // --- CONTROL ---
+            else if (bt === 'control_wait') {
+                await sleep((parseFloat(params.secs) || 1) * 1000);
+            } else if (bt === 'control_repeat') {
+                const times = parseInt(params.times) || 10;
+                const innerIds = getInnerStack(blockId);
+                for (let i = 0; i < times; i++) {
+                    if (runAbort) return { abort: true };
+                    for (const innerId of innerIds) {
+                        const result = await executeBlock(innerId, context);
+                        if (result && result.abort) return { abort: true };
+                    }
+                }
+            } else if (bt === 'control_forever') {
+                const innerIds = getInnerStack(blockId);
+                while (!runAbort) {
+                    for (const innerId of innerIds) {
+                        if (runAbort) return { abort: true };
+                        const result = await executeBlock(innerId, context);
+                        if (result && result.abort) return { abort: true };
+                    }
+                    await sleep(30);
+                }
+                return { abort: true };
+            } else if (bt === 'control_if') {
+                const cond = evaluateCondition(params.condition, context);
+                if (cond) {
+                    const innerIds = getInnerStack(blockId);
+                    for (const innerId of innerIds) {
+                        const result = await executeBlock(innerId, context);
+                        if (result && result.abort) return { abort: true };
+                    }
+                }
+            } else if (bt === 'control_ifelse') {
+                const cond = evaluateCondition(params.condition, context);
+                const innerIds = getInnerStack(blockId);
+                // First inner block chain is "if" branch, second inner block (if any) is "else" branch
+                // Simplified: execute all inners if true
+                if (cond) {
+                    for (const innerId of innerIds) {
+                        const result = await executeBlock(innerId, context);
+                        if (result && result.abort) return { abort: true };
+                    }
+                }
+            } else if (bt === 'control_waituntil') {
+                while (!runAbort && !evaluateCondition(params.condition, context)) {
+                    await sleep(50);
+                }
+            } else if (bt === 'control_repeatuntil') {
+                const innerIds = getInnerStack(blockId);
+                while (!runAbort && !evaluateCondition(params.condition, context)) {
+                    for (const innerId of innerIds) {
+                        if (runAbort) return { abort: true };
+                        const result = await executeBlock(innerId, context);
+                        if (result && result.abort) return { abort: true };
+                    }
+                    await sleep(30);
+                }
+            } else if (bt === 'control_stop') {
+                if (params.what === 'all' || params.what === 'this') {
+                    runAbort = true;
+                    return { abort: true };
+                }
+            } else if (bt === 'control_clone') {
+                clones.push({ ...sprite, x: sprite.x + 20, y: sprite.y + 20 });
+                log('🧬 Clon creado en (' + Math.round(sprite.x + 20) + ', ' + Math.round(sprite.y + 20) + ')');
+            } else if (bt === 'control_deleteclone') {
+                if (clones.length > 0) clones.pop();
+                log('🗑 Clon eliminado');
+            }
+
+            // --- SENSING ---
+            else if (bt === 'sensing_touchingmouse') {
+                const mx = (mouseStageX || 0);
+                const my = (mouseStageY || 0);
+                const sx = stageWidth / 2 + sprite.x;
+                const sy = stageHeight / 2 - sprite.y;
+                const dist = Math.sqrt((mx - sx) ** 2 + (my - sy) ** 2);
+                return { value: dist < 35, next: true };
+            } else if (bt === 'sensing_touchingedge') {
+                const hw = stageWidth / 2;
+                const hh = stageHeight / 2;
+                return { value: Math.abs(sprite.x) > hw - 5 || Math.abs(sprite.y) > hh - 5, next: true };
+            } else if (bt === 'sensing_keypressed') {
+                return { value: keysPressed.has(params.key || ' '), next: true };
+            } else if (bt === 'sensing_mousedown') {
+                return { value: mouseIsDown, next: true };
+            } else if (bt === 'sensing_mousex') {
+                return { value: (mouseStageX || stageWidth / 2) - stageWidth / 2, next: true };
+            } else if (bt === 'sensing_mousey') {
+                return { value: stageHeight / 2 - (mouseStageY || stageHeight / 2), next: true };
+            } else if (bt === 'sensing_timer') {
+                return { value: getTimer(), next: true };
+            } else if (bt === 'sensing_resettimer') {
+                resetTimer();
+            } else if (bt === 'sensing_username') {
+                return { value: 'Usuario', next: true };
+            }
+
+            // --- OPERATORS ---
+            else if (bt === 'operators_add') return { value: (parseFloat(params.a) || 0) + (parseFloat(params.b) || 0),
+                next: true };
+            else if (bt === 'operators_sub') return { value: (parseFloat(params.a) || 0) - (parseFloat(params.b) || 0),
+                next: true };
+            else if (bt === 'operators_mul') return { value: (parseFloat(params.a) || 0) * (parseFloat(params.b) || 0),
+                next: true };
+            else if (bt === 'operators_div') return { value: (parseFloat(params.a) || 0) / (parseFloat(params.b) || 1),
+                next: true };
+            else if (bt === 'operators_random') return { value: Math.floor(Math.random() * ((parseInt(params.max) || 10) - (
+                    parseInt(params.min) || 1) + 1)) + (parseInt(params.min) || 1), next: true };
+            else if (bt === 'operators_gt') return { value: (parseFloat(params.a) || 0) > (parseFloat(params.b) || 0),
+                next: true };
+            else if (bt === 'operators_lt') return { value: (parseFloat(params.a) || 0) < (parseFloat(params.b) || 0),
+                next: true };
+            else if (bt === 'operators_eq') return { value: (parseFloat(params.a) || 0) === (parseFloat(params.b) || 0),
+                next: true };
+            else if (bt === 'operators_and') return { value: evaluateCondition(params.a, context) && evaluateCondition(
+                    params.b, context), next: true };
+            else if (bt === 'operators_or') return { value: evaluateCondition(params.a, context) || evaluateCondition(params
+                    .b, context), next: true };
+            else if (bt === 'operators_not') return { value: !evaluateCondition(params.a, context), next: true };
+            else if (bt === 'operators_join') return { value: String(params.a || '') + String(params.b || ''), next: true };
+            else if (bt === 'operators_letterof') {
+                const txt = String(params.text || '');
+                const idx = parseInt(params.idx) || 1;
+                return { value: txt.charAt(idx - 1) || '', next: true };
+            } else if (bt === 'operators_length') return { value: String(params.text || '').length, next: true };
+            else if (bt === 'operators_contains') return { value: String(params.text || '').includes(String(params.sub ||
+                    '')), next: true };
+            else if (bt === 'operators_mod') return { value: (parseFloat(params.a) || 0) % (parseFloat(params.b) || 1),
+                next: true };
+            else if (bt === 'operators_round') return { value: Math.round(parseFloat(params.val) || 0), next: true };
+            else if (bt === 'operators_sqrt') return { value: Math.sqrt(Math.abs(parseFloat(params.val) || 0)),
+            next: true };
+
+            // --- VARIABLES ---
+            else if (bt === 'variables_set') {
+                variables[params.varname || 'miVar'] = parseFloat(params.val) || 0;
+                updateStageInfo();
+            } else if (bt === 'variables_change') {
+                if (variables[params.varname || 'miVar'] === undefined) variables[params.varname || 'miVar'] = 0;
+                variables[params.varname || 'miVar'] += parseFloat(params.dval) || 1;
+                updateStageInfo();
+            } else if (bt === 'variables_get') {
+                return { value: variables[params.varname || 'miVar'] ?? 0, next: true };
+            } else if (bt === 'variables_show' || bt === 'variables_hide') {
+                updateStageInfo();
+            } else if (bt === 'variables_addtolist') {
+                if (!lists[params.listname || 'miLista']) lists[params.listname || 'miLista'] = [];
+                lists[params.listname || 'miLista'].push(params.item || 'cosa');
+                updateStageInfo();
+            } else if (bt === 'variables_deleteoflist') {
+                const lst = lists[params.listname || 'miLista'] || [];
+                const idx = parseInt(params.idx) || 1;
+                if (idx > 0 && idx <= lst.length) lst.splice(idx - 1, 1);
+                updateStageInfo();
+            } else if (bt === 'variables_getlist') {
+                const lst = lists[params.listname || 'miLista'] || [];
+                const idx = parseInt(params.idx) || 1;
+                return { value: lst[idx - 1] ?? '', next: true };
+            } else if (bt === 'variables_lengthlist') {
+                return { value: (lists[params.listname || 'miLista'] || []).length, next: true };
+            } else if (bt === 'variables_containslist') {
+                return { value: (lists[params.listname || 'miLista'] || []).includes(params.item || 'cosa'),
+                next: true };
+            }
+
+            // --- MY BLOCKS ---
+            else if (bt === 'myblocks_define') {
+                // Definitions are stored but executed via calls
+                log('📝 Definido: ' + (params.name || 'miBloque'));
+            } else if (bt === 'myblocks_call') {
+                // Find definition and execute its stack
+                const defName = params.name || 'miBloque';
+                for (const [id, wb] of Object.entries(workspaceBlocks)) {
+                    if (wb.blockType === 'myblocks_define' && wb.params.name === defName) {
+                        const stack = getStack(id);
+                        for (const sid of stack) {
+                            if (sid === id) continue; // skip the define block itself
+                            const result = await executeBlock(sid, context);
+                            if (result && result.abort) return { abort: true };
+                        }
                         break;
                     }
                 }
             }
+
+            return { next: true };
         }
 
-        draw(ctx) {
-            ctx.beginPath();
-            ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-            ctx.fillStyle = this.color;
-            ctx.fill();
-            ctx.strokeStyle = '#C71585';
-            ctx.lineWidth = 2;
-            ctx.stroke();
-            
-            // Ojos
-            ctx.fillStyle = 'black';
-            ctx.beginPath(); ctx.arc(this.x - 5, this.y - 3, 2, 0, Math.PI * 2); ctx.fill();
-            ctx.beginPath(); ctx.arc(this.x + 5, this.y - 3, 2, 0, Math.PI * 2); ctx.fill();
+        function evaluateCondition(condStr, context) {
+            if (condStr === 'true') return true;
+            if (condStr === 'false') return false;
+            // Try to evaluate as expression
+            try {
+                return !!eval(condStr);
+            } catch (e) {
+                return true;
+            }
         }
-    }
 
-    // Inicializar algunos slimes libres
-    for(let i=0; i<3; i++) {
-        slimes.push(new Slime(canvas.width/2 + Math.random()*50, canvas.height - 100 + Math.random()*50));
-    }
+        function sleep(ms) {
+            return new Promise(resolve => {
+                const id = setTimeout(resolve, ms);
+                if (runAbort) clearTimeout(id);
+            });
+        }
 
-    // Interacciones del mouse
-    canvas.addEventListener('mousedown', (e) => {
-        const rect = canvas.getBoundingClientRect();
-        const mouseX = e.clientX - rect.left;
-        const mouseY = e.clientY - rect.top;
-
-        if (currentMode === 'build') {
-            // Revisar si clickeamos una parcela vacía
-            for (let p of plots) {
-                if (mouseX > p.x && mouseX < p.x + p.w && mouseY > p.y && mouseY < p.y + p.h) {
-                    if (p.type === 'empty' && money >= 100) {
-                        p.type = 'corral';
-                        updateMoney(-100);
-                        
-                        // Añadir un par de slimes al nuevo corral para probar
-                        let s1 = new Slime(p.x + p.w/2, p.y + p.h/2);
-                        let s2 = new Slime(p.x + p.w/2 + 20, p.y + p.h/2);
-                        s1.plotId = slimes.length; // hack rápido
-                        s2.plotId = slimes.length + 1;
-                        slimes.push(s1, s2);
-                        // Reasignar IDs de parcela correctamente
-                        slimes.forEach(s => s.plotId = s.getCurrentPlot());
+        async function processBroadcasts() {
+            const processed = new Set();
+            while (broadcastQueue.length > 0 && !runAbort) {
+                const msg = broadcastQueue.shift();
+                if (processed.has(msg)) continue;
+                processed.add(msg);
+                // Find all "when receive" blocks matching this message
+                for (const [id, wb] of Object.entries(workspaceBlocks)) {
+                    if (runAbort) break;
+                    if (wb.blockType === 'events_whenreceive' && wb.params.msg === msg) {
+                        const stack = getStack(id);
+                        for (const sid of stack) {
+                            if (runAbort) break;
+                            const result = await executeBlock(sid);
+                            if (result && result.abort) break;
+                        }
                     }
                 }
             }
-        } 
-        else if (currentMode === 'feed') {
-            if (money >= 5) {
-                updateMoney(-5);
-                foods.push({x: mouseX, y: mouseY, radius: 4, color: '#8B4513'});
+        }
+
+        async function runStack(startBlockId) {
+            const stack = getStack(startBlockId);
+            for (const blockId of stack) {
+                if (runAbort) break;
+                const result = await executeBlock(blockId);
+                if (result && result.abort) break;
             }
         }
-        else if (currentMode === 'vac') {
-            // Recolectar plorts
-            for (let i = plorts.length - 1; i >= 0; i--) {
-                let plort = plorts[i];
-                let dist = Math.hypot(mouseX - plort.x, mouseY - plort.y);
-                if (dist < 30) { // Radio de succión
-                    updateMoney(plort.value);
-                    plorts.splice(i, 1);
+
+        async function runAllHatBlocks() {
+            runAbort = false;
+            isRunning = true;
+            broadcastQueue = [];
+            log('🚩 Proyecto iniciado...');
+            resetTimer();
+
+            // Find all hat blocks and run them
+            const hatBlocks = [];
+            for (const [id, wb] of Object.entries(workspaceBlocks)) {
+                if (wb.shape === 'hat') {
+                    hatBlocks.push(id);
                 }
             }
-        }
-    });
 
-    // Bucle principal del juego
-    function gameLoop() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
+            // Run "when green flag" blocks first
+            const flagBlocks = hatBlocks.filter(id => workspaceBlocks[id].blockType === 'events_whenflag');
+            const otherHats = hatBlocks.filter(id => !flagBlocks.includes(id));
 
-        // Dibujar parcelas
-        for (let p of plots) {
-            ctx.fillStyle = p.type === 'empty' ? 'rgba(0,0,0,0.1)' : 'rgba(139, 69, 19, 0.3)';
-            ctx.fillRect(p.x, p.y, p.w, p.h);
-            ctx.strokeStyle = p.type === 'empty' ? 'rgba(255,255,255,0.3)' : '#8B4513';
-            ctx.lineWidth = 4;
-            ctx.strokeRect(p.x, p.y, p.w, p.h);
-            
-            if (p.type === 'empty') {
-                ctx.fillStyle = 'rgba(255,255,255,0.5)';
-                ctx.font = '16px Arial';
-                ctx.fillText('Parcela Vacía', p.x + p.w/2 - 45, p.y + p.h/2);
+            const runStackAsync = async (startId) => {
+                const stack = getStack(startId);
+                for (const blockId of stack) {
+                    if (runAbort) break;
+                    const result = await executeBlock(blockId);
+                    if (result && result.abort) break;
+                }
+            };
+
+            // Run flag blocks concurrently
+            const promises = flagBlocks.map(id => runStackAsync(id));
+            await Promise.all(promises);
+
+            // Process any broadcasts
+            await processBroadcasts();
+
+            if (!runAbort) {
+                log('✅ Ejecución completada.');
+            } else {
+                log('⏹ Ejecución detenida.');
             }
+            isRunning = false;
+            updateStageInfo();
+            drawStage();
         }
 
-        // Dibujar comida
-        for (let f of foods) {
-            ctx.beginPath();
-            ctx.arc(f.x, f.y, f.radius, 0, Math.PI * 2);
-            ctx.fillStyle = f.color;
-            ctx.fill();
+        function runProject() {
+            if (isRunning) {
+                stopProject();
+                setTimeout(() => runAllHatBlocks(), 100);
+                return;
+            }
+            runAllHatBlocks();
         }
 
-        // Dibujar plorts
-        for (let pl of plorts) {
-            ctx.beginPath();
-            ctx.moveTo(pl.x, pl.y - pl.radius);
-            ctx.lineTo(pl.x + pl.radius, pl.y + pl.radius);
-            ctx.lineTo(pl.x - pl.radius, pl.y + pl.radius);
-            ctx.closePath();
-            ctx.fillStyle = pl.color;
-            ctx.fill();
-            ctx.strokeStyle = '#FF69B4';
-            ctx.stroke();
+        function stopProject() {
+            runAbort = true;
+            isRunning = false;
+            broadcastQueue = [];
+            sprite.sayText = '';
+            sprite.sayTimer = 0;
+            sprite.thinkText = '';
+            sprite.thinkTimer = 0;
+            log('⏹ Detenido.');
+            updateStageInfo();
+            drawStage();
         }
 
-        // Actualizar y dibujar slimes
-        for (let s of slimes) {
-            s.update();
-            s.draw(ctx);
+        // --- Mouse tracking on stage ---
+        let mouseStageX = stageWidth / 2;
+        let mouseStageY = stageHeight / 2;
+        let mouseIsDown = false;
+        const keysPressed = new Set();
+
+        stageCanvas.addEventListener('mousemove', (e) => {
+            const rect = stageCanvas.getBoundingClientRect();
+            const scaleX = stageWidth / rect.width;
+            const scaleY = stageHeight / rect.height;
+            mouseStageX = (e.clientX - rect.left) * scaleX;
+            mouseStageY = (e.clientY - rect.top) * scaleY;
+        });
+        stageCanvas.addEventListener('mousedown', () => { mouseIsDown = true; });
+        stageCanvas.addEventListener('mouseup', () => { mouseIsDown = false; });
+        stageCanvas.addEventListener('mouseleave', () => { mouseIsDown = false; });
+        document.addEventListener('keydown', (e) => { keysPressed.add(e.key);
+            keysPressed.add(e.key.toLowerCase()); });
+        document.addEventListener('keyup', (e) => { keysPressed.delete(e.key);
+            keysPressed.delete(e.key.toLowerCase()); });
+
+        // --- Save / Load ---
+        function saveProject() {
+            const project = {
+                version: '1.0',
+                sprite: JSON.parse(JSON.stringify(sprite)),
+                stageBackground,
+                variables: JSON.parse(JSON.stringify(variables)),
+                lists: JSON.parse(JSON.stringify(lists)),
+                blocks: [],
+            };
+            for (const [id, wb] of Object.entries(workspaceBlocks)) {
+                project.blocks.push({
+                    id,
+                    blockType: wb.blockType,
+                    shape: wb.shape,
+                    color: wb.color,
+                    params: wb.params,
+                    x: parseInt(wb.div.style.left) || 0,
+                    y: parseInt(wb.div.style.top) || 0,
+                    nextBlockId: wb.nextBlockId,
+                    prevBlockId: wb.prevBlockId,
+                    parentCBlockId: wb.parentCBlockId,
+                    innerBlockIds: wb.innerBlockIds,
+                    label: wb.div.textContent.replace(/[\n\r]/g, '').trim().substring(0, 80),
+                });
+            }
+            const json = JSON.stringify(project, null, 2);
+            const blob = new Blob([json], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'BlockIngenier_proyecto.json';
+            a.click();
+            URL.revokeObjectURL(url);
+            toast('💾 Proyecto guardado!');
+            log('💾 Proyecto guardado como archivo JSON.');
         }
 
-        requestAnimationFrame(gameLoop);
-    }
+        function loadProject() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            input.onchange = (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = (ev) => {
+                    try {
+                        const project = JSON.parse(ev.target.result);
+                        // Clear workspace
+                        clearWorkspaceSilent();
+                        // Restore sprite
+                        if (project.sprite) {
+                            sprite = { ...sprite, ...project.sprite };
+                            if (project.sprite.effects) sprite.effects = { ...sprite.effects, ...project.sprite
+                                    .effects };
+                        }
+                        if (project.stageBackground) stageBackground = project.stageBackground;
+                        if (project.variables) variables = project.variables;
+                        if (project.lists) lists = project.lists;
+                        // Restore blocks
+                        if (project.blocks) {
+                            project.blocks.forEach(bd => {
+                                const id = createWorkspaceBlockRaw(bd.id, bd.blockType, bd.label || bd
+                                    .blockType, bd.shape, bd.color, bd.params, bd.x, bd.y);
+                                const wb = workspaceBlocks[id];
+                                if (wb) {
+                                    wb.nextBlockId = bd.nextBlockId || null;
+                                    wb.prevBlockId = bd.prevBlockId || null;
+                                    wb.parentCBlockId = bd.parentCBlockId || null;
+                                    wb.innerBlockIds = bd.innerBlockIds || [];
+                                    wb.div._nextBlockId = wb.nextBlockId;
+                                    wb.div._prevBlockId = wb.prevBlockId;
+                                    wb.div._parentCBlockId = wb.parentCBlockId;
+                                    wb.div._innerBlockIds = wb.innerBlockIds;
+                                }
+                            });
+                        }
+                        updateStageInfo();
+                        drawStage();
+                        toast('📂 Proyecto cargado!');
+                        log('📂 Proyecto cargado exitosamente.');
+                    } catch (err) {
+                        toast('❌ Error al cargar el archivo.');
+                        log('❌ Error: ' + err.message);
+                    }
+                };
+                reader.readAsText(file);
+            };
+            input.click();
+        }
 
-    // Iniciar
-    gameLoop();
-</script>
+        function createWorkspaceBlockRaw(id, blockType, label, shape, color, params, x, y) {
+            const div = document.createElement('div');
+            div.className = 'ws-block';
+            div.style.background = color;
+            div.style.left = x + 'px';
+            div.style.top = y + 'px';
+            div.dataset.blockId = id;
+            div.dataset.blockType = blockType;
+            div.dataset.shape = shape;
+            div.dataset.color = color;
+            div.textContent = label;
+            div.title = blockType + ' | ID: ' + id;
+            if (shape === 'hat') div.classList.add('hat-block');
+            else if (shape === 'cblock') {
+                div.classList.add('c-block');
+                const inner = document.createElement('div');
+                inner.className = 'inner-area';
+                inner.dataset.innerFor = id;
+                div.appendChild(inner);
+                div.textContent = label;
+                div.appendChild(inner);
+            } else if (shape === 'reporter') div.classList.add('reporter-block');
+            else if (shape === 'boolean') div.classList.add('boolean-block');
+            if (shape !== 'hat') {
+                const tn = document.createElement('div');
+                tn.className = 'block-top-notch';
+                tn.style.background = color;
+                div.appendChild(tn);
+            }
+            if (shape !== 'reporter' && shape !== 'boolean') {
+                const n = document.createElement('div');
+                n.className = 'block-notch';
+                n.style.background = color;
+                div.appendChild(n);
+            }
+            div._params = JSON.parse(JSON.stringify(params || {}));
+            div._nextBlockId = null;
+            div._prevBlockId = null;
+            div._parentCBlockId = null;
+            div._innerBlockIds = [];
+            div.addEventListener('mousedown', (e) => {
+                if (e.button === 0) {
+                    e.stopPropagation();
+                    selectBlock(id);
+                    if (!isRunning) {
+                        isDragging = true;
+                        dragTarget = div;
+                        const rect = div.getBoundingClientRect();
+                        dragOffsetX = e.clientX - rect.left;
+                        dragOffsetY = e.clientY - rect.top;
+                        div.style.zIndex = 70;
+                        div.style.cursor = 'grabbing';
+                    }
+                }
+                if (e.button === 2) { e.preventDefault();
+                    e.stopPropagation();
+                    selectBlock(id);
+                    showContextMenu(e.clientX, e.clientY); }
+            });
+            div.addEventListener('contextmenu', (e) => { e.preventDefault();
+                selectBlock(id);
+                showContextMenu(e.clientX, e.clientY); });
+            document.getElementById('workspace').appendChild(div);
+            workspaceBlocks[id] = { div, blockType, shape, color, params: div._params, nextBlockId: null, prevBlockId: null,
+                parentCBlockId: null, innerBlockIds: [] };
+            if (parseInt(id.replace('b', '')) >= blockIdCounter) blockIdCounter = parseInt(id.replace('b', '')) + 1;
+            return id;
+        }
 
+        function clearWorkspace() {
+            if (isRunning) stopProject();
+            const ws = document.getElementById('workspace');
+            while (ws.firstChild) ws.removeChild(ws.firstChild);
+            workspaceBlocks = {};
+            selectedBlockId = null;
+            blockIdCounter = 0;
+            toast('🗑 Área de trabajo limpiada.');
+            log('🗑 Todos los bloques eliminados.');
+        }
+
+        function clearWorkspaceSilent() {
+            const ws = document.getElementById('workspace');
+            while (ws.firstChild) ws.removeChild(ws.firstChild);
+            workspaceBlocks = {};
+            selectedBlockId = null;
+            blockIdCounter = 0;
+        }
+
+        function toast(msg) {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.classList.add('show');
+            clearTimeout(t._timeout);
+            t._timeout = setTimeout(() => t.classList.remove('show'), 1800);
+        }
+
+        // --- Initialize ---
+        function init() {
+            buildSidebar();
+            updateStageInfo();
+            drawStage();
+            resetTimer();
+            log('🧩 BlockIngenier listo. Arrastra bloques desde la paleta al área de trabajo.');
+            log('💡 Conecta bloques entre sí y presiona "Ejecutar" para ver la magia.');
+
+            // Add some demo blocks
+            const demoX = 40;
+            const demoY = 20;
+            const id1 = createWorkspaceBlock('events_whenflag', 'Al hacer clic en bandera verde', 'hat', '#FFBF00', {},
+                demoX, demoY);
+            const id2 = createWorkspaceBlock('motion_gotoxy', 'Ir a X:0 Y:0', 'stack', '#4C97FF', { x: 0, y: 0 }, demoX,
+                demoY + 50);
+            const id3 = createWorkspaceBlock('looks_say', 'Decir "¡Hola BlockIngenier!" por 2 seg', 'stack', '#9966FF', {
+                text: '¡Hola BlockIngenier!',
+                secs: 2 }, demoX, demoY + 100);
+            const id4 = createWorkspaceBlock('control_repeat', 'Repetir 4 veces', 'cblock', '#FFAB19', { times: 4 }, demoX,
+                demoY + 150);
+            const id5 = createWorkspaceBlock('motion_movesteps', 'Mover 30 pasos', 'stack', '#4C97FF', { steps: 30 },
+                demoX + 30, demoY + 210);
+            const id6 = createWorkspaceBlock('motion_turnright', 'Girar derecha 90°', 'stack', '#4C97FF', { degrees: 90 },
+                demoX + 30, demoY + 260);
+
+            // Connect demo blocks
+            workspaceBlocks[id1].nextBlockId = id2;
+            workspaceBlocks[id1].div._nextBlockId = id2;
+            workspaceBlocks[id2].prevBlockId = id1;
+            workspaceBlocks[id2].div._prevBlockId = id1;
+            workspaceBlocks[id2].nextBlockId = id3;
+            workspaceBlocks[id2].div._nextBlockId = id3;
+            workspaceBlocks[id3].prevBlockId = id2;
+            workspaceBlocks[id3].div._prevBlockId = id2;
+            workspaceBlocks[id3].nextBlockId = id4;
+            workspaceBlocks[id3].div._nextBlockId = id4;
+            workspaceBlocks[id4].prevBlockId = id3;
+            workspaceBlocks[id4].div._prevBlockId = id3;
+            workspaceBlocks[id4].innerBlockIds = [id5];
+            workspaceBlocks[id4].div._innerBlockIds = [id5];
+            workspaceBlocks[id5].parentCBlockId = id4;
+            workspaceBlocks[id5].div._parentCBlockId = id4;
+            workspaceBlocks[id5].nextBlockId = id6;
+            workspaceBlocks[id5].div._nextBlockId = id6;
+            workspaceBlocks[id6].prevBlockId = id5;
+            workspaceBlocks[id6].div._prevBlockId = id5;
+
+            // Initialize default variable
+            variables['miVar'] = 0;
+            variables['puntos'] = 0;
+            lists['miLista'] = ['manzana', 'pera', 'uva'];
+            updateStageInfo();
+        }
+
+        // --- Animation loop for stage ---
+        function animationLoop() {
+            if (sprite.sayTimer > 0 && sprite.sayTimer < 9999) {
+                sprite.sayTimer -= 0.03;
+                if (sprite.sayTimer <= 0) { sprite.sayText = '';
+                    sprite.sayTimer = 0; }
+            }
+            if (sprite.thinkTimer > 0 && sprite.thinkTimer < 9999) {
+                sprite.thinkTimer -= 0.03;
+                if (sprite.thinkTimer <= 0) { sprite.thinkText = '';
+                    sprite.thinkTimer = 0; }
+            }
+            if (!isRunning || runAbort) {
+                drawStage();
+            }
+            updateStageInfo();
+            requestAnimationFrame(animationLoop);
+        }
+
+        init();
+        animationLoop();
+        log('✅ BlockIngenier inicializado correctamente.');
+        log('📋 Categorías: Movimiento, Apariencia, Sonido, Eventos, Control, Sensores, Operadores, Variables, Mis Bloques.');
+    </script>
 </body>
 </html>
