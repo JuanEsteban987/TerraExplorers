@@ -515,7 +515,11 @@
             { kind: 'block', type: 'operators_random' },
             { kind: 'block', type: 'operators_join' },
         ]},
-        { kind: 'category', name: 'Variables', colour: '#FF8C1A', custom: 'VARIABLE' },
+        { kind: 'category', name: 'Variables', colour: '#FF8C1A', blocks: [
+            { kind: 'block', type: 'variables_set' },
+            { kind: 'block', type: 'variables_change' },
+            { kind: 'block', type: 'variables_get' },
+        ]},
       ]
     };
 
@@ -644,13 +648,11 @@
       return def;
     }
     function getInputTargetBlock(block, name) {
-      const input = block.getInputTargetBlock(name);
-      return input;
+      return block.getInputTargetBlock(name);
     }
     async function evaluateBlock(block) {
       if (runAbort) return;
       const type = block.type;
-      // Motion
       if (type==='motion_movesteps') {
         const steps = parseFloat(getFieldValue(block,'STEPS',10));
         const rad = sprite.direction * Math.PI/180;
@@ -667,7 +669,6 @@
       else if (type==='motion_setx') { sprite.x = parseFloat(getFieldValue(block,'X',0)); }
       else if (type==='motion_changey') { sprite.y += parseFloat(getFieldValue(block,'DY',10)); }
       else if (type==='motion_sety') { sprite.y = parseFloat(getFieldValue(block,'Y',0)); }
-      // Looks
       else if (type==='looks_say') {
         sprite.sayText = getFieldValue(block,'TEXT','Hola');
         const secs = parseFloat(getFieldValue(block,'SECS',2));
@@ -681,17 +682,14 @@
         sprite.size = Math.max(5,Math.min(500,sprite.size));
       } else if (type==='looks_show') { sprite.visible=true; }
       else if (type==='looks_hide') { sprite.visible=false; }
-      // Sound
       else if (type==='sound_play') {
         playBeep(440,0.3);
       }
-      // Events
       else if (type==='events_broadcast') {
         const msg = getFieldValue(block,'MESSAGE','mensaje1');
         broadcastQueue.push(msg);
         log('📡 Enviado: '+msg);
       }
-      // Control
       else if (type==='control_wait') {
         await sleep(parseFloat(getFieldValue(block,'SECS',1))*1000);
       } else if (type==='control_repeat') {
@@ -716,11 +714,9 @@
         const what = getFieldValue(block,'WHAT','all');
         if (what==='all') runAbort=true;
       }
-      // Sensing
       else if (type==='sensing_resettimer') {
         timerStart = Date.now();
       }
-      // Variables
       else if (type==='variables_set') {
         const varName = getFieldValue(block,'VAR','miVar');
         const val = parseFloat(getFieldValue(block,'VAL',0));
@@ -755,7 +751,6 @@
         const next = hat.getNextBlock();
         if (next) await executeStack(next);
       }
-      // Process broadcasts
       while (broadcastQueue.length && !runAbort) {
         const msg = broadcastQueue.shift();
         const receiveHats = topBlocks.filter(b => b.type==='events_whenreceive' && getFieldValue(b,'MESSAGE')===msg);
@@ -782,7 +777,6 @@
       log('⏹ Detenido manualmente');
     }
 
-    // Audio dummy
     function playBeep(freq,dur) {
       try {
         const ctx = new (window.AudioContext||window.webkitAudioContext)();
@@ -857,7 +851,6 @@
       drawStage();
       updateVarDisplay();
       log('🧩 BlockIngenier listo. Arrastra bloques desde la caja de herramientas.');
-      // Ejemplo: algunos bloques para empezar
       const xmlText = `<xml xmlns="https://developers.google.com/blockly/xml">
         <block type="events_whenflag" x="30" y="30">
           <next>
@@ -895,7 +888,6 @@
     }
     init();
 
-    // Animation loop
     function animationLoop() {
       if (sprite.sayTimer>0 && sprite.sayTimer<9999) {
         sprite.sayTimer -= 0.03;
