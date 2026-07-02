@@ -7,15 +7,15 @@
     <style>
         /* Reset y base */
         * {
-            box-sizing: border-box;
             margin: 0;
             padding: 0;
+            box-sizing: border-box;
         }
 
         body {
-            background: #0d0d14;
-            font-family: 'Segoe UI', Roboto, system-ui, sans-serif;
-            color: #d0d0e0;
+            font-family: 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+            background: #0b0b12;
+            color: #e0e0ec;
             min-height: 100vh;
             display: flex;
             align-items: center;
@@ -26,81 +26,131 @@
         /* Contenedor principal */
         .app {
             width: 100%;
-            max-width: 900px;
-            background: #1a1a26;
-            border-radius: 8px;
-            padding: 30px 35px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
+            max-width: 1000px;
+            background: #14141f;
+            border-radius: 16px;
+            padding: 40px 45px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8);
             position: relative;
-            transition: all 0.2s;
+            overflow: hidden;
         }
 
-        /* Pantalla de menú */
+        /* Pantalla de inicio (menú) */
         #menuScreen {
             text-align: center;
-            padding: 40px 0;
+            padding: 50px 20px 40px;
+        }
+
+        #menuScreen .tagline {
+            font-size: 0.9rem;
+            letter-spacing: 4px;
+            color: #6a8ab0;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+            font-weight: 300;
         }
 
         #menuScreen h1 {
-            font-size: 2.6rem;
+            font-size: 4rem;
             font-weight: 300;
             letter-spacing: 2px;
-            color: #e8e8f0;
-            margin-bottom: 12px;
+            color: #f0f4fa;
+            margin-bottom: 10px;
         }
 
-        #menuScreen p {
-            color: #8a8aa0;
-            font-size: 1.1rem;
-            margin-bottom: 40px;
+        #menuScreen h1 span {
+            color: #6a8ab0;
+            font-weight: 500;
         }
 
-        .btn-primary {
-            background: #4a6a8a;
+        #menuScreen .sub {
+            font-size: 1.2rem;
+            color: #9a9ab0;
+            max-width: 550px;
+            margin: 10px auto 35px;
+            line-height: 1.5;
+            font-weight: 300;
+        }
+
+        .btn-start {
+            background: #2a4a6a;
             border: none;
-            color: #f0f0fa;
+            color: #f0f4fa;
             font-size: 1.3rem;
             font-weight: 500;
-            padding: 14px 48px;
-            border-radius: 30px;
+            padding: 16px 60px;
+            border-radius: 40px;
             cursor: pointer;
-            transition: background 0.25s, transform 0.1s;
-            letter-spacing: 1px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+            transition: background 0.3s, transform 0.1s;
+            letter-spacing: 2px;
+            box-shadow: 0 6px 18px rgba(42, 74, 106, 0.4);
         }
 
-        .btn-primary:hover {
-            background: #5f82a6;
+        .btn-start:hover {
+            background: #3a5f82;
             transform: scale(1.02);
         }
 
-        .btn-primary:active {
+        .btn-start:active {
             transform: scale(0.97);
         }
 
-        /* Pantalla del creador (inicialmente oculta) */
+        /* Pantalla del creador (pasos) */
         #creatorScreen {
             display: none;
         }
 
-        /* Estilos del formulario */
-        h2 {
-            font-weight: 300;
-            font-size: 1.8rem;
-            color: #d4d4e8;
-            border-bottom: 1px solid #33334a;
-            padding-bottom: 12px;
-            margin-top: 0;
-            margin-bottom: 24px;
+        /* Navegación por pasos */
+        .steps-nav {
+            display: flex;
+            gap: 30px;
+            justify-content: center;
+            margin-bottom: 30px;
+            border-bottom: 1px solid #2a2a3a;
+            padding-bottom: 16px;
         }
 
-        h3 {
-            font-weight: 400;
-            font-size: 1.2rem;
-            color: #b0b0c8;
-            margin: 28px 0 14px 0;
-            border-left: 3px solid #4a6a8a;
-            padding-left: 12px;
+        .step-indicator {
+            font-size: 1rem;
+            color: #6a6a84;
+            padding: 6px 16px;
+            border-radius: 20px;
+            background: #1e1e2e;
+            transition: background 0.2s, color 0.2s;
+            cursor: default;
+        }
+
+        .step-indicator.active {
+            background: #2a4a6a;
+            color: #f0f4fa;
+        }
+
+        .step-panel {
+            display: none;
+            animation: fade 0.3s ease;
+        }
+
+        .step-panel.active {
+            display: block;
+        }
+
+        @keyframes fade {
+            0% { opacity: 0.4; transform: translateY(6px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+
+        h2 {
+            font-weight: 300;
+            font-size: 2rem;
+            color: #d4d8e8;
+            margin-bottom: 20px;
+            letter-spacing: 1px;
+        }
+
+        h2 small {
+            font-size: 1rem;
+            color: #6a8ab0;
+            font-weight: 300;
         }
 
         label {
@@ -108,7 +158,7 @@
             margin-top: 16px;
             font-size: 0.9rem;
             font-weight: 500;
-            color: #b8b8d0;
+            color: #b0b8d0;
             letter-spacing: 0.3px;
         }
 
@@ -118,10 +168,10 @@
             width: 100%;
             padding: 10px 14px;
             margin-top: 4px;
-            background: #252536;
-            border: 1px solid #3a3a52;
-            border-radius: 4px;
-            color: #eaeaf0;
+            background: #1e1e30;
+            border: 1px solid #2e3a4a;
+            border-radius: 6px;
+            color: #e8ecf4;
             font-size: 0.95rem;
             transition: border 0.2s, background 0.2s;
         }
@@ -130,8 +180,8 @@
         textarea:focus,
         select:focus {
             outline: none;
-            border-color: #5f82a6;
-            background: #2e2e44;
+            border-color: #4a7a9a;
+            background: #26263a;
         }
 
         textarea {
@@ -143,7 +193,7 @@
 
         .row {
             display: flex;
-            gap: 18px;
+            gap: 20px;
             flex-wrap: wrap;
         }
 
@@ -152,18 +202,18 @@
         }
 
         .hint {
-            color: #7a7a94;
+            color: #6a6a84;
             font-size: 0.8rem;
             margin-top: 3px;
         }
 
         /* Grupos dinámicos (recetas y funciones) */
         .group-card {
-            background: #15151f;
-            border-left: 3px solid #4a6a8a;
+            background: #18182a;
+            border-left: 3px solid #3a6a8a;
             padding: 18px 20px;
             margin-top: 18px;
-            border-radius: 4px;
+            border-radius: 6px;
             position: relative;
         }
 
@@ -171,19 +221,19 @@
             position: absolute;
             top: 12px;
             right: 14px;
-            background: #553333;
+            background: #442a2a;
             border: none;
-            color: #d0b0b0;
+            color: #c0a0a0;
             font-size: 1.1rem;
-            padding: 0 8px;
-            border-radius: 3px;
+            padding: 0 10px;
+            border-radius: 4px;
             cursor: pointer;
-            line-height: 1.6;
+            line-height: 1.8;
             transition: background 0.2s;
         }
 
         .group-card .remove-btn:hover {
-            background: #7a4444;
+            background: #6a3a3a;
         }
 
         .ingredient-row {
@@ -203,11 +253,11 @@
         }
 
         .btn-sm {
-            background: #3a3a52;
+            background: #2a3a4a;
             border: none;
-            color: #d0d0e0;
+            color: #d0d8e8;
             padding: 4px 14px;
-            border-radius: 3px;
+            border-radius: 4px;
             cursor: pointer;
             font-weight: 500;
             font-size: 1rem;
@@ -219,67 +269,84 @@
         }
 
         .btn-sm:hover {
-            background: #4e4e6e;
+            background: #3a506a;
         }
 
         .btn-sm.danger {
-            background: #553333;
+            background: #4a2a2a;
         }
         .btn-sm.danger:hover {
-            background: #7a4444;
+            background: #6a3a3a;
         }
 
         .btn-sm.success {
-            background: #2a5a3a;
+            background: #2a4a3a;
         }
         .btn-sm.success:hover {
-            background: #3a7a4a;
+            background: #3a6a4a;
         }
 
         .btn-add {
             background: transparent;
-            border: 1px dashed #4a6a8a;
-            color: #b0b0c8;
-            padding: 8px 18px;
-            border-radius: 20px;
+            border: 1px dashed #3a6a8a;
+            color: #a0b0c8;
+            padding: 8px 22px;
+            border-radius: 30px;
             cursor: pointer;
-            margin-top: 12px;
+            margin-top: 16px;
             transition: background 0.2s, border 0.2s;
             font-size: 0.9rem;
         }
 
         .btn-add:hover {
             background: #1a2a3a;
-            border-color: #5f82a6;
+            border-color: #5a8aaa;
+        }
+
+        .btn-nav {
+            background: #2a4a6a;
+            border: none;
+            color: #f0f4fa;
+            font-size: 1rem;
+            padding: 10px 30px;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: background 0.25s;
+            letter-spacing: 1px;
+            margin-top: 20px;
+        }
+
+        .btn-nav:hover {
+            background: #3a5f82;
         }
 
         .btn-generate {
-            background: #4a6a8a;
+            background: #2a6a4a;
             border: none;
-            color: #f0f0fa;
-            font-size: 1.2rem;
+            color: #f0f4fa;
+            font-size: 1.1rem;
             font-weight: 500;
             padding: 14px 0;
             width: 100%;
             border-radius: 30px;
             cursor: pointer;
             transition: background 0.25s;
-            margin-top: 30px;
+            margin-top: 25px;
             letter-spacing: 1px;
         }
 
         .btn-generate:hover {
-            background: #5f82a6;
+            background: #3a8a5a;
         }
 
         .status {
             margin-top: 20px;
             padding: 12px 16px;
-            border-radius: 4px;
+            border-radius: 6px;
             background: #1a1a2a;
-            color: #d0d0e0;
+            color: #d0d8e8;
             display: none;
-            border-left: 4px solid #4a6a8a;
+            border-left: 4px solid #3a6a8a;
         }
 
         .status.error {
@@ -294,22 +361,37 @@
 
         .footer {
             text-align: center;
-            color: #5a5a72;
+            color: #4a4a62;
             font-size: 0.8rem;
-            margin-top: 28px;
-            border-top: 1px solid #25253a;
+            margin-top: 30px;
+            border-top: 1px solid #22223a;
             padding-top: 18px;
         }
 
-        /* Ocultar/mostrar */
-        .hidden {
-            display: none !important;
+        /* Botón volver al menú desde el creador (pequeño) */
+        .back-menu {
+            background: transparent;
+            border: none;
+            color: #5a6a84;
+            font-size: 0.9rem;
+            cursor: pointer;
+            text-decoration: underline;
+            padding: 6px 10px;
+            margin-bottom: 10px;
+            transition: color 0.2s;
+        }
+
+        .back-menu:hover {
+            color: #8a9ab0;
         }
 
         /* Responsive */
-        @media (max-width: 600px) {
+        @media (max-width: 640px) {
             .app {
                 padding: 20px 18px;
+            }
+            #menuScreen h1 {
+                font-size: 2.8rem;
             }
             .row {
                 gap: 10px;
@@ -320,117 +402,185 @@
             .ingredient-row input[type="number"] {
                 flex: 1 1 60px;
             }
+            .steps-nav {
+                gap: 12px;
+                flex-wrap: wrap;
+            }
         }
     </style>
 </head>
 <body>
     <div class="app">
-        <!-- PANTALLA DE MENÚ -->
+        <!-- PANTALLA DE INICIO (MENÚ) -->
         <div id="menuScreen">
-            <h1>Creador de Datapack</h1>
-            <p>Genera datapacks para Minecraft Java Edition con recetas y funciones personalizadas.</p>
-            <button class="btn-primary" id="btnStart">Crear Mod</button>
+            <div class="tagline">Creador de Datapack</div>
+            <h1><span>MOD</span> MAKER</h1>
+            <p class="sub">Diseña tu propio datapack para Minecraft Java Edition con recetas personalizadas y funciones a medida.</p>
+            <button class="btn-start" id="btnStart">Crear Mod</button>
         </div>
 
-        <!-- PANTALLA DEL CREADOR -->
+        <!-- PANTALLA DEL CREADOR (PASOS) -->
         <div id="creatorScreen">
-            <h2>Configuración del datapack</h2>
+            <button class="back-menu" id="btnBackMenu">← Volver al menú</button>
 
-            <!-- Datos generales -->
-            <div class="row">
-                <div>
-                    <label for="modName">Nombre (namespace)</label>
-                    <input type="text" id="modName" placeholder="ej: mipack" value="mipack" required>
-                    <div class="hint">minúsculas, números y guión bajo</div>
-                </div>
-                <div>
-                    <label for="modDescription">Descripción</label>
-                    <input type="text" id="modDescription" placeholder="breve descripción" value="Mi datapack personalizado">
-                </div>
-            </div>
-            <div class="row">
-                <div>
-                    <label for="packFormat">Formato de pack</label>
-                    <select id="packFormat">
-                        <option value="4">1.13 - 1.14</option>
-                        <option value="5">1.15 - 1.16.1</option>
-                        <option value="6">1.16.2 - 1.16.5</option>
-                        <option value="7">1.17 - 1.18.1</option>
-                        <option value="8">1.18.2 - 1.19.2</option>
-                        <option value="9" selected>1.19.3 - 1.20.1</option>
-                        <option value="10">1.20.2 - 1.20.4</option>
-                        <option value="12">1.20.5 - 1.21.4</option>
-                        <option value="13">1.21.5+</option>
-                    </select>
-                </div>
-                <div>
-                    <label for="modVersion">Versión del datapack</label>
-                    <input type="text" id="modVersion" placeholder="1.0.0" value="1.0.0">
-                </div>
+            <!-- Navegación de pasos -->
+            <div class="steps-nav">
+                <span class="step-indicator active" id="step1Label">Paso 1 · Configuración</span>
+                <span class="step-indicator" id="step2Label">Paso 2 · Contenido</span>
             </div>
 
-            <!-- Recetas -->
-            <h3>Recetas</h3>
-            <div id="recipesContainer">
-                <!-- Grupo de receta por defecto -->
-                <div class="group-card recipe-group" data-index="0">
-                    <button type="button" class="remove-btn" onclick="removeGroup(this, 'recipe')">✕</button>
-                    <div class="row">
-                        <div>
-                            <label>Identificador de la receta</label>
-                            <input type="text" class="recipe-name" placeholder="ej: espada" value="receta_ejemplo" required>
+            <!-- PASO 1: Configuración general -->
+            <div class="step-panel active" id="step1Panel">
+                <h2>Configuración del datapack <small>Paso 1</small></h2>
+                <div class="row">
+                    <div>
+                        <label for="modName">Nombre (namespace)</label>
+                        <input type="text" id="modName" placeholder="ej: mipack" value="mipack" required>
+                        <div class="hint">minúsculas, números y guión bajo</div>
+                    </div>
+                    <div>
+                        <label for="modDescription">Descripción</label>
+                        <input type="text" id="modDescription" placeholder="breve descripción" value="Mi datapack personalizado">
+                    </div>
+                </div>
+                <div class="row">
+                    <div>
+                        <label for="packFormat">Formato de pack</label>
+                        <select id="packFormat">
+                            <option value="4">1.13 - 1.14</option>
+                            <option value="5">1.15 - 1.16.1</option>
+                            <option value="6">1.16.2 - 1.16.5</option>
+                            <option value="7">1.17 - 1.18.1</option>
+                            <option value="8">1.18.2 - 1.19.2</option>
+                            <option value="9" selected>1.19.3 - 1.20.1</option>
+                            <option value="10">1.20.2 - 1.20.4</option>
+                            <option value="12">1.20.5 - 1.21.4</option>
+                            <option value="13">1.21.5+</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="modVersion">Versión del datapack</label>
+                        <input type="text" id="modVersion" placeholder="1.0.0" value="1.0.0">
+                    </div>
+                </div>
+                <button class="btn-nav" id="btnStep2">Siguiente →</button>
+            </div>
+
+            <!-- PASO 2: Recetas y funciones -->
+            <div class="step-panel" id="step2Panel">
+                <h2>Añadir contenido <small>Paso 2</small></h2>
+
+                <!-- Recetas -->
+                <h3 style="font-weight:400; color:#b0b8d0; margin-top:0;">Recetas</h3>
+                <div id="recipesContainer">
+                    <!-- Grupo de receta por defecto -->
+                    <div class="group-card recipe-group" data-index="0">
+                        <button type="button" class="remove-btn" onclick="removeGroup(this, 'recipe')">✕</button>
+                        <div class="row">
+                            <div>
+                                <label>Identificador de la receta</label>
+                                <input type="text" class="recipe-name" placeholder="ej: espada" value="receta_ejemplo" required>
+                            </div>
+                            <div>
+                                <label>Resultado (item y cantidad)</label>
+                                <div style="display:flex; gap:8px;">
+                                    <input type="text" class="recipe-result-item" placeholder="minecraft:diamond_sword" value="minecraft:diamond_sword" style="flex:2;">
+                                    <input type="number" class="recipe-result-count" placeholder="1" value="1" min="1" style="flex:0 0 70px;">
+                                </div>
+                            </div>
                         </div>
-                        <div>
-                            <label>Resultado (item y cantidad)</label>
-                            <div style="display:flex; gap:8px;">
-                                <input type="text" class="recipe-result-item" placeholder="minecraft:diamond_sword" value="minecraft:diamond_sword" style="flex:2;">
-                                <input type="number" class="recipe-result-count" placeholder="1" value="1" min="1" style="flex:0 0 70px;">
+                        <label>Ingredientes (item:cantidad)</label>
+                        <div class="ingredients-list">
+                            <div class="ingredient-row">
+                                <input type="text" class="ingredient-item" placeholder="minecraft:diamond" value="minecraft:diamond">
+                                <input type="number" class="ingredient-count" placeholder="1" value="1" min="1">
+                                <button type="button" class="btn-sm" onclick="addIngredient(this)">+</button>
                             </div>
                         </div>
                     </div>
-                    <label>Ingredientes (item:cantidad)</label>
-                    <div class="ingredients-list">
-                        <div class="ingredient-row">
-                            <input type="text" class="ingredient-item" placeholder="minecraft:diamond" value="minecraft:diamond">
-                            <input type="number" class="ingredient-count" placeholder="1" value="1" min="1">
-                            <button type="button" class="btn-sm" onclick="addIngredient(this)">+</button>
-                        </div>
+                </div>
+                <button type="button" class="btn-add" onclick="addRecipeGroup()">+ Añadir receta</button>
+
+                <!-- Funciones -->
+                <h3 style="font-weight:400; color:#b0b8d0; margin-top:30px;">Funciones</h3>
+                <p class="hint">Comandos que se ejecutarán al llamar la función.</p>
+                <div id="functionsContainer">
+                    <div class="group-card function-group" data-index="0">
+                        <button type="button" class="remove-btn" onclick="removeGroup(this, 'function')">✕</button>
+                        <label>Identificador de la función</label>
+                        <input type="text" class="function-name" placeholder="ej: dar_espada" value="dar_espada" required>
+                        <label>Comandos (uno por línea)</label>
+                        <textarea class="function-commands" rows="4">give @s minecraft:diamond_sword{display:{Name:'{"text":"Espada de diamante","color":"gold"}'},Enchantments:[{id:"minecraft:sharpness",lvl:2}]} 1</textarea>
                     </div>
                 </div>
+                <button type="button" class="btn-add" onclick="addFunctionGroup()">+ Añadir función</button>
+
+                <!-- Botón generar -->
+                <button type="button" class="btn-generate" onclick="generateMod()">Generar y descargar .zip</button>
+
+                <div id="status" class="status"></div>
+                <div class="footer">El .zip generado es un datapack listo para la carpeta datapacks de tu mundo.</div>
             </div>
-            <button type="button" class="btn-add" onclick="addRecipeGroup()">+ Añadir receta</button>
-
-            <!-- Funciones -->
-            <h3>Funciones</h3>
-            <p class="hint">Comandos que se ejecutarán al llamar la función (ej. para dar ítems personalizados).</p>
-            <div id="functionsContainer">
-                <div class="group-card function-group" data-index="0">
-                    <button type="button" class="remove-btn" onclick="removeGroup(this, 'function')">✕</button>
-                    <label>Identificador de la función</label>
-                    <input type="text" class="function-name" placeholder="ej: dar_espada" value="dar_espada" required>
-                    <label>Comandos (uno por línea)</label>
-                    <textarea class="function-commands" rows="4">give @s minecraft:diamond_sword{display:{Name:'{"text":"Espada de diamante","color":"gold"}'},Enchantments:[{id:"minecraft:sharpness",lvl:2}]} 1</textarea>
-                </div>
-            </div>
-            <button type="button" class="btn-add" onclick="addFunctionGroup()">+ Añadir función</button>
-
-            <!-- Botón generar -->
-            <button type="button" class="btn-generate" onclick="generateMod()">Generar y descargar .zip</button>
-
-            <div id="status" class="status"></div>
-            <div class="footer">El .zip generado es un datapack listo para la carpeta datapacks de tu mundo.</div>
         </div>
     </div>
 
-    <!-- Librería JSZip para crear el zip -->
+    <!-- Librería JSZip -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js">
     </script>
 
     <script>
-        // ------------------- Manejo de pantallas -------------------
+        // ------------------- Manejo de pantallas y pasos -------------------
+
+        // Mostrar menú o creador
         document.getElementById('btnStart').addEventListener('click', function() {
             document.getElementById('menuScreen').style.display = 'none';
             document.getElementById('creatorScreen').style.display = 'block';
+            // Asegurar que el paso 1 esté activo
+            showStep(1);
+        });
+
+        document.getElementById('btnBackMenu').addEventListener('click', function() {
+            document.getElementById('creatorScreen').style.display = 'none';
+            document.getElementById('menuScreen').style.display = 'block';
+        });
+
+        // Navegación entre pasos
+        function showStep(step) {
+            // Ocultar todos los paneles
+            document.querySelectorAll('.step-panel').forEach(p => p.classList.remove('active'));
+            // Mostrar el panel correspondiente
+            document.getElementById('step' + step + 'Panel').classList.add('active');
+            // Actualizar indicadores
+            document.querySelectorAll('.step-indicator').forEach(el => el.classList.remove('active'));
+            document.getElementById('step' + step + 'Label').classList.add('active');
+        }
+
+        document.getElementById('btnStep2').addEventListener('click', function() {
+            // Validar que el nombre no esté vacío
+            const name = document.getElementById('modName').value.trim();
+            if (!name) {
+                alert('El nombre del mod no puede estar vacío.');
+                return;
+            }
+            if (!/^[a-z0-9_]+$/.test(name.toLowerCase())) {
+                alert('El nombre solo puede contener minúsculas, números y guión bajo.');
+                return;
+            }
+            showStep(2);
+        });
+
+        // También permitir clic en los indicadores (solo navegación, pero no validación)
+        document.querySelectorAll('.step-indicator').forEach(el => {
+            el.addEventListener('click', function() {
+                const step = this.id.replace('step', '').replace('Label', '');
+                if (step === '1') {
+                    showStep(1);
+                } else if (step === '2') {
+                    // Podríamos validar, pero dejamos que el botón lo haga
+                    // Por simplicidad, permitimos ir al paso 2 sin validar
+                    showStep(2);
+                }
+            });
         });
 
         // ------------------- Funciones para grupos dinámicos -------------------
@@ -571,9 +721,8 @@
             return str.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
         }
 
-        // Inicialización: asegurar que los grupos tengan los botones correctos
+        // Inicializar grupos (asegurar botones)
         document.addEventListener('DOMContentLoaded', function() {
-            // Recetas
             document.querySelectorAll('#recipesContainer .recipe-group').forEach(group => {
                 const list = group.querySelector('.ingredients-list');
                 const rows = list.querySelectorAll('.ingredient-row');
@@ -597,7 +746,7 @@
             status.className = 'status';
             status.style.display = 'none';
 
-            // Obtener datos del formulario
+            // Obtener datos del paso 1
             const modNameRaw = document.getElementById('modName').value.trim();
             const modDescription = document.getElementById('modDescription').value.trim() || 'Mi datapack';
             const packFormat = parseInt(document.getElementById('packFormat').value);
