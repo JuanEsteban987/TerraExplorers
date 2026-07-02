@@ -3,236 +3,354 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Generador de Datapack / Mod para Minecraft</title>
+    <title>Creador de Datapack</title>
     <style>
+        /* Reset y base */
         * {
             box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
         }
+
         body {
-            background: #1e1e2f;
-            color: #e0e0e0;
-            padding: 20px;
+            background: #0d0d14;
+            font-family: 'Segoe UI', Roboto, system-ui, sans-serif;
+            color: #d0d0e0;
+            min-height: 100vh;
             display: flex;
+            align-items: center;
             justify-content: center;
+            padding: 20px;
         }
-        .container {
-            max-width: 900px;
+
+        /* Contenedor principal */
+        .app {
             width: 100%;
-            background: #2d2d44;
-            padding: 25px 30px;
-            border-radius: 16px;
-            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.7);
+            max-width: 900px;
+            background: #1a1a26;
+            border-radius: 8px;
+            padding: 30px 35px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
+            position: relative;
+            transition: all 0.2s;
         }
-        h1 {
+
+        /* Pantalla de menú */
+        #menuScreen {
             text-align: center;
-            color: #f0c27f;
-            margin-top: 0;
+            padding: 40px 0;
+        }
+
+        #menuScreen h1 {
+            font-size: 2.6rem;
+            font-weight: 300;
+            letter-spacing: 2px;
+            color: #e8e8f0;
+            margin-bottom: 12px;
+        }
+
+        #menuScreen p {
+            color: #8a8aa0;
+            font-size: 1.1rem;
+            margin-bottom: 40px;
+        }
+
+        .btn-primary {
+            background: #4a6a8a;
+            border: none;
+            color: #f0f0fa;
+            font-size: 1.3rem;
             font-weight: 500;
-            border-bottom: 2px solid #3d3d5c;
-            padding-bottom: 15px;
+            padding: 14px 48px;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: background 0.25s, transform 0.1s;
+            letter-spacing: 1px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
         }
+
+        .btn-primary:hover {
+            background: #5f82a6;
+            transform: scale(1.02);
+        }
+
+        .btn-primary:active {
+            transform: scale(0.97);
+        }
+
+        /* Pantalla del creador (inicialmente oculta) */
+        #creatorScreen {
+            display: none;
+        }
+
+        /* Estilos del formulario */
         h2 {
-            color: #b8b8d0;
-            font-weight: 400;
-            border-left: 4px solid #f0c27f;
-            padding-left: 12px;
-            margin-top: 30px;
+            font-weight: 300;
+            font-size: 1.8rem;
+            color: #d4d4e8;
+            border-bottom: 1px solid #33334a;
+            padding-bottom: 12px;
+            margin-top: 0;
+            margin-bottom: 24px;
         }
+
+        h3 {
+            font-weight: 400;
+            font-size: 1.2rem;
+            color: #b0b0c8;
+            margin: 28px 0 14px 0;
+            border-left: 3px solid #4a6a8a;
+            padding-left: 12px;
+        }
+
         label {
             display: block;
-            margin-top: 14px;
+            margin-top: 16px;
+            font-size: 0.9rem;
             font-weight: 500;
-            color: #c8c8e0;
+            color: #b8b8d0;
+            letter-spacing: 0.3px;
         }
+
         input,
         textarea,
         select {
             width: 100%;
-            padding: 10px 12px;
-            margin-top: 5px;
-            border: none;
-            border-radius: 8px;
-            background: #3b3b55;
-            color: #f0f0f0;
-            font-size: 14px;
-            transition: 0.2s;
+            padding: 10px 14px;
+            margin-top: 4px;
+            background: #252536;
+            border: 1px solid #3a3a52;
+            border-radius: 4px;
+            color: #eaeaf0;
+            font-size: 0.95rem;
+            transition: border 0.2s, background 0.2s;
         }
+
         input:focus,
         textarea:focus,
         select:focus {
-            outline: 2px solid #f0c27f;
-            background: #444466;
+            outline: none;
+            border-color: #5f82a6;
+            background: #2e2e44;
         }
+
         textarea {
             resize: vertical;
-            min-height: 70px;
             font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            min-height: 70px;
         }
+
         .row {
             display: flex;
-            gap: 16px;
+            gap: 18px;
             flex-wrap: wrap;
         }
+
         .row>div {
             flex: 1 1 200px;
         }
-        .btn {
-            background: #f0c27f;
-            color: #1e1e2f;
-            border: none;
-            padding: 10px 22px;
-            border-radius: 30px;
-            font-weight: 600;
-            font-size: 15px;
-            cursor: pointer;
-            transition: 0.2s;
-            margin-top: 12px;
+
+        .hint {
+            color: #7a7a94;
+            font-size: 0.8rem;
+            margin-top: 3px;
         }
-        .btn:hover {
-            background: #f5d39c;
-            transform: scale(1.02);
-        }
-        .btn-danger {
-            background: #d97070;
-            color: #1e1e2f;
-        }
-        .btn-danger:hover {
-            background: #e08484;
-        }
-        .btn-success {
-            background: #7bc47f;
-        }
-        .btn-success:hover {
-            background: #8fd493;
-        }
-        .btn-generate {
-            background: #f0c27f;
-            font-size: 18px;
-            padding: 14px 30px;
-            display: block;
-            width: 100%;
-            margin-top: 30px;
-        }
-        .recipe-group,
-        .function-group {
-            background: #25253a;
-            border-radius: 12px;
-            padding: 16px 18px;
-            margin-top: 16px;
-            border-left: 4px solid #f0c27f;
+
+        /* Grupos dinámicos (recetas y funciones) */
+        .group-card {
+            background: #15151f;
+            border-left: 3px solid #4a6a8a;
+            padding: 18px 20px;
+            margin-top: 18px;
+            border-radius: 4px;
             position: relative;
         }
-        .recipe-group .remove-btn,
-        .function-group .remove-btn {
+
+        .group-card .remove-btn {
             position: absolute;
-            top: 10px;
+            top: 12px;
             right: 14px;
-            background: #d97070;
-            color: #1e1e2f;
+            background: #553333;
             border: none;
-            border-radius: 50%;
-            width: 28px;
-            height: 28px;
-            font-weight: bold;
+            color: #d0b0b0;
+            font-size: 1.1rem;
+            padding: 0 8px;
+            border-radius: 3px;
             cursor: pointer;
-            font-size: 16px;
-            line-height: 1;
+            line-height: 1.6;
+            transition: background 0.2s;
         }
-        .recipe-group .remove-btn:hover,
-        .function-group .remove-btn:hover {
-            background: #e08484;
+
+        .group-card .remove-btn:hover {
+            background: #7a4444;
         }
+
         .ingredient-row {
             display: flex;
             gap: 10px;
             align-items: center;
             margin-top: 8px;
         }
+
         .ingredient-row input {
             flex: 1;
         }
-        .ingredient-row .btn-small {
-            background: #5a5a7a;
-            color: #eee;
+
+        .ingredient-row input[type="number"] {
+            flex: 0 0 70px;
+            min-width: 60px;
+        }
+
+        .btn-sm {
+            background: #3a3a52;
             border: none;
-            border-radius: 6px;
-            padding: 6px 12px;
+            color: #d0d0e0;
+            padding: 4px 14px;
+            border-radius: 3px;
             cursor: pointer;
-            font-weight: bold;
+            font-weight: 500;
+            font-size: 1rem;
+            transition: background 0.15s;
+            height: 36px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
         }
-        .ingredient-row .btn-small:hover {
-            background: #6e6e92;
+
+        .btn-sm:hover {
+            background: #4e4e6e;
         }
-        .hint {
-            color: #a0a0b8;
-            font-size: 13px;
-            margin-top: 4px;
+
+        .btn-sm.danger {
+            background: #553333;
         }
+        .btn-sm.danger:hover {
+            background: #7a4444;
+        }
+
+        .btn-sm.success {
+            background: #2a5a3a;
+        }
+        .btn-sm.success:hover {
+            background: #3a7a4a;
+        }
+
+        .btn-add {
+            background: transparent;
+            border: 1px dashed #4a6a8a;
+            color: #b0b0c8;
+            padding: 8px 18px;
+            border-radius: 20px;
+            cursor: pointer;
+            margin-top: 12px;
+            transition: background 0.2s, border 0.2s;
+            font-size: 0.9rem;
+        }
+
+        .btn-add:hover {
+            background: #1a2a3a;
+            border-color: #5f82a6;
+        }
+
+        .btn-generate {
+            background: #4a6a8a;
+            border: none;
+            color: #f0f0fa;
+            font-size: 1.2rem;
+            font-weight: 500;
+            padding: 14px 0;
+            width: 100%;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: background 0.25s;
+            margin-top: 30px;
+            letter-spacing: 1px;
+        }
+
+        .btn-generate:hover {
+            background: #5f82a6;
+        }
+
+        .status {
+            margin-top: 20px;
+            padding: 12px 16px;
+            border-radius: 4px;
+            background: #1a1a2a;
+            color: #d0d0e0;
+            display: none;
+            border-left: 4px solid #4a6a8a;
+        }
+
+        .status.error {
+            border-left-color: #b55a5a;
+            background: #2a1a1a;
+        }
+
+        .status.success {
+            border-left-color: #5a9a6a;
+            background: #1a2a1a;
+        }
+
         .footer {
             text-align: center;
-            margin-top: 25px;
-            color: #7a7a9a;
-            font-size: 13px;
+            color: #5a5a72;
+            font-size: 0.8rem;
+            margin-top: 28px;
+            border-top: 1px solid #25253a;
+            padding-top: 18px;
         }
-        .status {
-            margin-top: 18px;
-            padding: 12px;
-            border-radius: 8px;
-            background: #3b3b55;
-            color: #e0e0e0;
-            display: none;
+
+        /* Ocultar/mostrar */
+        .hidden {
+            display: none !important;
         }
-        .status.error {
-            background: #6b3a3a;
-            display: block;
-        }
-        .status.success {
-            background: #2a5a3a;
-            display: block;
-        }
-        .inline-group {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-            align-items: center;
-        }
-        .inline-group label {
-            margin-top: 0;
-            flex: 0 0 auto;
-        }
-        .inline-group input {
-            flex: 1;
-            min-width: 100px;
-        }
-        .inline-group select {
-            flex: 0 0 auto;
-            width: auto;
+
+        /* Responsive */
+        @media (max-width: 600px) {
+            .app {
+                padding: 20px 18px;
+            }
+            .row {
+                gap: 10px;
+            }
+            .ingredient-row {
+                flex-wrap: wrap;
+            }
+            .ingredient-row input[type="number"] {
+                flex: 1 1 60px;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>⛏️ Generador de Datapack / Mod</h1>
-        <p style="text-align:center; color:#b0b0c8;">Crea un datapack para Minecraft Java Edition con recetas y funciones personalizadas.</p>
+    <div class="app">
+        <!-- PANTALLA DE MENÚ -->
+        <div id="menuScreen">
+            <h1>Creador de Datapack</h1>
+            <p>Genera datapacks para Minecraft Java Edition con recetas y funciones personalizadas.</p>
+            <button class="btn-primary" id="btnStart">Crear Mod</button>
+        </div>
 
-        <form id="modForm">
-            <!-- Datos principales -->
-            <h2>Información del Datapack</h2>
+        <!-- PANTALLA DEL CREADOR -->
+        <div id="creatorScreen">
+            <h2>Configuración del datapack</h2>
+
+            <!-- Datos generales -->
             <div class="row">
                 <div>
-                    <label for="modName">Nombre del mod (namespace)</label>
+                    <label for="modName">Nombre (namespace)</label>
                     <input type="text" id="modName" placeholder="ej: mipack" value="mipack" required>
-                    <div class="hint">Solo minúsculas, números y guión bajo. Sin espacios.</div>
+                    <div class="hint">minúsculas, números y guión bajo</div>
                 </div>
                 <div>
                     <label for="modDescription">Descripción</label>
-                    <input type="text" id="modDescription" placeholder="Breve descripción" value="Mi datapack personalizado">
+                    <input type="text" id="modDescription" placeholder="breve descripción" value="Mi datapack personalizado">
                 </div>
             </div>
             <div class="row">
                 <div>
-                    <label for="packFormat">Formato de pack (versión)</label>
+                    <label for="packFormat">Formato de pack</label>
                     <select id="packFormat">
                         <option value="4">1.13 - 1.14</option>
                         <option value="5">1.15 - 1.16.1</option>
@@ -246,28 +364,27 @@
                     </select>
                 </div>
                 <div>
-                    <label for="modVersion">Versión del datapack (opcional)</label>
+                    <label for="modVersion">Versión del datapack</label>
                     <input type="text" id="modVersion" placeholder="1.0.0" value="1.0.0">
                 </div>
             </div>
 
             <!-- Recetas -->
-            <h2>🍳 Recetas de Crafting</h2>
-            <p class="hint">Cada receta es del tipo <strong>shapeless</strong> (sin forma).</p>
+            <h3>Recetas</h3>
             <div id="recipesContainer">
-                <!-- Aquí se agregarán dinámicamente los grupos de recetas -->
-                <div class="recipe-group" data-index="0">
+                <!-- Grupo de receta por defecto -->
+                <div class="group-card recipe-group" data-index="0">
                     <button type="button" class="remove-btn" onclick="removeGroup(this, 'recipe')">✕</button>
                     <div class="row">
                         <div>
-                            <label>Nombre de la receta (identificador)</label>
-                            <input type="text" class="recipe-name" placeholder="ej: espada_de_diamante" value="receta_ejemplo" required>
+                            <label>Identificador de la receta</label>
+                            <input type="text" class="recipe-name" placeholder="ej: espada" value="receta_ejemplo" required>
                         </div>
                         <div>
                             <label>Resultado (item y cantidad)</label>
-                            <div class="inline-group">
+                            <div style="display:flex; gap:8px;">
                                 <input type="text" class="recipe-result-item" placeholder="minecraft:diamond_sword" value="minecraft:diamond_sword" style="flex:2;">
-                                <input type="number" class="recipe-result-count" placeholder="1" value="1" min="1" style="flex:1; width:70px;">
+                                <input type="number" class="recipe-result-count" placeholder="1" value="1" min="1" style="flex:0 0 70px;">
                             </div>
                         </div>
                     </div>
@@ -275,55 +392,63 @@
                     <div class="ingredients-list">
                         <div class="ingredient-row">
                             <input type="text" class="ingredient-item" placeholder="minecraft:diamond" value="minecraft:diamond">
-                            <input type="number" class="ingredient-count" placeholder="1" value="1" min="1" style="width:70px;">
-                            <button type="button" class="btn-small" onclick="addIngredient(this)">+</button>
+                            <input type="number" class="ingredient-count" placeholder="1" value="1" min="1">
+                            <button type="button" class="btn-sm" onclick="addIngredient(this)">+</button>
                         </div>
                     </div>
                 </div>
             </div>
-            <button type="button" class="btn btn-success" onclick="addRecipeGroup()">➕ Añadir receta</button>
+            <button type="button" class="btn-add" onclick="addRecipeGroup()">+ Añadir receta</button>
 
             <!-- Funciones -->
-            <h2>⚙️ Funciones (comandos)</h2>
-            <p class="hint">Cada función es un archivo .mcfunction con los comandos que escribas.</p>
+            <h3>Funciones</h3>
+            <p class="hint">Comandos que se ejecutarán al llamar la función (ej. para dar ítems personalizados).</p>
             <div id="functionsContainer">
-                <div class="function-group" data-index="0">
+                <div class="group-card function-group" data-index="0">
                     <button type="button" class="remove-btn" onclick="removeGroup(this, 'function')">✕</button>
-                    <label>Nombre de la función (identificador)</label>
-                    <input type="text" class="function-name" placeholder="ej: mi_funcion" value="saludo" required>
+                    <label>Identificador de la función</label>
+                    <input type="text" class="function-name" placeholder="ej: dar_espada" value="dar_espada" required>
                     <label>Comandos (uno por línea)</label>
-                    <textarea class="function-commands" rows="4" placeholder="say Hola mundo!">say Hola desde mi datapack!</textarea>
+                    <textarea class="function-commands" rows="4">give @s minecraft:diamond_sword{display:{Name:'{"text":"Espada de diamante","color":"gold"}'},Enchantments:[{id:"minecraft:sharpness",lvl:2}]} 1</textarea>
                 </div>
             </div>
-            <button type="button" class="btn btn-success" onclick="addFunctionGroup()">➕ Añadir función</button>
+            <button type="button" class="btn-add" onclick="addFunctionGroup()">+ Añadir función</button>
 
             <!-- Botón generar -->
-            <button type="button" class="btn btn-generate" onclick="generateMod()">🚀 Generar y descargar .zip</button>
-        </form>
+            <button type="button" class="btn-generate" onclick="generateMod()">Generar y descargar .zip</button>
 
-        <div id="status" class="status"></div>
-        <div class="footer">Los archivos generados son compatibles con Minecraft Java Edition. Coloca el .zip en la carpeta <code>datapacks</code> de tu mundo.</div>
+            <div id="status" class="status"></div>
+            <div class="footer">El .zip generado es un datapack listo para la carpeta datapacks de tu mundo.</div>
+        </div>
     </div>
 
+    <!-- Librería JSZip para crear el zip -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js">
     </script>
-    <script>
-        // ------------------- Funciones para manejar grupos dinámicos -------------------
 
-        function addRecipeGroup(data = null) {
+    <script>
+        // ------------------- Manejo de pantallas -------------------
+        document.getElementById('btnStart').addEventListener('click', function() {
+            document.getElementById('menuScreen').style.display = 'none';
+            document.getElementById('creatorScreen').style.display = 'block';
+        });
+
+        // ------------------- Funciones para grupos dinámicos -------------------
+
+        function addRecipeGroup(data) {
             const container = document.getElementById('recipesContainer');
             const index = container.children.length;
             const group = document.createElement('div');
-            group.className = 'recipe-group';
+            group.className = 'group-card recipe-group';
             group.dataset.index = index;
 
+            let name = 'receta_' + (index + 1);
             let resultItem = 'minecraft:diamond_sword';
             let resultCount = 1;
-            let recipeName = 'receta_' + (index + 1);
             let ingredients = [{ item: 'minecraft:diamond', count: 1 }];
 
             if (data) {
-                recipeName = data.name || recipeName;
+                name = data.name || name;
                 resultItem = data.resultItem || resultItem;
                 resultCount = data.resultCount || resultCount;
                 ingredients = data.ingredients || ingredients;
@@ -333,14 +458,14 @@
                 <button type="button" class="remove-btn" onclick="removeGroup(this, 'recipe')">✕</button>
                 <div class="row">
                     <div>
-                        <label>Nombre de la receta (identificador)</label>
-                        <input type="text" class="recipe-name" placeholder="ej: espada_de_diamante" value="${escapeHtml(recipeName)}" required>
+                        <label>Identificador de la receta</label>
+                        <input type="text" class="recipe-name" placeholder="ej: espada" value="${escapeHtml(name)}" required>
                     </div>
                     <div>
                         <label>Resultado (item y cantidad)</label>
-                        <div class="inline-group">
+                        <div style="display:flex; gap:8px;">
                             <input type="text" class="recipe-result-item" placeholder="minecraft:diamond_sword" value="${escapeHtml(resultItem)}" style="flex:2;">
-                            <input type="number" class="recipe-result-count" placeholder="1" value="${resultCount}" min="1" style="flex:1; width:70px;">
+                            <input type="number" class="recipe-result-count" placeholder="1" value="${resultCount}" min="1" style="flex:0 0 70px;">
                         </div>
                     </div>
                 </div>
@@ -352,8 +477,8 @@
                 html += `
                     <div class="ingredient-row">
                         <input type="text" class="ingredient-item" placeholder="minecraft:diamond" value="${escapeHtml(ing.item)}">
-                        <input type="number" class="ingredient-count" placeholder="1" value="${ing.count}" min="1" style="width:70px;">
-                        ${idx === 0 ? `<button type="button" class="btn-small" onclick="addIngredient(this)">+</button>` : `<button type="button" class="btn-small" onclick="removeIngredient(this)">−</button>`}
+                        <input type="number" class="ingredient-count" placeholder="1" value="${ing.count}" min="1">
+                        <button type="button" class="btn-sm" onclick="${idx === 0 ? 'addIngredient(this)' : 'removeIngredient(this)'}">${idx === 0 ? '+' : '−'}</button>
                     </div>
                 `;
             });
@@ -363,25 +488,25 @@
             container.appendChild(group);
         }
 
-        function addFunctionGroup(data = null) {
+        function addFunctionGroup(data) {
             const container = document.getElementById('functionsContainer');
             const index = container.children.length;
             const group = document.createElement('div');
-            group.className = 'function-group';
+            group.className = 'group-card function-group';
             group.dataset.index = index;
 
-            let funcName = 'funcion_' + (index + 1);
-            let commands = 'say Hola!';
+            let name = 'funcion_' + (index + 1);
+            let commands = 'say Hola desde mi datapack!';
 
             if (data) {
-                funcName = data.name || funcName;
+                name = data.name || name;
                 commands = data.commands || commands;
             }
 
             group.innerHTML = `
                 <button type="button" class="remove-btn" onclick="removeGroup(this, 'function')">✕</button>
-                <label>Nombre de la función (identificador)</label>
-                <input type="text" class="function-name" placeholder="ej: mi_funcion" value="${escapeHtml(funcName)}" required>
+                <label>Identificador de la función</label>
+                <input type="text" class="function-name" placeholder="ej: dar_espada" value="${escapeHtml(name)}" required>
                 <label>Comandos (uno por línea)</label>
                 <textarea class="function-commands" rows="4">${escapeHtml(commands)}</textarea>
             `;
@@ -392,7 +517,6 @@
             const group = btn.closest(`.${type}-group`);
             if (group) {
                 group.remove();
-                // Reindexar (opcional)
             }
         }
 
@@ -402,22 +526,20 @@
             row.className = 'ingredient-row';
             row.innerHTML = `
                 <input type="text" class="ingredient-item" placeholder="minecraft:diamond" value="">
-                <input type="number" class="ingredient-count" placeholder="1" value="1" min="1" style="width:70px;">
-                <button type="button" class="btn-small" onclick="removeIngredient(this)">−</button>
+                <input type="number" class="ingredient-count" placeholder="1" value="1" min="1">
+                <button type="button" class="btn-sm" onclick="removeIngredient(this)">−</button>
             `;
             list.appendChild(row);
-            // El botón + ya no es necesario, cada fila tiene su propio botón de eliminar
-            // Pero aseguramos que solo el primer elemento tenga +, lo manejamos en la inicialización
-            // Mejor: al agregar, siempre ponemos botón − y el primero tendrá +
+            // Actualizar botones: el primero debe ser +, los demás −
             const rows = list.querySelectorAll('.ingredient-row');
             rows.forEach((r, i) => {
-                const btn = r.querySelector('.btn-small');
+                const b = r.querySelector('.btn-sm');
                 if (i === 0) {
-                    btn.textContent = '+';
-                    btn.onclick = function() { addIngredient(this); };
+                    b.textContent = '+';
+                    b.onclick = function() { addIngredient(this); };
                 } else {
-                    btn.textContent = '−';
-                    btn.onclick = function() { removeIngredient(this); };
+                    b.textContent = '−';
+                    b.onclick = function() { removeIngredient(this); };
                 }
             });
         }
@@ -427,10 +549,10 @@
             const list = row.closest('.ingredients-list');
             if (list.querySelectorAll('.ingredient-row').length > 1) {
                 row.remove();
-                // Actualizar botones
+                // Reasignar botones
                 const rows = list.querySelectorAll('.ingredient-row');
                 rows.forEach((r, i) => {
-                    const b = r.querySelector('.btn-small');
+                    const b = r.querySelector('.btn-sm');
                     if (i === 0) {
                         b.textContent = '+';
                         b.onclick = function() { addIngredient(this); };
@@ -449,8 +571,24 @@
             return str.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
         }
 
-        // Inicializar con ejemplos (ya están en el HTML, pero podemos agregar más)
-        // No es necesario, ya tenemos uno de cada.
+        // Inicialización: asegurar que los grupos tengan los botones correctos
+        document.addEventListener('DOMContentLoaded', function() {
+            // Recetas
+            document.querySelectorAll('#recipesContainer .recipe-group').forEach(group => {
+                const list = group.querySelector('.ingredients-list');
+                const rows = list.querySelectorAll('.ingredient-row');
+                rows.forEach((row, i) => {
+                    const btn = row.querySelector('.btn-sm');
+                    if (i === 0) {
+                        btn.textContent = '+';
+                        btn.onclick = function() { addIngredient(this); };
+                    } else {
+                        btn.textContent = '−';
+                        btn.onclick = function() { removeIngredient(this); };
+                    }
+                });
+            });
+        });
 
         // ------------------- Generación del datapack -------------------
 
@@ -459,7 +597,7 @@
             status.className = 'status';
             status.style.display = 'none';
 
-            // Recoger datos del formulario
+            // Obtener datos del formulario
             const modNameRaw = document.getElementById('modName').value.trim();
             const modDescription = document.getElementById('modDescription').value.trim() || 'Mi datapack';
             const packFormat = parseInt(document.getElementById('packFormat').value);
@@ -476,7 +614,7 @@
                 return;
             }
 
-            // Recolectar recetas
+            // Recoger recetas
             const recipeGroups = document.querySelectorAll('#recipesContainer .recipe-group');
             const recipes = [];
             recipeGroups.forEach(group => {
@@ -497,7 +635,7 @@
                 }
             });
 
-            // Recolectar funciones
+            // Recoger funciones
             const functionGroups = document.querySelectorAll('#functionsContainer .function-group');
             const functions = [];
             functionGroups.forEach(group => {
@@ -520,7 +658,7 @@
             };
             zip.file('pack.mcmeta', JSON.stringify(packMeta, null, 2));
 
-            // Crear carpetas
+            // data/namespace/
             const dataFolder = zip.folder('data');
             const namespaceFolder = dataFolder.folder(namespace);
 
@@ -538,7 +676,6 @@
                             count: recipe.resultCount
                         }
                     };
-                    // Si solo hay un ingrediente, se puede simplificar, pero dejamos array
                     recipesFolder.file(`${recipe.name}.json`, JSON.stringify(recipeJson, null, 2));
                 });
             }
@@ -562,10 +699,10 @@
                     link.click();
                     document.body.removeChild(link);
                     URL.revokeObjectURL(link.href);
-                    showStatus('✅ ¡Datapack generado con éxito! Descargando...', 'success');
+                    showStatus('Datapack generado correctamente. Descargando...', 'success');
                 })
                 .catch(err => {
-                    showStatus('❌ Error al generar el zip: ' + err.message, 'error');
+                    showStatus('Error al generar el zip: ' + err.message, 'error');
                 });
         }
 
@@ -575,25 +712,6 @@
             status.className = 'status ' + type;
             status.style.display = 'block';
         }
-
-        // Asegurar que cada grupo de recetas tenga al menos un ingrediente con botón +
-        document.addEventListener('DOMContentLoaded', function() {
-            // Recetas: aseguramos que el primer ingrediente tenga + y los demás −
-            document.querySelectorAll('#recipesContainer .recipe-group').forEach(group => {
-                const list = group.querySelector('.ingredients-list');
-                const rows = list.querySelectorAll('.ingredient-row');
-                rows.forEach((row, i) => {
-                    const btn = row.querySelector('.btn-small');
-                    if (i === 0) {
-                        btn.textContent = '+';
-                        btn.onclick = function() { addIngredient(this); };
-                    } else {
-                        btn.textContent = '−';
-                        btn.onclick = function() { removeIngredient(this); };
-                    }
-                });
-            });
-        });
     </script>
 </body>
 </html>
